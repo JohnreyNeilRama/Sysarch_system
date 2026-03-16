@@ -1,0 +1,170 @@
+/* DASHBOARD NAVBAR */
+
+.dashboard-navbar{
+    background-color:#0f5bbe;
+    color:white;
+    padding:12px 25px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.dashboard-left{
+    font-size:30px;
+    font-weight:bold;
+}
+
+/* Right menu */
+
+.dashboard-right{
+    list-style:none;
+    display:flex;
+    align-items:center;
+}
+
+.dashboard-right li{
+    margin-left:20px;
+}
+
+.dashboard-right a{
+    color:white;
+    text-decoration:none;
+    font-size:20px;
+    padding:8px 12px;
+    border-radius:4px;
+    transition:background 0.3s;
+}
+
+.dashboard-right a:hover:not(.logout-btn){
+    background: rgba(255,255,255,0.2);
+}
+
+
+/* Logout button */
+
+.logout-btn{
+    background:white;
+    color:black !important;
+    font-weight:bold;
+    padding:8px 14px;
+    border-radius:5px;
+    margin-left: 50px;
+}
+
+.logout-btn:hover{
+    background:gray;
+    
+}
+
+/* Main Content */
+/* DASHBOARD LAYOUT */
+
+.dashboard-container{
+    display:flex;
+    min-height:calc(100vh - 60px); /* fill screen below navbar */
+    padding: 20px;
+    background-color: #f5f7fa;
+}
+
+
+/* LEFT STUDENT PANEL */
+
+.student-info{
+    width:320px;
+    background:white;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    overflow: hidden;
+    margin: 0 auto;
+}
+
+
+/* HEADER */
+
+.student-header{
+    background: linear-gradient(135deg, #0f5bbe 0%, #1976D2 100%);
+    color:white;
+    padding:20px;
+    font-size:18px;
+    font-weight:bold;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+
+/* PROFILE */
+
+.student-profile{
+    text-align:center;
+    padding:25px 20px;
+    background: linear-gradient(180deg, #f8f9fa 0%, #fff 100%);
+    border-bottom: 2px solid #e9ecef;
+}
+
+.student-profile img{
+    width:140px;
+    height:140px;
+    border-radius:50%;
+    object-fit:cover;
+    border: 4px solid #0f5bbe;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    transition: transform 0.3s;
+}
+
+.student-profile img:hover{
+    transform: scale(1.05);
+}
+
+
+/* DETAILS */
+
+.student-details{
+    padding:25px 30px;
+}
+
+.student-details p{
+    font-size:15px;
+    margin:15px 0;
+    padding: 12px 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #0f5bbe;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.student-details strong{
+    color: #555;
+    font-weight: 600;
+    min-width: 90px;
+}
+
+.student-details span{
+    color: #333;
+    font-weight: 500;
+    text-align: right;
+    flex: 1;
+}
+
+
+/* RIGHT SIDE (EMPTY FOR NOW) */
+
+.dashboard-main{
+    flex:1;
+    background:transparent;
+    margin-left: 20px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dashboard-container{
+        flex-direction: column;
+    }
+    
+    .student-info{
+        width: 100%;
+        margin-bottom: 20px;
+    }
+}
