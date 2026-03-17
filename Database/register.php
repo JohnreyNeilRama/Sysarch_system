@@ -18,11 +18,35 @@ if ($password !== $confirm_password) {
     exit;
 }
 
+// Check if ID number already exists
+$stmt = $conn->prepare("SELECT id FROM students WHERE id_number = ?");
+$stmt->bind_param("s", $id_number);
+$stmt->execute();
+$result = $stmt->get_result();
+if($result->num_rows > 0){
+    echo "Error: ID Number '$id_number' is already registered!";
+    $stmt->close();
+    $conn->close();
+    exit;
+}
+
+// Check if email already exists
+$stmt = $conn->prepare("SELECT id FROM students WHERE email = ?");
+$stmt->bind_param("s", $email);
+$stmt->execute();
+$result = $stmt->get_result();
+if($result->num_rows > 0){
+    echo "Error: Email '$email' is already registered!";
+    $stmt->close();
+    $conn->close();
+    exit;
+}
+
 // Hash the password for security
 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
 // Use prepared statement for security
-$stmt = $conn->prepare("INSERT INTO students (id_number, last_name, first_name, middle_name, course, year_level, email, password, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt = $conn->prepare("INSERT INTO students (id_number, last_name, first_name, middle_name, course, year_level, email, password, address, sessions) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 30)");
 $stmt->bind_param("sssssssss", $id_number, $last_name, $first_name, $middle_name, $course, $year_level, $email, $hashed_password, $address);
 
 if($stmt->execute()){

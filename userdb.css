@@ -123,16 +123,40 @@
     padding:25px 30px;
 }
 
+.student-details{
+    padding:20px;
+}
+
 .student-details p{
-    font-size:15px;
-    margin:15px 0;
-    padding: 12px 15px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    border-left: 4px solid #0f5bbe;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    margin-bottom:15px;
+    padding:12px 15px;
+    background: #f9fbfd;
+    border-radius:10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
+}
+
+/* Hover effect */
+.student-details p:hover{
+    background:#eef4ff;
+    transform: translateY(-2px);
+}
+
+/* Label (ID Number, Name, etc.) */
+.student-details strong{
+    font-size:12px;
+    color:#888;
+    margin-bottom:5px;
+    letter-spacing:0.5px;
+}
+
+/* Value */
+.student-details span{
+    font-size:15px;
+    font-weight:600;
+    color:#222;
 }
 
 .student-details strong{
@@ -144,7 +168,7 @@
 .student-details span{
     color: #333;
     font-weight: 500;
-    text-align: right;
+    text-align: left;
     flex: 1;
 }
 
@@ -156,6 +180,99 @@
     background:transparent;
     margin-left: 20px;
 }
+
+/* DASHBOARD RIGHT CARDS */
+
+.dashboard-card{
+    background:white;
+    border-radius:15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin-bottom: 25px;
+    overflow:hidden;
+}
+
+/* CARD HEADER */
+
+.card-header{
+    background: linear-gradient(135deg, #0f5bbe 0%, #1976D2 100%);
+    color:white;
+    padding:18px;
+    font-size:18px;
+    font-weight:bold;
+    text-align:center;
+}
+
+/* CARD BODY */
+
+.card-body{
+    padding:25px;
+    min-height:150px;
+}
+
+/* RULES LIST */
+
+.rules-content h3{
+    text-align:center;
+    font-size:18px;
+    margin-bottom:5px;
+}
+
+.rules-content h4{
+    text-align:center;
+    font-size:14px;
+    margin-bottom:10px;
+}
+
+.rules-title{
+    margin-top:15px;
+    font-weight:bold;
+}
+
+.rules-content p{
+    font-size:14px;
+    margin:15px 0;
+    text-align:justify;
+}
+
+.rules-content ol{
+    padding-left:20px;
+}
+
+.rules-content li{
+    margin-bottom:12px;
+    font-size:14px;
+    line-height:1.5;
+    text-align:justify;
+}
+
+/* ANNOUNCEMENT TEXT */
+
+/* ANNOUNCEMENT STYLE */
+
+.announcement-item{
+    margin-bottom:15px;
+}
+
+.announcement-meta{
+    font-weight:bold;
+    color:#333;
+    font-size:14px;
+}
+
+.announcement-text{
+    margin-top:8px;
+    font-size:14px;
+    color:#555;
+    line-height:1.5;
+}
+
+/* Divider line */
+.card-body hr{
+    border:none;
+    border-top:1px solid #ddd;
+    margin:15px 0;
+}
+
 
 /* Responsive */
 @media (max-width: 768px) {

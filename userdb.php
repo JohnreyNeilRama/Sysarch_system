@@ -28,7 +28,7 @@ if(!isset($_SESSION['student_id'])){
 
     <ul class="dashboard-right">    
         <li><a href="#">Notification</a></li>
-        <li><a href="landing.php">Home</a></li>
+        <li><a href="userdb.php">Home</a></li>
         <li><a href="edit_profile.php">Edit Profile</a></li>
         <li><a href="#">History</a></li>
         <li><a href="#">Reservation</a></li>
@@ -59,15 +59,80 @@ if(!isset($_SESSION['student_id'])){
             <p><strong>Year Level:</strong> <span><?php echo $_SESSION['year_level']; ?></span></p>
             <p><strong>Email:</strong> <span><?php echo $_SESSION['email']; ?></span></p>
             <p><strong>Address:</strong> <span><?php echo $_SESSION['address']; ?></span></p>
+            <p><strong>Remaining Sessions:</strong> <span><?php echo isset($_SESSION['sessions']) ? $_SESSION['sessions'] : '30'; ?></span></p>
 
         </div>
 
     </div>
 
-    <!-- RIGHT SIDE -->
-    <div class="dashboard-main">
-        <!-- Announcement and Rules will go here -->
+   <div class="dashboard-main">
+    <!-- RULES AND REGULATION -->
+    <div class="dashboard-card">
+        <div class="card-header">Rules and Regulation</div>
+        <div class="card-body">
+            <div class="rules-content">
+
+            <h3>University of Cebu</h3>
+            <h4>COLLEGE OF INFORMATION & COMPUTER STUDIES</h4>
+
+            <h4 class="rules-title">LABORATORY RULES AND REGULATIONS</h4>
+
+            <br> 
+            
+
+            <p>
+                To avoid embarrassment and maintain camaraderie with your friends and superiors 
+                at our laboratories, please observe the following:
+            </p>
+
+            <ol>
+                <li>
+                    Maintain silence, proper decorum and discipline inside the laboratory. 
+                    Mobile phones, walkmans and other personal items of equipment must be switched off.
+                </li>
+
+                <li>
+                    Games are not allowed inside the lab. This includes computer-related games, 
+                    card games and other games that may disturb the operation of the lab.
+                </li>
+
+                <li>
+                    Surfing the Internet is allowed only with the permission of the instructor. 
+                    Downloading and installing of software are strictly prohibited.
+                </li>
+            </ol>
+
+            </div>
+        </div>
     </div>
+
+    <!-- ANNOUNCEMENT -->
+  <div class="dashboard-card">
+    <div class="card-header">Announcement</div>
+
+    <div class="card-body">
+
+        <div class="announcement-item">
+            <div class="announcement-meta">
+                CCS Admin | 2026-Feb-11
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="announcement-item">
+            <div class="announcement-meta">
+                CCS Admin | 2024-May-08
+            </div>
+
+            <div class="announcement-text">
+                Important Announcement! We are excited to announce the launch of our new website! 
+                🔔 Explore our latest products and services now!
+            </div>
+        </div>
+
+    </div>
+</div>
 
 </div>
 
