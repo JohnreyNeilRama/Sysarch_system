@@ -8,7 +8,7 @@ if(!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true){
 }
 
 // Include database connection
-include 'Database/connect.php';
+include '../includes/connect.php';
 
 // Handle student ID lookup request
 if(isset($_GET['id_lookup'])) {
@@ -166,8 +166,8 @@ $month_labels = json_encode(array_keys($monthly_data));
 <head>
 <meta charset="UTF-8">
 <title>Admin Dashboard - CCS Sit-in Monitoring System</title>
-<link rel="stylesheet" href="admin_dashboard.css">
-<link rel="icon" type="image/png" href="pictures/uclogo.png">
+<link rel="stylesheet" href="../assets/css/admin_dashboard.css">
+<link rel="icon" type="image/png" href="../assets/images/uclogo.png">
 </head>
 
 <body class="admin-dashboard-page">
@@ -176,13 +176,13 @@ $month_labels = json_encode(array_keys($monthly_data));
 <nav class="dashboard-navbar">
 
     <div class="dashboard-left">
-        <img class="admin-logo" src="pictures/uclogo.png" alt="UC Logo">
+        <img class="admin-logo" src="../assets/images/uclogo.png" alt="UC Logo">
         <span class="admin-title">Admin Dashboard</span>
     </div>
 
     <ul class="dashboard-right">    
         <li><a href="admin_dashboard.php" class="active">Dashboard</a></li>
-        <li><a href="#">Manage Students</a></li>
+        <li><a href="manage_students.php">Manage Students</a></li>
         <li><a href="#">Sit-in Logs</a></li>
         <li><a href="#">Reservations</a></li>
         <li><a href="#">Reports</a></li>
@@ -200,7 +200,7 @@ $month_labels = json_encode(array_keys($monthly_data));
     <div class="stats-container">
         <div class="stat-card">
             <div class="stat-icon">
-                <img src="pictures/uclogo.png" alt="Students">
+                <img src="../assets/images/uclogo.png" alt="Students">
             </div>
             <div class="stat-info">
                 <h3><?php echo $student_count; ?></h3>
@@ -210,7 +210,7 @@ $month_labels = json_encode(array_keys($monthly_data));
 
         <div class="stat-card">
             <div class="stat-icon">
-                <img src="pictures/uclogo.png" alt="Announcements">
+                <img src="../assets/images/uclogo.png" alt="Announcements">
             </div>
             <div class="stat-info">
                 <h3><?php echo $announcement_count; ?></h3>
@@ -220,7 +220,7 @@ $month_labels = json_encode(array_keys($monthly_data));
 
         <div class="stat-card">
             <div class="stat-icon">
-                <img src="pictures/uclogo.png" alt="Labs">
+                <img src="../assets/images/uclogo.png" alt="Labs">
             </div>
             <div class="stat-info">
                 <h3>4</h3>
@@ -230,7 +230,7 @@ $month_labels = json_encode(array_keys($monthly_data));
 
         <div class="stat-card">
             <div class="stat-icon">
-                <img src="pictures/uclogo.png" alt="Today">
+                <img src="../assets/images/uclogo.png" alt="Today">
             </div>
             <div class="stat-info">
                 <h3><?php echo $today_sitin_count; ?></h3>
@@ -264,6 +264,66 @@ $month_labels = json_encode(array_keys($monthly_data));
         </div>
     </div>
 
+
+<!-- EDIT STUDENT MODAL -->
+<div class="modal-overlay" id="editModal">
+
+    <div class="modal-box edit-modal">
+
+        <div class="modal-header">
+            <h2>Edit Student</h2>
+            <span class="close-btn" onclick="closeEditModal()">&times;</span>
+        </div>
+
+        <div class="modal-body">
+
+            <form class="edit-form">
+
+                <div class="form-group">
+                    <label>ID Number</label>
+                    <input type="text" placeholder="Student ID" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" placeholder="Enter full name">
+                </div>
+
+                <div class="form-group">
+                    <label>Year Level</label>
+                    <select>
+                        <option>Select Year</option>
+                        <option>1st Year</option>
+                        <option>2nd Year</option>
+                        <option>3rd Year</option>
+                        <option>4th Year</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Course</label>
+                    <input type="text" placeholder="Enter course">
+                </div>
+
+                <div class="form-group">
+                    <label>Remaining Sessions</label>
+                    <input type="number" placeholder="Sessions">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-close" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="btn-submit">Save Changes</button>
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+</div>
+
+    <!-- QUICK ACTIONS & ANNOUNCEMENTS -->
+    <div class="two-column-container">
     <!-- QUICK ACTIONS -->
     <div class="dashboard-card">
         <div class="card-header">Quick Actions</div>
@@ -309,6 +369,7 @@ $month_labels = json_encode(array_keys($monthly_data));
                 <button type="submit" class="submit-btn">Post Announcement</button>
             </form>
         </div>
+    </div>
     </div>
 
 </div>
@@ -403,11 +464,18 @@ closeBtn2.onclick = () => {
 };
 
 // close when clicking outside
-window.onclick = (e) => {
-    if(e.target === modal){
-        modal.classList.remove("active");
+window.addEventListener("click", function(e){
+    const sitInModal = document.getElementById("sitInModal");
+    const editModal = document.getElementById("editModal");
+
+    if(e.target === sitInModal){
+        sitInModal.classList.remove("active");
     }
-};
+
+    if(e.target === editModal){
+        editModal.classList.remove("active");
+    }
+});
 
 // Fetch student info when ID Number loses focus
 function fetchStudentInfo() {
@@ -443,6 +511,26 @@ function fetchStudentInfo() {
     })
     .catch(error => console.error('Error:', error));
 }
+
+// EDIT MODAL ELEMENT
+const editModal = document.getElementById("editModal");
+
+// OPEN MODAL
+function openEditModal(){
+    editModal.classList.add("active");
+}
+
+// CLOSE MODAL
+function closeEditModal(){
+    editModal.classList.remove("active");
+}
+
+// CLOSE WHEN CLICKING OUTSIDE (SAFE VERSION)
+window.addEventListener("click", function(e){
+    if(e.target === editModal){
+        editModal.classList.remove("active");
+    }
+});
 </script>
 
 </body>

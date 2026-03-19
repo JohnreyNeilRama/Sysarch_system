@@ -14,7 +14,11 @@ $address = $_POST['address'];
 
 // Check if passwords match
 if ($password !== $confirm_password) {
-    echo "Password and Confirm Password do not match!";
+    if(isset($_POST['from_admin']) && $_POST['from_admin'] == '1'){
+        header("Location: ../pages/manage_students.php?error=" . urlencode("Password and Confirm Password do not match!"));
+    } else {
+        echo "Password and Confirm Password do not match!";
+    }
     exit;
 }
 
@@ -24,7 +28,12 @@ $stmt->bind_param("s", $id_number);
 $stmt->execute();
 $result = $stmt->get_result();
 if($result->num_rows > 0){
-    echo "Error: ID Number '$id_number' is already registered!";
+    $error_msg = "Error: ID Number '$id_number' is already registered!";
+    if(isset($_POST['from_admin']) && $_POST['from_admin'] == '1'){
+        header("Location: ../pages/manage_students.php?error=" . urlencode($error_msg));
+    } else {
+        echo $error_msg;
+    }
     $stmt->close();
     $conn->close();
     exit;
@@ -36,7 +45,12 @@ $stmt->bind_param("s", $email);
 $stmt->execute();
 $result = $stmt->get_result();
 if($result->num_rows > 0){
-    echo "Error: Email '$email' is already registered!";
+    $error_msg = "Error: Email '$email' is already registered!";
+    if(isset($_POST['from_admin']) && $_POST['from_admin'] == '1'){
+        header("Location: ../pages/manage_students.php?error=" . urlencode($error_msg));
+    } else {
+        echo $error_msg;
+    }
     $stmt->close();
     $conn->close();
     exit;
@@ -52,10 +66,20 @@ $stmt->bind_param("sssssssss", $id_number, $last_name, $first_name, $middle_name
 if($stmt->execute()){
     $stmt->close();
     $conn->close();
-    header("Location: ../login.php");
+    // Check if request comes from admin dashboard
+    if(isset($_POST['from_admin']) && $_POST['from_admin'] == '1'){
+        header("Location: ../pages/manage_students.php?success=1");
+    } else {
+        header("Location: ../pages/login.php");
+    }
     exit;
 }else{
-    echo "Error: " . $stmt->error;
+    $error_msg = "Error: " . $stmt->error;
+    if(isset($_POST['from_admin']) && $_POST['from_admin'] == '1'){
+        header("Location: ../pages/manage_students.php?error=" . urlencode($error_msg));
+    } else {
+        echo $error_msg;
+    }
     $stmt->close();
     $conn->close();
 }

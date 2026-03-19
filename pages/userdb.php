@@ -13,8 +13,8 @@ if(!isset($_SESSION['student_id'])){
 <head>
 <meta charset="UTF-8">
 <title>Student Dashboard</title>
-<link rel="stylesheet" href="userdb.css">
-<link rel="icon" type="image/png" href="pictures/uclogo.png">
+<link rel="stylesheet" href="../assets/css/userdb.css">
+<link rel="icon" type="image/png" href="../assets/images/uclogo.png">
 </head>
 
 <body class="dashboard-page">
@@ -47,7 +47,7 @@ if(!isset($_SESSION['student_id'])){
         </div>
 
         <div class="student-profile">
-            <img src="profile_pictures/<?php echo isset($_SESSION['profile_picture']) ? $_SESSION['profile_picture'] : 'default.php'; ?>" 
+            <img src="../assets/images/profile/<?php echo isset($_SESSION['profile_picture']) ? $_SESSION['profile_picture'] : 'default.php'; ?>" 
                  alt="Profile Picture">
         </div>
 

@@ -13,8 +13,8 @@ if(!isset($_SESSION['student_id'])){
 <head>
     <meta charset="UTF-8">
     <title>Edit Profile - CCS Sit-in Monitoring</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/png" href="pictures/uclogo.png">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="icon" type="image/png" href="../assets/images/uclogo.png">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -89,10 +89,10 @@ if(!isset($_SESSION['student_id'])){
 <div class="form-container">
     <h2>Edit Profile</h2>
     
-    <form action="Database/update_profile.php" method="POST" enctype="multipart/form-data">
+    <form action="../includes/update_profile.php" method="POST" enctype="multipart/form-data">
         
         <div class="profile-pic-section">
-            <img src="profile_pictures/<?php echo isset($_SESSION['profile_picture']) ? $_SESSION['profile_picture'] : 'default.png'; ?>" 
+            <img src="../assets/images/profile/<?php echo isset($_SESSION['profile_picture']) ? $_SESSION['profile_picture'] : 'default.png'; ?>" 
                  alt="Profile Picture" 
                  class="profile-pic-preview" 
                  id="preview">

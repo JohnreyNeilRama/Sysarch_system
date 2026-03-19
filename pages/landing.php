@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <title>CCS Sit-in Monitoring System</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/png" href="pictures/uclogo.png">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="icon" type="image/png" href="../assets/images/uclogo.png">
 </head>
 <body>
 
     <!-- Navigation Bar -->
     <nav class="navbar">
         <div class="nav-left">
-            <img class="logo_landing" src="pictures/uclogo.png">College of Computer Studies Sit-in Monitoring System
+            <img class="logo_landing" src="../assets/images/uclogo.png">College of Computer Studies Sit-in Monitoring System
         </div>
 
        <ul class="nav-right">

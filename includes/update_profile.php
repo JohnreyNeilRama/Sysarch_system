@@ -33,13 +33,13 @@ if(isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] === 
     if(in_array($fileActualExt, $allowed)){
         // Create new filename: userid_timestamp.extension
         $newFileName = $student_id . '_' . time() . '.' . $fileActualExt;
-        $fileDestination = '../profile_pictures/' . $newFileName;
+        $fileDestination = '../assets/images/profile/' . $newFileName;
         
         // Move file to folder
         if(move_uploaded_file($fileTmpName, $fileDestination)){
             // Delete old profile picture if it's not default
-            if($current_picture && $current_picture != 'default.png' && file_exists('../profile_pictures/' . $current_picture)){
-                unlink('../profile_pictures/' . $current_picture);
+            if($current_picture && $current_picture != 'default.png' && file_exists('../assets/images/profile/' . $current_picture)){
+                unlink('../assets/images/profile/' . $current_picture);
             }
             $current_picture = $newFileName;
         }
@@ -63,7 +63,7 @@ if($stmt->execute()){
     
     $stmt->close();
     $conn->close();
-    header("Location: ../userdb.php?success=1");
+    header("Location: ../pages/userdb.php?success=1");
     exit;
 }else{
     echo "Error: " . $stmt->error;

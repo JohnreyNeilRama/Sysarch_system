@@ -14,6 +14,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: relative;
+    z-index: 1000;
     
 }
 
@@ -71,7 +73,7 @@
 /* LANDING PAGE */
 .hero {
     height: calc(100vh - 70px);
-    background-image: url("pictures/landing_bg.jpg");
+    background-image: url("../images/landing_bg.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -82,7 +84,6 @@
     text-align: center;
 
     position: relative;
-    overflow: hidden;
 
     animation: fadeIn 0.5s ease-in-out;
 }
@@ -97,7 +98,7 @@
     width: 600px;              /* makes logo bigger */
     height: 600px;
 
-    background-image: url("pictures/ucmainccslogo.png");
+    background-image: url("../images/ucmainccslogo.png");
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -155,6 +156,8 @@
     position: absolute;
     background-color: white;
     min-width: 150px;
+    z-index: 1001;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 /* Dropdown links */
@@ -170,7 +173,7 @@
 
 /* Registration */
 .register-page {
-    background-image: url("pictures/log_background.jpg");
+    background-image: url("../images/log_background.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -268,7 +271,7 @@
 /*LOGIN FORM*/
 
 .login-page {
-    background-image: url("pictures/log_background.jpg");
+    background-image: url("../images/log_background.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
