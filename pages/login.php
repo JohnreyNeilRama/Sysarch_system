@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <title>CCS Sit-in Monitoring System</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
-    <link rel="icon" type="image/png" href="../assets/images/uclogo.png">
+    <link rel="stylesheet" href="/SYSARCH/assets/css/style.css">
+    <link rel="icon" type="image/png" href="/SYSARCH/assets/images/uclogo.png">
 </head>
 <body class="login-page">
    <!-- Navigation Bar -->
     <nav class="navbar">
         <div class="nav-left">
-            <img class="logo_landing" src="../assets/images/uclogo.png">College of Computer Studies Sit-in Monitoring System
+            <img class="logo_landing" src="/SYSARCH/assets/images/uclogo.png">College of Computer Studies Sit-in Monitoring System
         </div>
 
        <ul class="nav-right">
-    <li><a href="landing.php">Home</a></li>
+    <li><a href="/SYSARCH/landing.php">Home</a></li>
 
     <!-- Community Dropdown -->
     <li class="dropdown">
@@ -28,8 +28,8 @@
     </li>
 
     <li><a href="#">About</a></li>
-    <li><a href="login.php">Login</a></li>
-    <li><a href="registration.php">Register</a></li>
+    <li><a href="/SYSARCH/login.php">Login</a></li>
+    <li><a href="/SYSARCH/registration.php">Register</a></li>
 </ul>
 
     </nav>
@@ -45,7 +45,7 @@
             <p style="color: red; text-align: center; margin-bottom: 10px;">Invalid email or password!</p>
             <?php endif; ?>
 
-            <form action="../includes/login.php" method="POST">
+            <form action="/SYSARCH/includes/login.php" method="POST">
                 <label>Email</label>
                 <input type="email" name="email" placeholder="example@gmail.com" required>
 

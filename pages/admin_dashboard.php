@@ -3,7 +3,7 @@ session_start();
 
 // Check if admin is logged in
 if(!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true){
-    header("Location: login.php");
+    header("Location: /SYSARCH/login.php");
     exit;
 }
 
@@ -77,24 +77,17 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id_number'])) {
         $db_student_name = $student_row['first_name'] . ' ' . $student_row['last_name'];
         $student_sessions = $student_row['sessions'];
         
-        // Check if student has remaining sessions
+        // Check if student has remaining sessions (just for validation, not deducted yet)
         if($student_sessions <= 0) {
             echo "<script>alert('Error: Student has no remaining sessions. Please renew sessions first.');</script>";
         } else {
-            // Decrement sessions by 1
-            $new_sessions = $student_sessions - 1;
-            $update_sessions = $conn->prepare("UPDATE students SET sessions = ? WHERE id_number = ?");
-            $update_sessions->bind_param("is", $new_sessions, $id_number);
-            $update_sessions->execute();
-            $update_sessions->close();
-            
-            // Insert sit-in record
-            $stmt = $conn->prepare("INSERT INTO sit_in (id_number, student_name, purpose, lab, remaining_session, sit_in_date, sit_in_time) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssssiss", $id_number, $db_student_name, $purpose, $lab, $new_sessions, $sit_in_date, $sit_in_time);
+            // Insert sit-in record without deducting session (session will be deducted on logout)
+            $stmt = $conn->prepare("INSERT INTO sit_in (id_number, student_name, purpose, lab, remaining_session, sit_in_date, sit_in_time, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'Active')");
+            $stmt->bind_param("ssssiss", $id_number, $db_student_name, $purpose, $lab, $student_sessions, $sit_in_date, $sit_in_time);
             
             if($stmt->execute()) {
                 // Redirect to prevent double submission
-                header("Location: admin_dashboard.php");
+                header("Location: /SYSARCH/admin_dashboard.php");
                 exit;
             } else {
                 $sit_in_error = $stmt->error;
@@ -143,22 +136,37 @@ $monthly_data = array(
     'Sep' => 0, 'Oct' => 0, 'Nov' => 0, 'Dec' => 0
 );
 
-$stmt = $conn->prepare("SELECT MONTH(created_at) as month, COUNT(*) as count FROM students GROUP BY MONTH(created_at)");
+// Get purpose statistics from sit_in table
+$purpose_data = array(
+    'C Programming' => 0,
+    'Java Programming' => 0,
+    'Python Programming' => 0,
+    'Web Development' => 0,
+    'Database' => 0,
+    'Research' => 0,
+    'Assignment' => 0,
+    'Examination' => 0,
+    'Other' => 0
+);
+
+$stmt = $conn->prepare("SELECT purpose, COUNT(*) as count FROM sit_in GROUP BY purpose");
 $stmt->execute();
 $result = $stmt->get_result();
 while($row = $result->fetch_assoc()){
-    $month_num = $row['month'];
-    $month_names = array(1=>'Jan', 2=>'Feb', 3=>'Mar', 4=>'Apr', 5=>'May', 6=>'Jun', 7=>'Jul', 8=>'Aug', 9=>'Sep', 10=>'Oct', 11=>'Nov', 12=>'Dec');
-    if(isset($month_names[$month_num])){
-        $monthly_data[$month_names[$month_num]] = $row['count'];
+    $purpose = $row['purpose'];
+    if(isset($purpose_data[$purpose])){
+        $purpose_data[$purpose] = $row['count'];
+    } else {
+        $purpose_data['Other'] += $row['count'];
     }
 }
+$stmt->close();
 
 $conn->close();
 
-// Convert monthly data to JavaScript array
-$monthly_json = json_encode(array_values($monthly_data));
-$month_labels = json_encode(array_keys($monthly_data));
+// Convert purpose data to JavaScript arrays
+$purpose_json = json_encode(array_values($purpose_data));
+$purpose_labels = json_encode(array_keys($purpose_data));
 ?>
 
 <!DOCTYPE html>
@@ -166,7 +174,7 @@ $month_labels = json_encode(array_keys($monthly_data));
 <head>
 <meta charset="UTF-8">
 <title>Admin Dashboard - CCS Sit-in Monitoring System</title>
-<link rel="stylesheet" href="../assets/css/admin_dashboard.css">
+<link rel="stylesheet" href="/SYSARCH/assets/css/admin_dashboard.css">
 <link rel="icon" type="image/png" href="../assets/images/uclogo.png">
 </head>
 
@@ -176,18 +184,18 @@ $month_labels = json_encode(array_keys($monthly_data));
 <nav class="dashboard-navbar">
 
     <div class="dashboard-left">
-        <img class="admin-logo" src="../assets/images/uclogo.png" alt="UC Logo">
+        <img class="admin-logo" src="/SYSARCH/assets/images/uclogo.png" alt="UC Logo">
         <span class="admin-title">Admin Dashboard</span>
     </div>
 
     <ul class="dashboard-right">    
         <li><a href="admin_dashboard.php" class="active">Dashboard</a></li>
         <li><a href="manage_students.php">Manage Students</a></li>
-        <li><a href="#">Sit-in Logs</a></li>
-        <li><a href="#">Reservations</a></li>
+        <li><a href="manage_sitin.php">Sit-in Logs</a></li>
+        <li><a href="manage_reservations.php">Reservations</a></li>
         <li><a href="#">Reports</a></li>
         <li><a href="#">Settings</a></li>
-        <li><a href="logout.php" class="logout-btn">Log Out</a></li>
+        <li><a href="/SYSARCH/logout.php" class="logout-btn">Log Out</a></li>
     </ul>
 
 </nav>
@@ -200,7 +208,7 @@ $month_labels = json_encode(array_keys($monthly_data));
     <div class="stats-container">
         <div class="stat-card">
             <div class="stat-icon">
-                <img src="../assets/images/uclogo.png" alt="Students">
+                <img src="/SYSARCH/assets/images/uclogo.png" alt="Students">
             </div>
             <div class="stat-info">
                 <h3><?php echo $student_count; ?></h3>
@@ -210,7 +218,7 @@ $month_labels = json_encode(array_keys($monthly_data));
 
         <div class="stat-card">
             <div class="stat-icon">
-                <img src="../assets/images/uclogo.png" alt="Announcements">
+                <img src="/SYSARCH/assets/images/uclogo.png" alt="Announcements">
             </div>
             <div class="stat-info">
                 <h3><?php echo $announcement_count; ?></h3>
@@ -220,7 +228,7 @@ $month_labels = json_encode(array_keys($monthly_data));
 
         <div class="stat-card">
             <div class="stat-icon">
-                <img src="../assets/images/uclogo.png" alt="Labs">
+                <img src="/SYSARCH/assets/images/uclogo.png" alt="Labs">
             </div>
             <div class="stat-info">
                 <h3>4</h3>
@@ -230,7 +238,7 @@ $month_labels = json_encode(array_keys($monthly_data));
 
         <div class="stat-card">
             <div class="stat-icon">
-                <img src="../assets/images/uclogo.png" alt="Today">
+                <img src="/SYSARCH/assets/images/uclogo.png" alt="Today">
             </div>
             <div class="stat-info">
                 <h3><?php echo $today_sitin_count; ?></h3>
@@ -239,27 +247,15 @@ $month_labels = json_encode(array_keys($monthly_data));
         </div>
     </div>
 
-    <!-- BAR CHART SECTION -->
+    <!-- PIE CHART SECTION -->
     <div class="dashboard-card chart-card">
-        <div class="card-header">Student Registration Statistics</div>
+        <div class="card-header">Purpose Statistics</div>
         <div class="card-body">
-            <div class="chart-container">
-                <div class="chart-left">
-                    <div class="y-axis-label">Number of Students</div>
-                    <div class="bar-chart" id="barChart">
-                        <?php foreach($monthly_data as $month => $count): ?>
-                        <div class="bar-wrapper">
-                            <div class="bar" style="height: <?php echo ($count > 0) ? ($count / max($monthly_data) * 100) : 5; ?>%;" data-count="<?php echo $count; ?>"></div>
-                            <span class="bar-count"><?php echo $count; ?></span>
-                        </div>
-                        <?php endforeach; ?>
-                    </div>
+            <div class="pie-chart-container">
+                <div class="pie-chart-wrapper">
+                    <canvas id="pieChart"></canvas>
                 </div>
-                <div class="chart-bottom">
-                    <?php foreach(array_keys($monthly_data) as $month): ?>
-                    <span class="month-label"><?php echo $month; ?></span>
-                    <?php endforeach; ?>
-                </div>
+                <div class="pie-chart-legend" id="pieLegend"></div>
             </div>
         </div>
     </div>
@@ -444,6 +440,98 @@ $month_labels = json_encode(array_keys($monthly_data));
     </div>
 
 </div>
+
+<!-- Pie Chart Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Purpose data from PHP
+    const purposeLabels = <?php echo $purpose_labels; ?>;
+    const purposeData = <?php echo $purpose_json; ?>;
+    
+    // Color palette for pie chart
+    const colors = [
+        '#0f5bbe', // Blue
+        '#1976D2', // Light Blue
+        '#4caf50', // Green
+        '#ff9800', // Orange
+        '#f44336', // Red
+        '#9c27b0', // Purple
+        '#00bcd4', // Cyan
+        '#795548', // Brown
+        '#607d8b'  // Gray
+    ];
+    
+    // Find most and lowest used
+    let maxVal = Math.max(...purposeData);
+    let minVal = Math.min(...purposeData.filter(v => v > 0));
+    if (minVal === Infinity) minVal = 0;
+    
+    // Create pie chart
+    const ctx = document.getElementById('pieChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: purposeLabels,
+            datasets: [{
+                data: purposeData,
+                backgroundColor: colors,
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            let value = context.raw || 0;
+                            let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            let percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            
+                            // Add indicator for most/lowest
+                            let indicator = '';
+                            if (value === maxVal && maxVal > 0) {
+                                indicator = ' (Highest)';
+                            } else if (value === minVal && minVal > 0 && value !== maxVal) {
+                                indicator = ' (Lowest)';
+                            }
+                            
+                            return label + ': ' + value + ' (' + percentage + '%)' + indicator;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Create custom legend
+    const legendContainer = document.getElementById('pieLegend');
+    let legendHTML = '<div class="legend-title">Purpose Legend</div><div class="legend-items">';
+    
+    purposeLabels.forEach((label, index) => {
+        const value = purposeData[index];
+        let badge = '';
+        if (value === maxVal && maxVal > 0) {
+            badge = '<span class="legend-badge highest">Highest</span>';
+        } else if (value === minVal && minVal > 0 && value !== maxVal) {
+            badge = '<span class="legend-badge lowest">Lowest</span>';
+        }
+        
+        legendHTML += '<div class="legend-item">' +
+            '<span class="legend-color" style="background-color: ' + colors[index] + '"></span>' +
+            '<span class="legend-label">' + label + ': ' + value + '</span>' +
+            badge +
+            '</div>';
+    });
+    legendHTML += '</div>';
+    legendContainer.innerHTML = legendHTML;
+</script>
 
 <script>
 const openBtn = document.getElementById("openSitIn");

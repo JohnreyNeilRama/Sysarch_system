@@ -66,3 +66,20 @@ CREATE TABLE IF NOT EXISTS sit_in (
     sit_in_time TIME NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Create reservations table
+CREATE TABLE IF NOT EXISTS reservations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_number VARCHAR(50) NOT NULL,
+    student_name VARCHAR(200) NOT NULL,
+    lab_room VARCHAR(50) NOT NULL,
+    reservation_date DATE NOT NULL,
+    reservation_time TIME NOT NULL,
+    purpose VARCHAR(100) NOT NULL,
+    additional_notes TEXT,
+    status ENUM('Pending', 'Approved', 'Rejected') DEFAULT 'Pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- If sit_in table already exists, add status column:
+-- ALTER TABLE sit_in ADD COLUMN status ENUM('Active', 'Inactive') DEFAULT 'Active';

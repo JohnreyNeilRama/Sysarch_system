@@ -3,7 +3,7 @@ session_start();
 
 // Check if admin is logged in
 if(!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true){
-    header("Location: login.php");
+    header("Location: /SYSARCH/login.php");
     exit;
 }
 
@@ -12,7 +12,7 @@ include '../includes/connect.php';
 
 // Check if student ID is provided
 if(!isset($_GET['id']) || empty($_GET['id'])){
-    header("Location: manage_students.php");
+    header("Location: /SYSARCH/manage_students.php");
     exit;
 }
 

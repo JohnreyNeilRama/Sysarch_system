@@ -63,7 +63,7 @@ if($stmt->execute()){
     
     $stmt->close();
     $conn->close();
-    header("Location: ../pages/userdb.php?success=1");
+    header("Location: /SYSARCH/pages/userdb.php?success=1");
     exit;
 }else{
     echo "Error: " . $stmt->error;

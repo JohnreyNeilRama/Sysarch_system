@@ -1,5 +1,133 @@
 /* ADMIN DASHBOARD STYLES */
 
+/* Search Bar Styles */
+.search-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.search-form input {
+    padding: 10px 15px;
+    width: 250px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.search-form input:focus {
+    outline: none;
+    border-color: #0f5bbe;
+    box-shadow: 0 0 0 3px rgba(15, 91, 190, 0.1);
+}
+
+.search-btn {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #0f5bbe 0%, #1976D2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.search-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(15, 91, 190, 0.3);
+}
+
+.clear-search-btn {
+    padding: 10px 15px;
+    background: #6c757d;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.clear-search-btn:hover {
+    background: #5a6268;
+}
+
+/* Pie Chart Styles */
+.pie-chart-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.pie-chart-wrapper {
+    width: 100%;
+    max-width: 400px;
+    height: 350px;
+}
+
+.pie-chart-legend {
+    width: 100%;
+    max-width: 600px;
+}
+
+.legend-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.legend-items {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #f5f5f5;
+    border-radius: 20px;
+    font-size: 13px;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.legend-label {
+    color: #333;
+    white-space: nowrap;
+}
+
+.legend-badge {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: bold;
+    margin-left: 5px;
+}
+
+.legend-badge.highest {
+    background: #4caf50;
+    color: white;
+}
+
+.legend-badge.lowest {
+    background: #f44336;
+    color: white;
+}
+
 /* TWO COLUMN CONTAINER */
 .two-column-container {
     display: flex;
@@ -563,6 +691,14 @@
         
         .add-student-row {
             margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .button-group {
             display: flex;
             gap: 10px;
         }

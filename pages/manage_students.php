@@ -3,7 +3,7 @@ session_start();
 
 // Check if admin is logged in
 if(!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true){
-    header("Location: login.php");
+    header("Location: /SYSARCH/login.php");
     exit;
 }
 
@@ -15,12 +15,22 @@ if(isset($_POST['reset_all_sessions'])) {
     $reset_stmt = $conn->prepare("UPDATE students SET sessions = 30");
     $reset_stmt->execute();
     $reset_stmt->close();
-    header("Location: manage_students.php?reset_success=1");
+    header("Location: /SYSARCH/manage_students.php?reset_success=1");
     exit;
 }
 
-// Fetch all students
-$stmt = $conn->prepare("SELECT id, id_number, first_name, last_name, course, year_level, email, sessions FROM students ORDER BY last_name ASC");
+// Handle Search
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+
+if($search !== '') {
+    // Search by ID number or name
+    $search_param = "%$search%";
+    $stmt = $conn->prepare("SELECT id, id_number, first_name, last_name, course, year_level, email, sessions FROM students WHERE id_number LIKE ? OR first_name LIKE ? OR last_name LIKE ? ORDER BY last_name ASC");
+    $stmt->bind_param("sss", $search_param, $search_param, $search_param);
+} else {
+    // Fetch all students
+    $stmt = $conn->prepare("SELECT id, id_number, first_name, last_name, course, year_level, email, sessions FROM students ORDER BY last_name ASC");
+}
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
@@ -30,7 +40,7 @@ $result = $stmt->get_result();
 <head>
     <meta charset="UTF-8">
     <title>Manage Students - CCS Sit-in Monitoring System</title>
-    <link rel="stylesheet" href="../assets/css/admin_dashboard.css">
+    <link rel="stylesheet" href="/SYSARCH/assets/css/admin_dashboard.css">
     <link rel="icon" type="image/png" href="../assets/images/uclogo.png">
  
 </head>
@@ -41,18 +51,18 @@ $result = $stmt->get_result();
 <nav class="dashboard-navbar">
 
     <div class="dashboard-left">
-        <img class="admin-logo" src="../assets/images/uclogo.png" alt="UC Logo">
+        <img class="admin-logo" src="/SYSARCH/assets/images/uclogo.png" alt="UC Logo">
         <span class="admin-title">Admin Dashboard</span>
     </div>
 
     <ul class="dashboard-right">    
         <li><a href="admin_dashboard.php">Dashboard</a></li>
         <li><a href="manage_students.php" class="active">Manage Students</a></li>
-        <li><a href="#">Sit-in Logs</a></li>
-        <li><a href="#">Reservations</a></li>
+        <li><a href="manage_sitin.php">Sit-in Logs</a></li>
+        <li><a href="manage_reservations.php">Reservations</a></li>
         <li><a href="#">Reports</a></li>
         <li><a href="#">Settings</a></li>
-        <li><a href="logout.php" class="logout-btn">Log Out</a></li>
+        <li><a href="/SYSARCH/logout.php" class="logout-btn">Log Out</a></li>
     </ul>
 
 </nav>
@@ -62,9 +72,19 @@ $result = $stmt->get_result();
     <div class="header-row">
         <h2 style="text-align: center; width: 100%;">Manage Students</h2>
     </div>
+    
     <div class="add-student-row">
-        <button class="add-student-btn" onclick="toggleAddStudentForm()">+ Add Students</button>
-        <button class="reset-session-btn" onclick="resetAllSessions()">Reset All Sessions</button>
+        <div class="button-group">
+            <button class="add-student-btn" onclick="toggleAddStudentForm()">+ Add Students</button>
+            <button class="reset-session-btn" onclick="resetAllSessions()">Reset All Sessions</button>
+        </div>
+        <form method="GET" action="" class="search-form">
+            <input type="text" name="search" placeholder="Search by ID Number or Name..." value="<?php echo htmlspecialchars($search); ?>">
+            <button type="submit" class="search-btn">Search</button>
+            <?php if($search !== ''): ?>
+                <a href="manage_students.php" class="clear-search-btn">Clear</a>
+            <?php endif; ?>
+        </form>
     </div>
 
     <!-- Floating Add Student Form -->
@@ -74,7 +94,7 @@ $result = $stmt->get_result();
                 <h3>Add New Student</h3>
                 <span class="close-form" onclick="toggleAddStudentForm()">&times;</span>
             </div>
-            <form action="../includes/register.php" method="POST">
+            <form action="/SYSARCH/includes/register.php" method="POST">
                 <input type="hidden" name="from_admin" value="1">
                 <label>ID Number</label>
                 <input type="text" name="id_number" placeholder="Enter ID Number" required>

@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <title>CCS Sit-in Monitoring System</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
-    <link rel="icon" type="image/png" href="../assets/images/uclogo.png">
+    <link rel="stylesheet" href="/SYSARCH/assets/css/style.css">
+    <link rel="icon" type="image/png" href="/SYSARCH/assets/images/uclogo.png">
 </head>
 <body>
 
     <!-- Navigation Bar -->
     <nav class="navbar">
         <div class="nav-left">
-            <img class="logo_landing" src="../assets/images/uclogo.png">College of Computer Studies Sit-in Monitoring System
+            <img class="logo_landing" src="/SYSARCH/assets/images/uclogo.png">College of Computer Studies Sit-in Monitoring System
         </div>
 
        <ul class="nav-right">
@@ -29,8 +29,8 @@
     </li>
 
     <li><a href="#">About</a></li>
-    <li><a href="login.php">Login</a></li>
-    <li><a href="registration.php">Register</a></li>
+    <li><a href="/SYSARCH/login.php">Login</a></li>
+    <li><a href="/SYSARCH/registration.php">Register</a></li>
 </ul>
 
     </nav>
@@ -43,7 +43,7 @@
             Monitoring System
         </h1>
 
-        <a href="login.php" class="start-btn">Get Started →</a>
+        <a href="/SYSARCH/login.php" class="start-btn">Get Started →</a>
     </div>
 </main>
 

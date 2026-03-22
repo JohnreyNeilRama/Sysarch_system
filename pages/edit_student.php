@@ -3,7 +3,7 @@ session_start();
 
 // Check if admin is logged in
 if(!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true){
-    header("Location: login.php");
+    header("Location: /SYSARCH/login.php");
     exit;
 }
 
@@ -12,7 +12,7 @@ include '../includes/connect.php';
 
 // Check if student ID is provided
 if(!isset($_GET['id']) || empty($_GET['id'])){
-    header("Location: manage_students.php");
+    header("Location: /SYSARCH/manage_students.php");
     exit;
 }
 
@@ -25,7 +25,7 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if($result->num_rows == 0){
-    header("Location: manage_students.php");
+    header("Location: /SYSARCH/manage_students.php");
     exit;
 }
 
@@ -69,7 +69,7 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <title>Edit Student - CCS Sit-in Monitoring System</title>
-    <link rel="stylesheet" href="../assets/css/admin_dashboard.css">
+    <link rel="stylesheet" href="/SYSARCH/assets/css/admin_dashboard.css">
     <link rel="icon" type="image/png" href="../assets/images/uclogo.css">
     <style>
         .edit-container {
@@ -175,7 +175,7 @@ $conn->close();
 <!-- Dashboard Navigation -->
 <nav class="dashboard-navbar">
     <div class="dashboard-left">
-        <img class="admin-logo" src="../assets/images/uclogo.png" alt="UC Logo">
+        <img class="admin-logo" src="/SYSARCH/assets/images/uclogo.png" alt="UC Logo">
         <span class="admin-title">Admin Dashboard</span>
     </div>
     <ul class="dashboard-right">    
@@ -185,7 +185,7 @@ $conn->close();
         <li><a href="#">Reservations</a></li>
         <li><a href="#">Reports</a></li>
         <li><a href="#">Settings</a></li>
-        <li><a href="logout.php" class="logout-btn">Log Out</a></li>
+        <li><a href="/SYSARCH/logout.php" class="logout-btn">Log Out</a></li>
     </ul>
 </nav>
 

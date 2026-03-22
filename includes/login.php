@@ -24,7 +24,7 @@ if($row = $result->fetch_assoc()){
         
         $stmt->close();
         $conn->close();
-        header("Location: ../pages/admin_dashboard.php");
+        header("Location: /SYSARCH/pages/admin_dashboard.php");
         exit;
     }
 }
@@ -54,20 +54,20 @@ if($row = $result->fetch_assoc()){
         
         $stmt->close();
         $conn->close();
-        header("Location: ../pages/userdb.php");
+        header("Location: /SYSARCH/pages/userdb.php");
         exit;
     } else {
         // Invalid password
         $stmt->close();
         $conn->close();
-        header("Location: ../pages/login.php?error=1");
+        header("Location: /SYSARCH/pages/login.php?error=1");
         exit;
     }
 } else {
     // Invalid email
     $stmt->close();
     $conn->close();
-    header("Location: ../pages/login.php?error=1");
+    header("Location: /SYSARCH/pages/login.php?error=1");
     exit;
 }
 ?>

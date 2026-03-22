@@ -3,9 +3,29 @@ session_start();
 
 // Check if user is logged in
 if(!isset($_SESSION['student_id'])){
-    header("Location: login.php");
+    header("Location: /SYSARCH/login.php");
     exit;
 }
+
+// Include database connection
+include '../includes/connect.php';
+
+// Auto-create reservations table if not exists
+$create_reservations_table = "CREATE TABLE IF NOT EXISTS reservations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_number VARCHAR(50) NOT NULL,
+    student_name VARCHAR(200) NOT NULL,
+    lab_room VARCHAR(50) NOT NULL,
+    reservation_date DATE NOT NULL,
+    reservation_time TIME NOT NULL,
+    purpose VARCHAR(100) NOT NULL,
+    additional_notes TEXT,
+    status ENUM('Pending', 'Approved', 'Rejected') DEFAULT 'Pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)";
+$conn->query($create_reservations_table);
+
+$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -13,8 +33,8 @@ if(!isset($_SESSION['student_id'])){
 <head>
 <meta charset="UTF-8">
 <title>Student Dashboard</title>
-<link rel="stylesheet" href="../assets/css/userdb.css">
-<link rel="icon" type="image/png" href="../assets/images/uclogo.png">
+<link rel="stylesheet" href="/SYSARCH/assets/css/userdb.css">
+<link rel="icon" type="image/png" href="/SYSARCH/assets/images/uclogo.png">
 </head>
 
 <body class="dashboard-page">
@@ -28,11 +48,11 @@ if(!isset($_SESSION['student_id'])){
 
     <ul class="dashboard-right">    
         <li><a href="#">Notification</a></li>
-        <li><a href="userdb.php">Home</a></li>
-        <li><a href="edit_profile.php">Edit Profile</a></li>
+        <li><a href="/SYSARCH/userdb.php">Home</a></li>
+        <li><a href="/SYSARCH/edit_profile.php">Edit Profile</a></li>
         <li><a href="#">History</a></li>
-        <li><a href="#">Reservation</a></li>
-        <li><a href="logout.php" class="logout-btn">Log Out</a></li>
+        <li><a href="#" class="reservation-link" id="openReservation">Reservation</a></li>
+        <li><a href="/SYSARCH/logout.php" class="logout-btn">Log Out</a></li>
     </ul>
 
 </nav>
@@ -47,7 +67,7 @@ if(!isset($_SESSION['student_id'])){
         </div>
 
         <div class="student-profile">
-            <img src="../assets/images/profile/<?php echo isset($_SESSION['profile_picture']) ? $_SESSION['profile_picture'] : 'default.php'; ?>" 
+            <img src="/SYSARCH/assets/images/profile/<?php echo isset($_SESSION['profile_picture']) ? $_SESSION['profile_picture'] : 'default.php'; ?>" 
                  alt="Profile Picture">
         </div>
 
@@ -135,6 +155,98 @@ if(!isset($_SESSION['student_id'])){
 </div>
 
 </div>
+
+<!-- FLOATING RESERVATION MODAL -->
+<div class="reservation-modal-overlay" id="reservationModal">
+    <div class="reservation-modal">
+        <div class="reservation-modal-header">
+            <h2>Make a Reservation</h2>
+            <button class="reservation-close-btn" id="closeReservation">&times;</button>
+        </div>
+        <div class="reservation-modal-body">
+            <form class="reservation-form" action="/SYSARCH/includes/process_reservation.php" method="POST">
+                <div class="form-group">
+                    <label for="lab-room">Laboratory Room</label>
+                    <select id="lab-room" name="lab_room" required>
+                        <option value="">Select Laboratory</option>
+                        <option value="lab-528">Room 528</option>
+                        <option value="lab-530">Room 530</option>
+                        <option value="lab-532">Room 532</option>
+                        <option value="lab-534">Room 534</option>
+                        <option value="lab-536">Room 536</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="reservation-date">Reservation Date</label>
+                    <input type="date" id="reservation-date" name="reservation_date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="reservation-time">Reservation Time</label>
+                    <input type="time" id="reservation-time" name="reservation_time" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="purpose">Purpose</label>
+                    <select id="purpose" name="purpose" required>
+                        <option value="">Select Purpose</option>
+                        <option value="C Programming">C Programming</option>
+                        <option value="Java Programming">Java Programming</option>
+                        <option value="Python Programming">Python Programming</option>
+                        <option value="Web Development">Web Development</option>
+                        <option value="Database">Database</option>
+                        <option value="Research">Research</option>
+                        <option value="Assignment">Assignment</option>
+                        <option value="Examination">Examination</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="additional-notes">Additional Notes</label>
+                    <textarea id="additional-notes" name="additional_notes" placeholder="Enter any additional details..."></textarea>
+                </div>
+                
+                <button type="submit" class="reservation-submit-btn">Submit Reservation</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Modal -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('reservationModal');
+        const openBtn = document.getElementById('openReservation');
+        const closeBtn = document.getElementById('closeReservation');
+        
+        // Open modal
+        openBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            modal.classList.add('active');
+        });
+        
+        // Close modal with X button
+        closeBtn.addEventListener('click', function() {
+            modal.classList.remove('active');
+        });
+        
+        // Close modal when clicking outside
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && modal.classList.contains('active')) {
+                modal.classList.remove('active');
+            }
+        });
+    });
+</script>
 
 </body>
 </html>

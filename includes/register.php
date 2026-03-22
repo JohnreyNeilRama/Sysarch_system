@@ -15,7 +15,7 @@ $address = $_POST['address'];
 // Check if passwords match
 if ($password !== $confirm_password) {
     if(isset($_POST['from_admin']) && $_POST['from_admin'] == '1'){
-        header("Location: ../pages/manage_students.php?error=" . urlencode("Password and Confirm Password do not match!"));
+        header("Location: /SYSARCH/pages/manage_students.php?error=" . urlencode("Password and Confirm Password do not match!"));
     } else {
         echo "Password and Confirm Password do not match!";
     }
@@ -30,7 +30,7 @@ $result = $stmt->get_result();
 if($result->num_rows > 0){
     $error_msg = "Error: ID Number '$id_number' is already registered!";
     if(isset($_POST['from_admin']) && $_POST['from_admin'] == '1'){
-        header("Location: ../pages/manage_students.php?error=" . urlencode($error_msg));
+        header("Location: /SYSARCH/pages/manage_students.php?error=" . urlencode($error_msg));
     } else {
         echo $error_msg;
     }
@@ -47,7 +47,7 @@ $result = $stmt->get_result();
 if($result->num_rows > 0){
     $error_msg = "Error: Email '$email' is already registered!";
     if(isset($_POST['from_admin']) && $_POST['from_admin'] == '1'){
-        header("Location: ../pages/manage_students.php?error=" . urlencode($error_msg));
+        header("Location: /SYSARCH/pages/manage_students.php?error=" . urlencode($error_msg));
     } else {
         echo $error_msg;
     }
@@ -68,15 +68,15 @@ if($stmt->execute()){
     $conn->close();
     // Check if request comes from admin dashboard
     if(isset($_POST['from_admin']) && $_POST['from_admin'] == '1'){
-        header("Location: ../pages/manage_students.php?success=1");
+        header("Location: /SYSARCH/pages/manage_students.php?success=1");
     } else {
-        header("Location: ../pages/login.php");
+        header("Location: /SYSARCH/pages/login.php");
     }
     exit;
 }else{
     $error_msg = "Error: " . $stmt->error;
     if(isset($_POST['from_admin']) && $_POST['from_admin'] == '1'){
-        header("Location: ../pages/manage_students.php?error=" . urlencode($error_msg));
+        header("Location: /SYSARCH/pages/manage_students.php?error=" . urlencode($error_msg));
     } else {
         echo $error_msg;
     }

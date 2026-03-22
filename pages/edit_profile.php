@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if(!isset($_SESSION['student_id'])){
-    header("Location: login.php");
+    header("Location: /SYSARCH/login.php");
     exit;
 }
 ?>
@@ -13,8 +13,8 @@ if(!isset($_SESSION['student_id'])){
 <head>
     <meta charset="UTF-8">
     <title>Edit Profile - CCS Sit-in Monitoring</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
-    <link rel="icon" type="image/png" href="../assets/images/uclogo.png">
+    <link rel="stylesheet" href="/SYSARCH/assets/css/style.css">
+    <link rel="icon" type="image/png" href="/SYSARCH/assets/images/uclogo.png">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -89,15 +89,15 @@ if(!isset($_SESSION['student_id'])){
 <div class="form-container">
     <h2>Edit Profile</h2>
     
-    <form action="../includes/update_profile.php" method="POST" enctype="multipart/form-data">
+    <form action="/SYSARCH/includes/update_profile.php" method="POST" enctype="multipart/form-data">
         
         <div class="profile-pic-section">
-            <img src="../assets/images/profile/<?php echo isset($_SESSION['profile_picture']) ? $_SESSION['profile_picture'] : 'default.png'; ?>" 
+            <img src="/SYSARCH/assets/images/profile/<?php echo isset($_SESSION['profile_picture']) ? $_SESSION['profile_picture'] : 'default.png'; ?>" 
                  alt="Profile Picture" 
                  class="profile-pic-preview" 
                  id="preview">
             <br>
-            <label for="profile_picture" style="display:inline; cursor:pointer; color: #4CAF50;">
+            <label for="profile_picture" style="display:inline; cursor:pointer; color: #4CAF50; height: 30px; line-height: 30px; border: 3px solid #4CAF50; border-radius: 4px; padding: 0 10px;">
                 📷 Change Photo
             </label>
             <input type="file" name="profile_picture" id="profile_picture" accept="image/*" style="display:none;" onchange="previewImage(this)">
@@ -130,7 +130,7 @@ if(!isset($_SESSION['student_id'])){
         <button type="submit">Update Profile</button>
     </form>
     
-    <a href="userdb.php" class="back-link">← Back to Dashboard</a>
+    <a href="/SYSARCH/userdb.php" class="back-link">← Back to Dashboard</a>
 </div>
 
 <script>
