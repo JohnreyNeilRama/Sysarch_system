@@ -145,11 +145,16 @@
 .admin-dashboard-page .dashboard-navbar{
     background-color:#0f5bbe;
     color:white;
-    padding:12px 25px;
+    padding:15px 30px;
     display:flex;
     justify-content:space-between;
     align-items:center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.admin-dashboard-page .dashboard-navbar:hover{
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
 }
 
 .admin-dashboard-page .dashboard-left{
@@ -158,16 +163,40 @@
     display: flex;
     align-items: center;
     gap: 15px;
+    transition: transform 0.3s;
+}
+
+.admin-dashboard-page .dashboard-left:hover{
+    transform: scale(1.02);
 }
 
 .admin-logo{
-    width: 45px;
-    height: 45px;
+    width: 55px;
+    height: 55px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    object-fit: contain;
+    background: white;
+    padding: 3px;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.admin-logo:hover{
+    transform: scale(1.1) rotate(3deg);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
 
 .admin-title{
-    font-size: 24px;
-    font-weight: bold;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    transition: color 0.3s, text-shadow 0.3s;
+}
+
+.admin-title:hover{
+    color: #e3f2fd;
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.2);
 }
 
 /* Right menu */
@@ -188,11 +217,29 @@
     font-size:16px;
     padding:8px 12px;
     border-radius:4px;
-    transition:background 0.3s;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.admin-dashboard-page .dashboard-right a::after{
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: white;
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.admin-dashboard-page .dashboard-right a:hover::after{
+    width: 80%;
 }
 
 .admin-dashboard-page .dashboard-right a:hover:not(.logout-btn){
     background: rgba(255,255,255,0.2);
+    transform: translateY(-2px);
 }
 
 .admin-dashboard-page .dashboard-right a.active{
@@ -250,11 +297,12 @@
     display: flex;
     align-items: center;
     gap: 20px;
-    transition: transform 0.3s;
+    transition: transform 0.3s, box-shadow 0.3s, background-color 0.3s;
 }
 
 .stat-card:hover{
     transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
 }
 
 .stat-icon{
@@ -265,11 +313,27 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.stat-icon:hover{
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px rgba(15, 91, 190, 0.4);
+}
+
+.stat-icon .icon{
+    font-size: 28px;
+    line-height: 1;
 }
 
 .stat-icon img{
     width: 35px;
     height: 35px;
+    transition: transform 0.3s;
+}
+
+.stat-icon:hover img{
+    transform: rotate(5deg);
 }
 
 .stat-info h3{
@@ -292,6 +356,12 @@
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     margin-bottom: 25px;
     overflow:hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.admin-dashboard-page .dashboard-card:hover{
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
 }
 
 /* CARD HEADER */
@@ -303,6 +373,11 @@
     font-size:18px;
     font-weight:bold;
     text-align:center;
+    transition: background 0.3s;
+}
+
+.admin-dashboard-page .card-header:hover{
+    background: linear-gradient(135deg, #1976D2 0%, #0f5bbe 100%);
 }
 
 /* CARD BODY */
@@ -682,11 +757,18 @@
             border-radius: 5px;
             text-decoration: none;
             font-size: 14px;
-            transition: background-color 0.3s;
+            transition: all 0.3s ease;
         }
         
         .add-student-btn:hover {
             background-color: #1b85e0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(15, 91, 190, 0.3);
+        }
+        
+        .add-student-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(15, 91, 190, 0.2);
         }
         
         .add-student-row {
@@ -711,11 +793,18 @@
             border: none;
             font-size: 14px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.3s ease;
         }
         
         .reset-session-btn:hover {
             background-color: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+        }
+        
+        .reset-session-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(220, 53, 69, 0.2);
         }
         
         /* Floating Add Student Form */
@@ -730,6 +819,19 @@
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        
+        .floating-form-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .floating-form-overlay.show .floating-form-container {
+            transform: translateY(0);
+            opacity: 1;
         }
         
         .floating-form-container {
@@ -740,6 +842,9 @@
             max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            transform: translateY(-20px);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
         }
         
         .floating-form-header {
@@ -781,6 +886,7 @@
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 14px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
         
         .floating-form-container input:focus,
@@ -788,6 +894,7 @@
         .floating-form-container textarea:focus {
             outline: none;
             border-color: #0b4da2;
+            box-shadow: 0 0 0 3px rgba(11, 77, 162, 0.15);
         }
         
         .floating-form-container .submit-btn {
@@ -799,11 +906,18 @@
             border-radius: 5px;
             font-size: 15px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.3s ease;
         }
         
         .floating-form-container .submit-btn:hover {
             background-color: #1b85e0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(15, 91, 190, 0.3);
+        }
+        
+        .floating-form-container .submit-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(15, 91, 190, 0.2);
         }
         
         .students-table {
@@ -816,13 +930,25 @@
             padding: 12px;
             text-align: left;
             border-bottom: 1px solid #ddd;
+            transition: background-color 0.3s ease;
         }
         .students-table th {
-            background-color: #1a3a5f;
             color: white;
         }
-        .students-table tr:hover {
-            background-color: #f5f5f5;
+        
+        .students-table th {
+            background-color: #1a3a5f;
+            transition: background-color 0.3s ease;
+        }
+        .students-table th:hover {
+            background-color: #2a4a6f;
+        }
+        .students-table tbody tr {
+            transition: all 0.3s ease;
+        }
+        .students-table tbody tr:hover {
+            background-color: #e8f4fc;
+            transform: scale(1.01);
         }
         .header-row {
             display: flex;
@@ -849,25 +975,28 @@
 
         .btn-edit {
             background-color: white;
-            color: blue;
-            border: 1px solid blue;
+            color: #0f5bbe;
+            border: 1px solid #0f5bbe;
         }
 
         .btn-edit:hover {
-            background-color: #0056b3;
+            background-color: #0f5bbe;
             color: white;
-
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(15, 91, 190, 0.3);
         }
 
         .btn-delete {
             background-color: white;
-            color: red;
-            border: 1px solid red;
+            color: #dc3545;
+            border: 1px solid #dc3545;
         }
 
         .btn-delete:hover {
-            background-color: #c82333;
+            background-color: #dc3545;
             color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
         }
 
 /* ANIMATION */

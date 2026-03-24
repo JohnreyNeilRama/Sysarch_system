@@ -25,6 +25,10 @@ $create_table_sql = "CREATE TABLE IF NOT EXISTS sit_in (
 )";
 $conn->query($create_table_sql);
 
+// Auto-delete sit-in records older than 1 day (refresh daily)
+$cleanup_date = date('Y-m-d', strtotime('-1 day'));
+$conn->query("DELETE FROM sit_in WHERE sit_in_date < '$cleanup_date'");
+
 // Add status column to sit_in table if it doesn't exist
 $check_status_column = $conn->query("SHOW COLUMNS FROM sit_in LIKE 'status'");
 if($check_status_column->num_rows == 0) {
@@ -84,8 +88,9 @@ if(!empty($where_clauses)) {
     $where_clause = 'WHERE ' . implode(' AND ', $where_clauses);
 }
 
-// Fetch all sit-in records
-$sql = "SELECT * FROM sit_in $where_clause ORDER BY sit_in_date DESC, sit_in_time DESC";
+// Fetch all sit-in records for today
+$today_date = date('Y-m-d');
+$sql = "SELECT * FROM sit_in WHERE sit_in_date = '$today_date' ORDER BY sit_in_time DESC";
 $result = $conn->query($sql);
 ?>
 

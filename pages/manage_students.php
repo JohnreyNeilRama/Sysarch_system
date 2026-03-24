@@ -224,10 +224,16 @@ $result = $stmt->get_result();
     
     function toggleAddStudentForm() {
         var form = document.getElementById('addStudentForm');
-        if (form.style.display === 'none') {
-            form.style.display = 'flex';
+        if (form.classList.contains('show')) {
+            form.classList.remove('show');
+            setTimeout(function() {
+                form.style.display = 'none';
+            }, 300);
         } else {
-            form.style.display = 'none';
+            form.style.display = 'flex';
+            setTimeout(function() {
+                form.classList.add('show');
+            }, 10);
         }
     }
     

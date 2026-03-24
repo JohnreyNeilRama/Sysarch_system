@@ -3,16 +3,58 @@
 .dashboard-navbar{
     background-color:#0f5bbe;
     color:white;
-    padding:12px 25px;
+    padding:15px 30px;
     display:flex;
     justify-content:space-between;
     align-items:center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.dashboard-navbar:hover{
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
 }
 
 .dashboard-left{
     font-size:30px;
     font-weight:bold;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: transform 0.3s;
+}
+
+.dashboard-left:hover{
+    transform: scale(1.02);
+}
+
+.dashboard-left img{
+    width: 55px;
+    height: 55px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    object-fit: contain;
+    background: white;
+    padding: 3px;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.dashboard-left img:hover{
+    transform: scale(1.1) rotate(3deg);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.dashboard-left span{
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    transition: color 0.3s, text-shadow 0.3s;
+}
+
+.dashboard-left span:hover{
+    color: #e3f2fd;
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.2);
 }
 
 /* Right menu */
@@ -33,11 +75,29 @@
     font-size:20px;
     padding:8px 12px;
     border-radius:4px;
-    transition:background 0.3s;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.dashboard-right a::after{
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: white;
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.dashboard-right a:hover::after{
+    width: 80%;
 }
 
 .dashboard-right a:hover:not(.logout-btn){
     background: rgba(255,255,255,0.2);
+    transform: translateY(-2px);
 }
 
 
@@ -77,6 +137,12 @@
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     overflow: hidden;
     margin: 0 auto;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.student-info:hover{
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
 }
 
 
@@ -90,6 +156,11 @@
     font-weight:bold;
     text-align: center;
     letter-spacing: 1px;
+    transition: background 0.3s;
+}
+
+.student-header:hover{
+    background: linear-gradient(135deg, #1976D2 0%, #0f5bbe 100%);
 }
 
 
@@ -101,6 +172,11 @@
     background: linear-gradient(180deg, #f8f9fa 0%, #fff 100%);
     border-bottom: 2px solid #e9ecef;
     border-radius: 20px;
+    transition: background 0.3s;
+}
+
+.student-profile:hover{
+    background: linear-gradient(180deg, #fff 0%, #f8f9fa 100%);
 }
 
 .student-profile img{
@@ -110,11 +186,12 @@
     object-fit:cover;
     border: 4px solid #0f5bbe;
     box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-    transition: transform 0.3s;
+    transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .student-profile img:hover{
-    transform: scale(1.05);
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(15, 91, 190, 0.4);
 }
 
 
@@ -136,13 +213,14 @@
     background: #f9fbfd;
     border-radius:10px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
 }
 
 /* Hover effect */
 .student-details p:hover{
     background:#eef4ff;
-    transform: translateY(-2px);
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 /* Label (ID Number, Name, etc.) */
@@ -190,6 +268,12 @@
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     margin-bottom: 25px;
     overflow:hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.dashboard-card:hover{
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
 }
 
 /* CARD HEADER */
@@ -201,6 +285,11 @@
     font-size:18px;
     font-weight:bold;
     text-align:center;
+    transition: background 0.3s;
+}
+
+.card-header:hover{
+    background: linear-gradient(135deg, #1976D2 0%, #0f5bbe 100%);
 }
 
 /* CARD BODY */

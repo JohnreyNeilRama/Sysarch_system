@@ -7,6 +7,9 @@ if(!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true){
     exit;
 }
 
+// Set timezone to Philippines (Asia/Manila)
+date_default_timezone_set('Asia/Manila');
+
 // Include database connection
 include '../includes/connect.php';
 
@@ -208,7 +211,7 @@ $purpose_labels = json_encode(array_keys($purpose_data));
     <div class="stats-container">
         <div class="stat-card">
             <div class="stat-icon">
-                <img src="/SYSARCH/assets/images/uclogo.png" alt="Students">
+                <span class="icon">👥</span>
             </div>
             <div class="stat-info">
                 <h3><?php echo $student_count; ?></h3>
@@ -218,7 +221,7 @@ $purpose_labels = json_encode(array_keys($purpose_data));
 
         <div class="stat-card">
             <div class="stat-icon">
-                <img src="/SYSARCH/assets/images/uclogo.png" alt="Announcements">
+                <span class="icon">📢</span>
             </div>
             <div class="stat-info">
                 <h3><?php echo $announcement_count; ?></h3>
@@ -228,17 +231,17 @@ $purpose_labels = json_encode(array_keys($purpose_data));
 
         <div class="stat-card">
             <div class="stat-icon">
-                <img src="/SYSARCH/assets/images/uclogo.png" alt="Labs">
+                <span class="icon">💻</span>
             </div>
             <div class="stat-info">
-                <h3>4</h3>
+                <h3>5</h3>
                 <p>Computer Labs</p>
             </div>
         </div>
 
         <div class="stat-card">
             <div class="stat-icon">
-                <img src="/SYSARCH/assets/images/uclogo.png" alt="Today">
+                <span class="icon">📅</span>
             </div>
             <div class="stat-info">
                 <h3><?php echo $today_sitin_count; ?></h3>
@@ -249,7 +252,15 @@ $purpose_labels = json_encode(array_keys($purpose_data));
 
     <!-- PIE CHART SECTION -->
     <div class="dashboard-card chart-card">
-        <div class="card-header">Purpose Statistics</div>
+        <div class="card-header">
+            Purpose Statistics
+            <select id="timeRangeSelector" onchange="updatePieChart(this.value)" style="margin-left: 15px; padding: 5px 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 14px;">
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="year">This Year</option>
+            </select>
+        </div>
         <div class="card-body">
             <div class="pie-chart-container">
                 <div class="pie-chart-wrapper">
@@ -444,9 +455,8 @@ $purpose_labels = json_encode(array_keys($purpose_data));
 <!-- Pie Chart Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Purpose data from PHP
-    const purposeLabels = <?php echo $purpose_labels; ?>;
-    const purposeData = <?php echo $purpose_json; ?>;
+    // Purpose data from PHP (default: all data)
+    let pieChart = null;
     
     // Color palette for pie chart
     const colors = [
@@ -461,76 +471,102 @@ $purpose_labels = json_encode(array_keys($purpose_data));
         '#607d8b'  // Gray
     ];
     
-    // Find most and lowest used
-    let maxVal = Math.max(...purposeData);
-    let minVal = Math.min(...purposeData.filter(v => v > 0));
-    if (minVal === Infinity) minVal = 0;
-    
-    // Create pie chart
-    const ctx = document.getElementById('pieChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: purposeLabels,
-            datasets: [{
-                data: purposeData,
-                backgroundColor: colors,
-                borderWidth: 2,
-                borderColor: '#ffffff'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.label || '';
-                            let value = context.raw || 0;
-                            let total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            let percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                            
-                            // Add indicator for most/lowest
-                            let indicator = '';
-                            if (value === maxVal && maxVal > 0) {
-                                indicator = ' (Highest)';
-                            } else if (value === minVal && minVal > 0 && value !== maxVal) {
-                                indicator = ' (Lowest)';
+    // Function to update pie chart based on time range
+    function updatePieChart(timeRange) {
+        // Fetch data via AJAX
+        fetch('get_purpose_stats.php?range=' + timeRange)
+            .then(response => response.json())
+            .then(data => {
+                const labels = data.labels;
+                const values = data.values;
+                
+                // Find most and lowest used
+                let maxVal = Math.max(...values);
+                let minVal = Math.min(...values.filter(v => v > 0));
+                if (minVal === Infinity) minVal = 0;
+                
+                // Destroy existing chart if exists
+                if (pieChart) {
+                    pieChart.destroy();
+                }
+                
+                // Create pie chart
+                const ctx = document.getElementById('pieChart').getContext('2d');
+                pieChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: values,
+                            backgroundColor: colors,
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        let value = context.raw || 0;
+                                        let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        let percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                        
+                                        let indicator = '';
+                                        if (value === maxVal && maxVal > 0) {
+                                            indicator = ' (Highest)';
+                                        } else if (value === minVal && minVal > 0 && value !== maxVal) {
+                                            indicator = ' (Lowest)';
+                                        }
+                                        
+                                        return label + ': ' + value + ' (' + percentage + '%)' + indicator;
+                                    }
+                                }
                             }
-                            
-                            return label + ': ' + value + ' (' + percentage + '%)' + indicator;
                         }
                     }
-                }
-            }
-        }
-    });
+                });
+                
+                // Update custom legend
+                const legendContainer = document.getElementById('pieLegend');
+                let legendHTML = '<div class="legend-title">Purpose Legend</div><div class="legend-items">';
+                
+                labels.forEach((label, index) => {
+                    const value = values[index];
+                    let badge = '';
+                    if (value === maxVal && maxVal > 0) {
+                        badge = '<span class="legend-badge highest">Highest</span>';
+                    } else if (value === minVal && minVal > 0 && value !== maxVal) {
+                        badge = '<span class="legend-badge lowest">Lowest</span>';
+                    }
+                    
+                    legendHTML += '<div class="legend-item">' +
+                        '<span class="legend-color" style="background-color: ' + colors[index] + '"></span>' +
+                        '<span class="legend-label">' + label + ': ' + value + '</span>' +
+                        badge +
+                        '</div>';
+                });
+                legendHTML += '</div>';
+                legendContainer.innerHTML = legendHTML;
+            })
+            .catch(error => console.error('Error fetching data:', error));
+    }
     
-    // Create custom legend
-    const legendContainer = document.getElementById('pieLegend');
-    let legendHTML = '<div class="legend-title">Purpose Legend</div><div class="legend-items">';
+    // Initialize pie chart with default data (today)
+    function initPieChart() {
+        // Get initial time range from selector (default: today)
+        const timeRange = document.getElementById('timeRangeSelector').value;
+        updatePieChart(timeRange);
+    }
     
-    purposeLabels.forEach((label, index) => {
-        const value = purposeData[index];
-        let badge = '';
-        if (value === maxVal && maxVal > 0) {
-            badge = '<span class="legend-badge highest">Highest</span>';
-        } else if (value === minVal && minVal > 0 && value !== maxVal) {
-            badge = '<span class="legend-badge lowest">Lowest</span>';
-        }
-        
-        legendHTML += '<div class="legend-item">' +
-            '<span class="legend-color" style="background-color: ' + colors[index] + '"></span>' +
-            '<span class="legend-label">' + label + ': ' + value + '</span>' +
-            badge +
-            '</div>';
-    });
-    legendHTML += '</div>';
-    legendContainer.innerHTML = legendHTML;
+    // Initialize on page load
+    initPieChart();
 </script>
 
 <script>
