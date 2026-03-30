@@ -10,9 +10,9 @@ if(!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true){
 // Include database connection
 include '../includes/connect.php';
 
-// Handle Reset All Sessions
+// Handle Reset All Sessions (only 1st, 2nd, and 3rd year students)
 if(isset($_POST['reset_all_sessions'])) {
-    $reset_stmt = $conn->prepare("UPDATE students SET sessions = 30");
+    $reset_stmt = $conn->prepare("UPDATE students SET sessions = 30 WHERE year_level IN ('1st Year', '2nd Year', '3rd Year')");
     $reset_stmt->execute();
     $reset_stmt->close();
     header("Location: /SYSARCH/manage_students.php?reset_success=1");
@@ -163,7 +163,7 @@ $result = $stmt->get_result();
     <?php endif; ?>
 
     <?php if(isset($_GET['reset_success'])): ?>
-        <p id="success-message" style="color: green; margin-bottom: 15px;">✅ All sessions have been reset to 30!</p>
+        <p id="success-message" style="color: green; margin-bottom: 15px;">✅ Sessions have been reset to 30 for 1st, 2nd, and 3rd year students!</p>
     <?php endif; ?>
 
     <?php if(isset($_GET['error'])): ?>
@@ -238,7 +238,7 @@ $result = $stmt->get_result();
     }
     
     function resetAllSessions() {
-        if(confirm('Are you sure you want to reset all student sessions to 30?')) {
+        if(confirm('Are you sure you want to reset sessions to 30 for 1st, 2nd, and 3rd year students? (4th year students will not be affected)')) {
             // Create a form and submit it
             var form = document.createElement('form');
             form.method = 'POST';

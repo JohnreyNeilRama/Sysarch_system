@@ -308,7 +308,7 @@
 .stat-icon{
     width: 60px;
     height: 60px;
-    background: linear-gradient(135deg, #0f5bbe 0%, #1976D2 100%);
+    background: yellow;
     border-radius: 12px;
     display: flex;
     align-items: center;

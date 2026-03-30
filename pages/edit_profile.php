@@ -81,6 +81,12 @@ if(!isset($_SESSION['student_id'])){
             margin-top: 15px;
             color: #666;
             text-decoration: none;
+
+        }
+
+        .back-link:hover {
+            font-size: 20px;
+
         }
     </style>
 </head>

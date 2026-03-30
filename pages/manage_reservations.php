@@ -83,11 +83,26 @@ if(isset($_GET['action']) && isset($_GET['id'])) {
     }
 }
 
+// Handle Search
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+
 // Filter by status
-$status_filter = isset($_GET['status']) ? $_GET['status'] : 'Pending';
-$where_clause = "";
+$status_filter = isset($_GET['status']) ? $_GET['status'] : 'All';
+
+$where_clauses = [];
+
+if($search !== '') {
+    $search_param = "%$search%";
+    $where_clauses[] = "(id_number LIKE '$search_param' OR student_name LIKE '$search_param' OR lab_room LIKE '$search_param' OR purpose LIKE '$search_param')";
+}
+
 if($status_filter === 'Pending' || $status_filter === 'Approved' || $status_filter === 'Rejected') {
-    $where_clause = "WHERE status = '$status_filter'";
+    $where_clauses[] = "status = '$status_filter'";
+}
+
+$where_clause = '';
+if(!empty($where_clauses)) {
+    $where_clause = 'WHERE ' . implode(' AND ', $where_clauses);
 }
 
 // Fetch all reservations
@@ -193,6 +208,62 @@ $result = $conn->query($sql);
         .reservation-details strong {
             color: #333;
         }
+        
+        .add-student-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .search-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .search-form input[type="text"] {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            width: 250px;
+        }
+        
+        .search-btn {
+            padding: 10px 20px;
+            background: #0f5bbe;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .search-btn:hover {
+            background: #0d4fa1;
+        }
+        
+        .clear-search-btn {
+            padding: 10px 20px;
+            background: #e0e0e0;
+            color: #333;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .clear-search-btn:hover {
+            background: #d0d0d0;
+        }
     </style>
 </head>
 
@@ -224,12 +295,22 @@ $result = $conn->query($sql);
         <h2 style="text-align: center; width: 100%;">Manage Reservations</h2>
     </div>
     
-    <!-- Filter Tabs -->
-    <div class="filter-tabs">
-        <a href="?status=Pending" class="filter-tab <?php echo $status_filter === 'Pending' ? 'active' : ''; ?>">Pending</a>
-        <a href="?status=Approved" class="filter-tab <?php echo $status_filter === 'Approved' ? 'active' : ''; ?>">Approved</a>
-        <a href="?status=Rejected" class="filter-tab <?php echo $status_filter === 'Rejected' ? 'active' : ''; ?>">Rejected</a>
-        <a href="?" class="filter-tab <?php echo $status_filter === 'All' || $status_filter === '' ? 'active' : ''; ?>">All</a>
+    <!-- Filter Tabs and Search -->
+    <div class="add-student-row">
+        <div class="filter-tabs">
+            <a href="?status=Pending" class="filter-tab <?php echo $status_filter === 'Pending' ? 'active' : ''; ?>">Pending</a>
+            <a href="?status=Approved" class="filter-tab <?php echo $status_filter === 'Approved' ? 'active' : ''; ?>">Approved</a>
+            <a href="?status=Rejected" class="filter-tab <?php echo $status_filter === 'Rejected' ? 'active' : ''; ?>">Rejected</a>
+            <a href="?" class="filter-tab <?php echo $status_filter === 'All' || $status_filter === '' ? 'active' : ''; ?>">All</a>
+        </div>
+        <form method="GET" action="" class="search-form">
+            <input type="hidden" name="status" value="<?php echo htmlspecialchars($status_filter); ?>">
+            <input type="text" name="search" placeholder="Search by ID, Name, Lab, or Purpose..." value="<?php echo htmlspecialchars($search); ?>">
+            <button type="submit" class="search-btn">Search</button>
+            <?php if($search !== ''): ?>
+                <a href="?status=<?php echo $status_filter; ?>" class="clear-search-btn">Clear</a>
+            <?php endif; ?>
+        </form>
     </div>
 
     <?php if(isset($_GET['success'])): ?>

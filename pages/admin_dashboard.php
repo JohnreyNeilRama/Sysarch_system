@@ -101,6 +101,22 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id_number'])) {
     $check_stmt->close();
 }
 
+// Handle Announcement Form Submission
+if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['announcement_date']) && isset($_POST['message'])) {
+    $admin_name = $_SESSION['admin_username'];
+    $announcement_date = $_POST['announcement_date'];
+    $message = $_POST['message'];
+    
+    $stmt = $conn->prepare("INSERT INTO announcements (admin_name, announcement_date, message) VALUES (?, ?, ?)");
+    $stmt->bind_param("sss", $admin_name, $announcement_date, $message);
+    
+    if($stmt->execute()) {
+        header("Location: /SYSARCH/admin_dashboard.php?success=announcement");
+        exit;
+    }
+    $stmt->close();
+}
+
 // Get statistics
 $student_count = 0;
 $announcement_count = 0;
@@ -341,8 +357,8 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                     <span class="action-text">+ Sit-in</span>
                 </button>
                 <button class="action-btn">
-                    <span class="action-icon">📢</span>
-                    <span class="action-text">Post Announcement</span>
+                    <span class="action-icon">📤</span>
+                    <span class="action-text">Export Reports</span>
                 </button>
                 <button class="action-btn">
                     <span class="action-icon">📋</span>

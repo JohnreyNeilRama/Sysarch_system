@@ -50,7 +50,7 @@ $conn->close();
         <li><a href="#">Notification</a></li>
         <li><a href="/SYSARCH/userdb.php">Home</a></li>
         <li><a href="/SYSARCH/edit_profile.php">Edit Profile</a></li>
-        <li><a href="#">History</a></li>
+        <li><a href="/SYSARCH/history.php">History</a></li>
         <li><a href="#" class="reservation-link" id="openReservation">Reservation</a></li>
         <li><a href="/SYSARCH/logout.php" class="logout-btn">Log Out</a></li>
     </ul>
@@ -67,7 +67,7 @@ $conn->close();
         </div>
 
         <div class="student-profile">
-            <img src="/SYSARCH/assets/images/profile/<?php echo isset($_SESSION['profile_picture']) ? $_SESSION['profile_picture'] : 'default.php'; ?>" 
+            <img src="/SYSARCH/assets/images/profile/<?php echo isset($_SESSION['profile_picture']) ? $_SESSION['profile_picture'] : 'default.png'; ?>" 
                  alt="Profile Picture">
         </div>
 
@@ -131,26 +131,40 @@ $conn->close();
     <div class="card-header">Announcement</div>
 
     <div class="card-body">
-
-        <div class="announcement-item">
-            <div class="announcement-meta">
-                CCS Admin | 2026-Feb-11
-            </div>
-        </div>
-
-        <hr>
-
-        <div class="announcement-item">
-            <div class="announcement-meta">
-                CCS Admin | 2024-May-08
-            </div>
-
-            <div class="announcement-text">
-                Important Announcement! We are excited to announce the launch of our new website! 
-                🔔 Explore our latest products and services now!
-            </div>
-        </div>
-
+        <?php
+        // Fetch announcements from database (latest first)
+        include '../includes/connect.php';
+        $stmt = $conn->prepare("SELECT admin_name, announcement_date, message FROM announcements ORDER BY announcement_date DESC, created_at DESC");
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if($result->num_rows > 0) {
+            $first = true;
+            while($row = $result->fetch_assoc()) {
+                if(!$first) {
+                    echo '<hr>';
+                }
+                echo '<div class="announcement-item">';
+                echo '    <div class="announcement-meta">';
+                echo '        ' . htmlspecialchars($row['admin_name']) . ' | ' . date('Y-M-d', strtotime($row['announcement_date']));
+                echo '    </div>';
+                echo '    <div class="announcement-text">';
+                echo '        ' . nl2br(htmlspecialchars($row['message']));
+                echo '    </div>';
+                echo '</div>';
+                $first = false;
+            }
+        } else {
+            echo '<div class="announcement-item">';
+            echo '    <div class="announcement-text">';
+            echo '        No announcements yet.';
+            echo '    </div>';
+            echo '</div>';
+        }
+        
+        $stmt->close();
+        $conn->close();
+        ?>
     </div>
 </div>
 
@@ -169,11 +183,11 @@ $conn->close();
                     <label for="lab-room">Laboratory Room</label>
                     <select id="lab-room" name="lab_room" required>
                         <option value="">Select Laboratory</option>
-                        <option value="lab-528">Room 528</option>
-                        <option value="lab-530">Room 530</option>
-                        <option value="lab-532">Room 532</option>
-                        <option value="lab-534">Room 534</option>
-                        <option value="lab-536">Room 536</option>
+                        <option value="524">Room 524</option>
+                        <option value="525">Room 525</option>
+                        <option value="526">Room 526</option>
+                        <option value="527">Room 527</option>
+                        <option value="528">Room 528</option>
                     </select>
                 </div>
                 
