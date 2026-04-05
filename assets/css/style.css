@@ -363,3 +363,181 @@
         transform: translateY(0);
     }
 }
+
+/* ============================================
+   MOBILE RESPONSIVE STYLES
+   ============================================ */
+
+/* Mobile Navigation Toggle */
+.mobile-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 28px;
+    cursor: pointer;
+    padding: 5px;
+}
+
+/* Tablet and Mobile Styles (max-width: 768px) */
+@media (max-width: 768px) {
+    /* Navigation */
+    .navbar {
+        flex-wrap: wrap;
+        padding: 10px 15px;
+    }
+    
+    .nav-left {
+        font-size: 14px;
+        flex: 1;
+    }
+    
+    .logo_landing {
+        width: 40px;
+        height: 30px;
+        margin-right: 10px;
+    }
+    
+    .mobile-menu-toggle {
+        display: block;
+    }
+    
+    .nav-right {
+        display: none;
+        width: 100%;
+        flex-direction: column;
+        background-color: #0f5bbe;
+        margin-top: 10px;
+        padding: 10px 0;
+    }
+    
+    .nav-right.active {
+        display: flex;
+    }
+    
+    .nav-right li {
+        display: block;
+        width: 100%;
+    }
+    
+    .nav-right a {
+        padding: 12px 20px;
+        border-radius: 0;
+    }
+    
+    .dropdown-content {
+        position: static;
+        box-shadow: none;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .dropdown-content a {
+        padding-left: 40px;
+    }
+    
+    /* Hero Section */
+    .hero {
+        height: calc(100vh - 60px);
+    }
+    
+    .hero::before {
+        width: 300px;
+        height: 300px;
+        top: -30px;
+    }
+    
+    .hero-text h1 {
+        font-size: 28px;
+        margin-bottom: 25px;
+    }
+    
+    .start-btn {
+        padding: 10px 25px;
+        font-size: 14px;
+    }
+    
+    /* Forms */
+    .form-container {
+        width: 90%;
+        max-width: 400px;
+        padding: 20px;
+        margin: 20px auto;
+    }
+    
+    .login-container {
+        width: 90%;
+        max-width: 400px;
+        padding: 20px;
+    }
+    
+    .login {
+        padding-top: 20px;
+        height: auto;
+        min-height: 100vh;
+    }
+    
+    .content {
+        padding-top: 20px;
+        margin-bottom: 20px;
+    }
+}
+
+/* Small Mobile Styles (max-width: 480px) */
+@media (max-width: 480px) {
+    .navbar {
+        padding: 8px 10px;
+    }
+    
+    .nav-left {
+        font-size: 12px;
+    }
+    
+    .logo_landing {
+        width: 30px;
+        height: 25px;
+        margin-right: 8px;
+    }
+    
+    .hero-text h1 {
+        font-size: 22px;
+        margin-bottom: 20px;
+    }
+    
+    .start-btn {
+        padding: 8px 20px;
+        font-size: 13px;
+    }
+    
+    .form-container,
+    .login-container {
+        width: 95%;
+        padding: 15px;
+    }
+    
+    .form-container h2,
+    .login-container h2 {
+        font-size: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .form-container label,
+    .login-container label {
+        font-size: 12px;
+    }
+    
+    .form-container input,
+    .form-container select,
+    .form-container textarea,
+    .login-container input,
+    .login-container select,
+    .login-container textarea {
+        padding: 6px;
+        font-size: 13px;
+    }
+    
+    .form-container button,
+    .login-container button {
+        padding: 8px;
+        font-size: 14px;
+    }
+}

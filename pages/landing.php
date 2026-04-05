@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CCS Sit-in Monitoring System</title>
     <link rel="stylesheet" href="/SYSARCH/assets/css/style.css">
     <link rel="icon" type="image/png" href="/SYSARCH/assets/images/uclogo.png">
@@ -13,8 +14,8 @@
         <div class="nav-left">
             <img class="logo_landing" src="/SYSARCH/assets/images/uclogo.png">College of Computer Studies Sit-in Monitoring System
         </div>
-
-       <ul class="nav-right">
+        <button class="mobile-menu-toggle" id="mobileMenuToggle">☰</button>
+       <ul class="nav-right" id="navRight">
     <li><a href="#">Home</a></li>
 
     <!-- Community Dropdown -->
@@ -34,6 +35,18 @@
 </ul>
 
     </nav>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const navRight = document.getElementById('navRight');
+            
+            mobileMenuToggle.addEventListener('click', function() {
+                navRight.classList.toggle('active');
+                this.textContent = navRight.classList.contains('active') ? '✕' : '☰';
+            });
+        });
+    </script>
 
   <!-- Main Content -->
 <main class="hero">

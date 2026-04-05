@@ -1,6 +1,15 @@
 <?php
 session_start();
 
+// Refresh session to extend lifetime
+if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > 3600)) {
+    session_unset();
+    session_destroy();
+    header("Location: /SYSARCH/login.php");
+    exit;
+}
+$_SESSION['LAST_ACTIVITY'] = time();
+
 // Check if admin is logged in
 if(!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true){
     header("Location: /SYSARCH/login.php");
@@ -68,6 +77,7 @@ $conn->close();
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Student - CCS Sit-in Monitoring System</title>
     <link rel="stylesheet" href="/SYSARCH/assets/css/admin_dashboard.css">
     <link rel="icon" type="image/png" href="../assets/images/uclogo.css">
@@ -178,16 +188,29 @@ $conn->close();
         <img class="admin-logo" src="/SYSARCH/assets/images/uclogo.png" alt="UC Logo">
         <span class="admin-title">Admin Dashboard</span>
     </div>
-    <ul class="dashboard-right">    
+    <button class="mobile-menu-toggle" id="mobileMenuToggle">☰</button>
+    <ul class="dashboard-right" id="navRight">    
         <li><a href="admin_dashboard.php">Dashboard</a></li>
         <li><a href="manage_students.php" class="active">Manage Students</a></li>
-        <li><a href="#">Sit-in Logs</a></li>
-        <li><a href="#">Reservations</a></li>
-        <li><a href="#">Reports</a></li>
+        <li><a href="manage_sitin.php">Sit-in Logs</a></li>
+        <li><a href="manage_reservations.php">Reservations</a></li>
+        <li><a href="feedback_reports.php">Feedback Reports</a></li>
         <li><a href="#">Settings</a></li>
         <li><a href="/SYSARCH/logout.php" class="logout-btn">Log Out</a></li>
     </ul>
 </nav>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const navRight = document.getElementById('navRight');
+        
+        mobileMenuToggle.addEventListener('click', function() {
+            navRight.classList.toggle('active');
+            this.textContent = navRight.classList.contains('active') ? '✕' : '☰';
+        });
+    });
+</script>
 
 <div class="edit-container">
     <h2>Edit Student</h2>

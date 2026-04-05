@@ -12,6 +12,7 @@ if(!isset($_SESSION['student_id'])){
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Profile - CCS Sit-in Monitoring</title>
     <link rel="stylesheet" href="/SYSARCH/assets/css/style.css">
     <link rel="icon" type="image/png" href="/SYSARCH/assets/images/uclogo.png">
@@ -87,6 +88,67 @@ if(!isset($_SESSION['student_id'])){
         .back-link:hover {
             font-size: 20px;
 
+        }
+        
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .form-container {
+                margin: 20px 10px;
+                padding: 20px;
+            }
+            
+            h2 {
+                font-size: 22px;
+            }
+            
+            .profile-pic-preview {
+                width: 100px;
+                height: 100px;
+            }
+            
+            label {
+                font-size: 14px;
+            }
+            
+            input, select, textarea {
+                padding: 8px;
+                font-size: 14px;
+            }
+            
+            button {
+                padding: 10px;
+                font-size: 14px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .form-container {
+                margin: 10px;
+                padding: 15px;
+            }
+            
+            h2 {
+                font-size: 20px;
+            }
+            
+            .profile-pic-preview {
+                width: 80px;
+                height: 80px;
+            }
+            
+            label {
+                font-size: 13px;
+            }
+            
+            input, select, textarea {
+                padding: 8px;
+                font-size: 13px;
+            }
+            
+            button {
+                padding: 10px;
+                font-size: 13px;
+            }
         }
     </style>
 </head>

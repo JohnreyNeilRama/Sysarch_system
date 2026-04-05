@@ -299,6 +299,31 @@
     min-height:150px;
 }
 
+/* ANNOUNCEMENT BODY - SCROLLABLE */
+.announcement-body{
+    max-height:300px;
+    overflow-y:auto;
+    padding-right:10px;
+}
+
+.announcement-body::-webkit-scrollbar{
+    width:8px;
+}
+
+.announcement-body::-webkit-scrollbar-track{
+    background:#f1f1f1;
+    border-radius:4px;
+}
+
+.announcement-body::-webkit-scrollbar-thumb{
+    background:#c1c1c1;
+    border-radius:4px;
+}
+
+.announcement-body::-webkit-scrollbar-thumb:hover{
+    background:#a1a1a1;
+}
+
 /* RULES LIST */
 
 .rules-content h3{
@@ -550,5 +575,266 @@
     
     .reservation-modal-body {
         padding: 20px;
+    }
+}
+
+/* Mobile Navigation Toggle */
+.mobile-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 28px;
+    cursor: pointer;
+    padding: 5px;
+}
+
+/* Show mobile menu toggle on mobile */
+@media (max-width: 768px) {
+    .mobile-menu-toggle {
+        display: block;
+    }
+}
+
+/* Tablet and Mobile Styles (max-width: 768px) */
+@media (max-width: 768px) {
+    /* Navigation */
+    .dashboard-navbar {
+        padding: 10px 15px;
+        flex-wrap: wrap;
+    }
+    
+    .dashboard-left {
+        font-size: 18px;
+        flex: 1;
+    }
+    
+    .dashboard-left img {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .dashboard-left span {
+        font-size: 16px;
+    }
+    
+    .mobile-menu-toggle {
+        display: block;
+    }
+    
+    .dashboard-right {
+        display: none;
+        width: 100%;
+        flex-direction: column;
+        background-color: #0f5bbe;
+        margin-top: 10px;
+        padding: 10px 0;
+        align-items: stretch;
+    }
+    
+    .dashboard-right.active {
+        display: flex;
+    }
+    
+    .dashboard-right li {
+        display: block;
+        width: 100%;
+        margin: 0;
+        text-align: center;
+    }
+    
+    .dashboard-right a {
+        display: block;
+        padding: 12px 20px;
+        border-radius: 0;
+        font-size: 14px;
+        text-align: center;
+    }
+    
+    .logout-btn {
+        margin-left: 0;
+        margin-top: 10px;
+        text-align: center;
+    }
+    
+    /* Dashboard Container */
+    .dashboard-container {
+        flex-direction: column;
+        padding: 10px;
+    }
+    
+    /* Student Info Panel */
+    .student-info {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    
+    .student-header {
+        padding: 15px;
+        font-size: 16px;
+    }
+    
+    .student-profile {
+        padding: 20px 15px;
+    }
+    
+    .student-profile img {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .student-details {
+        padding: 15px;
+    }
+    
+    .student-details p {
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .student-details strong {
+        font-size: 11px;
+    }
+    
+    .student-details span {
+        font-size: 13px;
+    }
+    
+    /* Dashboard Main */
+    .dashboard-main {
+        margin-left: 0;
+    }
+    
+    /* Dashboard Cards */
+    .dashboard-card {
+        margin-bottom: 15px;
+    }
+    
+    .card-header {
+        padding: 12px;
+        font-size: 14px;
+    }
+    
+    .card-body {
+        padding: 15px;
+        min-height: 100px;
+    }
+    
+    /* Rules Content */
+    .rules-content h3 {
+        font-size: 16px;
+    }
+    
+    .rules-content h4 {
+        font-size: 12px;
+    }
+    
+    .rules-content p,
+    .rules-content li {
+        font-size: 13px;
+    }
+    
+    /* Announcement */
+    .announcement-meta {
+        font-size: 12px;
+    }
+    
+    .announcement-text {
+        font-size: 13px;
+    }
+    
+    /* Reservation Modal */
+    .reservation-modal {
+        width: 95%;
+    }
+    
+    .reservation-modal-header {
+        padding: 15px;
+    }
+    
+    .reservation-modal-header h2 {
+        font-size: 18px;
+    }
+    
+    .reservation-modal-body {
+        padding: 15px;
+    }
+    
+    .reservation-form .form-group {
+        margin-bottom: 12px;
+    }
+    
+    .reservation-form label {
+        font-size: 12px;
+    }
+    
+    .reservation-form input,
+    .reservation-form select,
+    .reservation-form textarea {
+        padding: 10px;
+        font-size: 13px;
+    }
+    
+    .reservation-submit-btn {
+        padding: 12px;
+        font-size: 14px;
+    }
+}
+
+/* Small Mobile Styles (max-width: 480px) */
+@media (max-width: 480px) {
+    .dashboard-navbar {
+        padding: 8px 10px;
+    }
+    
+    .dashboard-left {
+        font-size: 16px;
+    }
+    
+    .dashboard-left img {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .dashboard-left span {
+        font-size: 14px;
+    }
+    
+    .student-profile img {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .student-details strong {
+        font-size: 10px;
+    }
+    
+    .student-details span {
+        font-size: 12px;
+    }
+    
+    .card-header {
+        font-size: 13px;
+    }
+    
+    .rules-content h3 {
+        font-size: 14px;
+    }
+    
+    .rules-content h4 {
+        font-size: 11px;
+    }
+    
+    .rules-content p,
+    .rules-content li {
+        font-size: 12px;
+    }
+    
+    .announcement-meta {
+        font-size: 11px;
+    }
+    
+    .announcement-text {
+        font-size: 12px;
     }
 }

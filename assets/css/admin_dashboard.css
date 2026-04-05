@@ -656,6 +656,35 @@
     cursor:pointer;
 }
 
+/* Edit and Delete buttons for announcements */
+.edit-btn, .delete-btn{
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.3s;
+    margin-right: 5px;
+}
+
+.edit-btn{
+    background: #4a90d9;
+    color: white;
+}
+
+.edit-btn:hover{
+    background: #357abd;
+}
+
+.delete-btn{
+    background: #dc3545;
+    color: white;
+}
+
+.delete-btn:hover{
+    background: #c82333;
+}
+
 .btn-submit{
     background:#0f5bbe;
     color:white;
@@ -925,6 +954,7 @@
             border-collapse: collapse;
             background: white;
             margin-top: 20px;
+            table-layout: fixed;
         }
         .students-table th, .students-table td {
             padding: 12px;
@@ -944,11 +974,10 @@
             background-color: #2a4a6f;
         }
         .students-table tbody tr {
-            transition: all 0.3s ease;
+            transition: background-color 0.3s ease;
         }
         .students-table tbody tr:hover {
             background-color: #e8f4fc;
-            transform: scale(1.01);
         }
         .header-row {
             display: flex;
@@ -957,10 +986,15 @@
         }
 
         /* Edit and Delete Buttons */
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-            justify-content: center;
+        .students-table .action-buttons {
+            display: table-cell;
+            vertical-align: middle;
+            text-align: center;
+        }
+        
+        .students-table th,
+        .students-table td {
+            vertical-align: middle;
         }
 
         .btn-edit, .btn-delete {

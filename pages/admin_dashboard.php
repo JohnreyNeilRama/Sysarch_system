@@ -117,6 +117,32 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['announcement_date']) &&
     $stmt->close();
 }
 
+// Handle Delete Announcement
+if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_announcement'])) {
+    $delete_id = intval($_POST['announcement_id']);
+    $stmt = $conn->prepare("DELETE FROM announcements WHERE id = ?");
+    $stmt->bind_param("i", $delete_id);
+    if($stmt->execute()) {
+        header("Location: /SYSARCH/admin_dashboard.php?success=deleted");
+        exit;
+    }
+    $stmt->close();
+}
+
+// Handle Edit Announcement
+if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['edit_announcement'])) {
+    $edit_id = intval($_POST['announcement_id']);
+    $edit_date = $_POST['edit_date'];
+    $edit_message = $_POST['edit_message'];
+    $stmt = $conn->prepare("UPDATE announcements SET announcement_date = ?, message = ? WHERE id = ?");
+    $stmt->bind_param("ssi", $edit_date, $edit_message, $edit_id);
+    if($stmt->execute()) {
+        header("Location: /SYSARCH/admin_dashboard.php?success=updated");
+        exit;
+    }
+    $stmt->close();
+}
+
 // Get statistics
 $student_count = 0;
 $announcement_count = 0;
@@ -212,7 +238,7 @@ $purpose_labels = json_encode(array_keys($purpose_data));
         <li><a href="manage_students.php">Manage Students</a></li>
         <li><a href="manage_sitin.php">Sit-in Logs</a></li>
         <li><a href="manage_reservations.php">Reservations</a></li>
-        <li><a href="#">Reports</a></li>
+        <li><a href="feedback_reports.php">Feedback Reports</a></li>
         <li><a href="#">Settings</a></li>
         <li><a href="/SYSARCH/logout.php" class="logout-btn">Log Out</a></li>
     </ul>
@@ -271,7 +297,7 @@ $purpose_labels = json_encode(array_keys($purpose_data));
         <div class="card-header">
             Purpose Statistics
             <select id="timeRangeSelector" onchange="updatePieChart(this.value)" style="margin-left: 15px; padding: 5px 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 14px;">
-                <option value="today">Today</option>
+                <option value="today" selected>Today</option>
                 <option value="week">This Week</option>
                 <option value="month">This Month</option>
                 <option value="year">This Year</option>
@@ -356,9 +382,9 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                     <span class="action-icon">👤</span>
                     <span class="action-text">+ Sit-in</span>
                 </button>
-                <button class="action-btn">
-                    <span class="action-icon">📤</span>
-                    <span class="action-text">Export Reports</span>
+                <button class="action-btn" id="openAnnouncements" onclick="document.getElementById('announcementsModal').classList.add('active');">
+                    <span class="action-icon">📢</span>
+                    <span class="action-text">Announcements</span>
                 </button>
                 <button class="action-btn">
                     <span class="action-icon">📋</span>
@@ -491,10 +517,29 @@ $purpose_labels = json_encode(array_keys($purpose_data));
     function updatePieChart(timeRange) {
         // Fetch data via AJAX
         fetch('get_purpose_stats.php?range=' + timeRange)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.status);
+                }
+                return response.json();
+            })
             .then(data => {
+                if (data.error) {
+                    console.error('Error from server:', data.error);
+                    return;
+                }
+                console.log('Purpose stats data:', data);
                 const labels = data.labels;
-                const values = data.values;
+                // Convert all values to numbers to ensure proper calculations
+                const values = data.values.map(v => parseInt(v) || 0);
+                
+                // Check if there's any data
+                const totalCount = values.reduce((a, b) => a + b, 0);
+                if (totalCount === 0) {
+                    console.log('No sit-in data found');
+                    document.getElementById('pieLegend').innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No sit-in data available for this period.</p>';
+                    return;
+                }
                 
                 // Find most and lowest used
                 let maxVal = Math.max(...values);
@@ -585,6 +630,38 @@ $purpose_labels = json_encode(array_keys($purpose_data));
     initPieChart();
 </script>
 
+<!-- ANNOUNCEMENTS MODAL -->
+<div class="modal-overlay" id="announcementsModal">
+    <div class="modal-box" style="width: 500px; max-height: 80vh; overflow-y: auto; display: block;">
+        <div class="modal-header">
+            <h2>All Announcements</h2>
+            <span class="close-btn" id="closeAnnouncements">&times;</span>
+        </div>
+        <div class="modal-body">
+            <?php
+            include '../includes/connect.php';
+            $stmt = $conn->query("SELECT id, admin_name, announcement_date, message, created_at FROM announcements ORDER BY announcement_date DESC, created_at DESC");
+            if($stmt->num_rows > 0):
+                while($row = $stmt->fetch_assoc()): ?>
+                    <div class="announcement-item" style="background: #f8f9fa; padding: 15px; margin-bottom: 15px; border-radius: 8px; border-left: 4px solid #4a90d9;">
+                        <div class="announcement-meta" style="font-size: 12px; color: #666; margin-bottom: 8px;">
+                            <?php echo htmlspecialchars($row['admin_name']); ?> | <?php echo date('Y-M-d', strtotime($row['announcement_date'])); ?>
+                        </div>
+                        <div class="announcement-text" style="color: #333;">
+                            <?php echo nl2br(htmlspecialchars($row['message'])); ?>
+                        </div>
+                        <div class="announcement-actions" style="margin-top: 10px;">
+                            <button class="edit-btn" onclick="openEditAnnouncement(<?php echo $row['id']; ?>, '<?php echo $row['announcement_date']; ?>', '<?php echo htmlspecialchars(addslashes($row['message'])); ?>')">✏️ Edit</button>
+                            <button class="delete-btn" onclick="confirmDeleteAnnouncement(<?php echo $row['id']; ?>)">🗑️ Delete</button>
+                        </div>
+                    </div>
+                <?php endwhile; else: ?>
+                    <p style="text-align: center; color: #666;">No announcements yet.</p>
+                <?php endif; ?>
+        </div>
+    </div>
+</div>
+
 <script>
 const openBtn = document.getElementById("openSitIn");
 const modal = document.getElementById("sitInModal");
@@ -607,6 +684,7 @@ closeBtn2.onclick = () => {
 window.addEventListener("click", function(e){
     const sitInModal = document.getElementById("sitInModal");
     const editModal = document.getElementById("editModal");
+    const announcementsModal = document.getElementById("announcementsModal");
 
     if(e.target === sitInModal){
         sitInModal.classList.remove("active");
@@ -615,7 +693,50 @@ window.addEventListener("click", function(e){
     if(e.target === editModal){
         editModal.classList.remove("active");
     }
+
+    if(e.target === announcementsModal){
+        announcementsModal.classList.remove("active");
+    }
 });
+
+// Announcements Modal
+const openAnnouncementsBtn = document.getElementById("openAnnouncements");
+const announcementsModal = document.getElementById("announcementsModal");
+const closeAnnouncementsBtn = document.getElementById("closeAnnouncements");
+
+if(openAnnouncementsBtn) {
+    openAnnouncementsBtn.onclick = () => {
+        announcementsModal.classList.add("active");
+    };
+}
+
+if(closeAnnouncementsBtn) {
+    closeAnnouncementsBtn.onclick = () => {
+        announcementsModal.classList.remove("active");
+    };
+}
+
+// Edit and Delete Announcement Functions
+function openEditAnnouncement(id, date, message) {
+    document.getElementById('editAnnId').value = id;
+    document.getElementById('editAnnDate').value = date;
+    document.getElementById('editAnnMessage').value = message;
+    document.getElementById('editAnnouncementModal').classList.add('active');
+}
+
+function closeEditAnnouncement() {
+    document.getElementById('editAnnouncementModal').classList.remove('active');
+}
+
+function confirmDeleteAnnouncement(id) {
+    if(confirm('Are you sure you want to delete this announcement?')) {
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.innerHTML = '<input type="hidden" name="delete_announcement" value="1"><input type="hidden" name="announcement_id" value="' + id + '">';
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
 
 // Fetch student info when ID Number loses focus
 function fetchStudentInfo() {
@@ -672,6 +793,31 @@ window.addEventListener("click", function(e){
     }
 });
 </script>
+
+<!-- Edit Announcement Modal -->
+<div class="modal-overlay" id="editAnnouncementModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2>Edit Announcement</h2>
+            <span class="close-btn" onclick="closeEditAnnouncement()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form method="POST" action="">
+                <input type="hidden" name="edit_announcement" value="1">
+                <input type="hidden" id="editAnnId" name="announcement_id" value="">
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="editAnnDate" name="edit_date" required>
+                </div>
+                <div class="form-group">
+                    <label>Message</label>
+                    <textarea id="editAnnMessage" name="edit_message" rows="4" required></textarea>
+                </div>
+                <button type="submit" class="submit-btn">Save Changes</button>
+            </form>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>

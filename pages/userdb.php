@@ -10,6 +10,9 @@ if(!isset($_SESSION['student_id'])){
 // Include database connection
 include '../includes/connect.php';
 
+// Set timezone to Philippines (Asia/Manila)
+date_default_timezone_set('Asia/Manila');
+
 // Auto-create reservations table if not exists
 $create_reservations_table = "CREATE TABLE IF NOT EXISTS reservations (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -32,6 +35,7 @@ $conn->close();
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Student Dashboard</title>
 <link rel="stylesheet" href="/SYSARCH/assets/css/userdb.css">
 <link rel="icon" type="image/png" href="/SYSARCH/assets/images/uclogo.png">
@@ -45,8 +49,8 @@ $conn->close();
     <div class="dashboard-left">
         Dashboard
     </div>
-
-    <ul class="dashboard-right">    
+    <button class="mobile-menu-toggle" id="mobileMenuToggle">☰</button>
+    <ul class="dashboard-right" id="navRight">    
         <li><a href="#">Notification</a></li>
         <li><a href="/SYSARCH/userdb.php">Home</a></li>
         <li><a href="/SYSARCH/edit_profile.php">Edit Profile</a></li>
@@ -56,6 +60,18 @@ $conn->close();
     </ul>
 
 </nav>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const navRight = document.getElementById('navRight');
+        
+        mobileMenuToggle.addEventListener('click', function() {
+            navRight.classList.toggle('active');
+            this.textContent = navRight.classList.contains('active') ? '✕' : '☰';
+        });
+    });
+</script>
 
 <div class="dashboard-container">
 
@@ -130,7 +146,7 @@ $conn->close();
   <div class="dashboard-card">
     <div class="card-header">Announcement</div>
 
-    <div class="card-body">
+    <div class="card-body announcement-body">
         <?php
         // Fetch announcements from database (latest first)
         include '../includes/connect.php';

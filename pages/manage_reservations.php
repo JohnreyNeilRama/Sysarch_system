@@ -1,6 +1,15 @@
 <?php
 session_start();
 
+// Refresh session to extend lifetime
+if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > 3600)) {
+    session_unset();
+    session_destroy();
+    header("Location: /SYSARCH/login.php");
+    exit;
+}
+$_SESSION['LAST_ACTIVITY'] = time();
+
 // Check if admin is logged in
 if(!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true){
     header("Location: /SYSARCH/login.php");
@@ -9,6 +18,38 @@ if(!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true){
 
 // Include database connection
 include '../includes/connect.php';
+
+// Set timezone to Philippines (Asia/Manila)
+date_default_timezone_set('Asia/Manila');
+
+// Auto-create sit_in table if not exists
+$create_sitin_table = "CREATE TABLE IF NOT EXISTS sit_in (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_number VARCHAR(50) NOT NULL,
+    student_name VARCHAR(200) NOT NULL,
+    purpose VARCHAR(100) NOT NULL,
+    lab VARCHAR(50) NOT NULL,
+    remaining_session INT NOT NULL,
+    sit_in_date DATE NOT NULL,
+    sit_in_time TIME NOT NULL,
+    status VARCHAR(20) DEFAULT 'Active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)";
+$conn->query($create_sitin_table);
+
+// Add status column to sit_in table if not exists
+$check_status_column = $conn->query("SHOW COLUMNS FROM sit_in LIKE 'status'");
+if($check_status_column->num_rows == 0) {
+    $conn->query("ALTER TABLE sit_in ADD COLUMN status VARCHAR(20) DEFAULT 'Active'");
+} else {
+    // Check if status column is ENUM and convert to VARCHAR if needed
+    $check_enum = $conn->query("SHOW COLUMNS FROM sit_in LIKE 'status'");
+    if($col = $check_enum->fetch_assoc()) {
+        if(strpos($col['Type'], 'enum') !== false) {
+            $conn->query("ALTER TABLE sit_in MODIFY COLUMN status VARCHAR(20) DEFAULT 'Active'");
+        }
+    }
+}
 
 // Auto-create reservations table if not exists
 $create_reservations_table = "CREATE TABLE IF NOT EXISTS reservations (
@@ -38,40 +79,67 @@ if(isset($_GET['action']) && isset($_GET['id'])) {
         $res_result = $get_stmt->get_result();
         
         if($res_row = $res_result->fetch_assoc()) {
-            // Update reservation status to Approved
-            $stmt = $conn->prepare("UPDATE reservations SET status = 'Approved' WHERE id = ?");
-            $stmt->bind_param("i", $id);
-            $stmt->execute();
-            $stmt->close();
-            
-            // Create sit_in record
             $student_id = $res_row['id_number'];
-            $student_name = $res_row['student_name'];
             $lab = $res_row['lab_room'];
             $purpose = $res_row['purpose'];
             $sit_date = $res_row['reservation_date'];
             $sit_time = $res_row['reservation_time'];
             
-            // Get remaining sessions from students table
-            $session_stmt = $conn->prepare("SELECT sessions FROM students WHERE id_number = ?");
+            // Look up student in students table to get correct name and sessions
+            $session_stmt = $conn->prepare("SELECT first_name, middle_name, last_name, sessions FROM students WHERE id_number = ?");
             $session_stmt->bind_param("s", $student_id);
             $session_stmt->execute();
             $session_result = $session_stmt->get_result();
-            $remaining_sessions = 30; // default
+            
             if($session_row = $session_result->fetch_assoc()) {
                 $remaining_sessions = $session_row['sessions'];
+                $student_name = trim($session_row['first_name'] . ' ' . $session_row['middle_name'] . ' ' . $session_row['last_name']);
+                
+                // Update reservation status to Approved
+                $stmt = $conn->prepare("UPDATE reservations SET status = 'Approved' WHERE id = ?");
+                $stmt->bind_param("i", $id);
+                $stmt->execute();
+                $stmt->close();
+                
+                // Determine status based on scheduled date/time
+                $now_str = date('Y-m-d H:i:s');
+                $scheduled_str = $sit_date . ' ' . $sit_time;
+                $sit_in_status = ($scheduled_str <= $now_str) ? 'Active' : 'Pending';
+
+                // Insert into sit_in table with correct sessions from students table
+                $sit_in_stmt = $conn->prepare("INSERT INTO sit_in (id_number, student_name, purpose, lab, remaining_session, sit_in_date, sit_in_time, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                if (!$sit_in_stmt) {
+                    $session_stmt->close();
+                    $get_stmt->close();
+                    header("Location: /SYSARCH/pages/manage_reservations.php?error=" . urlencode("Prepare failed: " . $conn->error));
+                    exit;
+                }
+                $sit_in_stmt->bind_param("ssssisss", $student_id, $student_name, $purpose, $lab, $remaining_sessions, $sit_date, $sit_time, $sit_in_status);
+                if (!$sit_in_stmt->execute()) {
+                    $sit_in_stmt->close();
+                    $session_stmt->close();
+                    $get_stmt->close();
+                    header("Location: /SYSARCH/pages/manage_reservations.php?error=" . urlencode("Insert failed: " . $sit_in_stmt->error));
+                    exit;
+                }
+                $sit_in_stmt->close();
+                
+                $session_stmt->close();
+                $get_stmt->close();
+                
+                header("Location: /SYSARCH/pages/manage_reservations.php?success=" . urlencode("Reservation approved! Student will be checked in at the scheduled time ($sit_date $sit_time)."));
+                exit;
+            } else {
+                // Student not found - reject the approval
+                $session_stmt->close();
+                $get_stmt->close();
+                header("Location: /SYSARCH/pages/manage_reservations.php?error=" . urlencode("Student with ID Number '$student_id' not found in the system. Cannot approve reservation."));
+                exit;
             }
-            $session_stmt->close();
-            
-            // Insert into sit_in table
-            $sit_in_stmt = $conn->prepare("INSERT INTO sit_in (id_number, student_name, purpose, lab, remaining_session, sit_in_date, sit_in_time, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'Active')");
-            $sit_in_stmt->bind_param("ssssiss", $student_id, $student_name, $purpose, $lab, $remaining_sessions, $sit_date, $sit_time);
-            $sit_in_stmt->execute();
-            $sit_in_stmt->close();
         }
         $get_stmt->close();
         
-        header("Location: /SYSARCH/pages/manage_reservations.php?success=Reservation approved and student logged in!");
+        header("Location: /SYSARCH/pages/manage_reservations.php?error=" . urlencode("Reservation not found."));
         exit;
     } elseif($action === 'reject') {
         $stmt = $conn->prepare("UPDATE reservations SET status = 'Rejected' WHERE id = ?");
@@ -83,21 +151,34 @@ if(isset($_GET['action']) && isset($_GET['id'])) {
     }
 }
 
+// Auto-activate pending sit-ins where scheduled time has arrived (when admin views reservations)
+$now = date('Y-m-d H:i:s');
+$conn->query("UPDATE sit_in SET status = 'Active' WHERE status = 'Pending' AND TIMESTAMP(sit_in_date, sit_in_time) <= '$now'");
+
 // Handle Search
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 // Filter by status
 $status_filter = isset($_GET['status']) ? $_GET['status'] : 'All';
 
+$res_params = [];
+$res_types = '';
 $where_clauses = [];
 
 if($search !== '') {
     $search_param = "%$search%";
-    $where_clauses[] = "(id_number LIKE '$search_param' OR student_name LIKE '$search_param' OR lab_room LIKE '$search_param' OR purpose LIKE '$search_param')";
+    $where_clauses[] = "(id_number LIKE ? OR student_name LIKE ? OR lab_room LIKE ? OR purpose LIKE ?)";
+    $res_params[] = $search_param;
+    $res_params[] = $search_param;
+    $res_params[] = $search_param;
+    $res_params[] = $search_param;
+    $res_types .= 'ssss';
 }
 
 if($status_filter === 'Pending' || $status_filter === 'Approved' || $status_filter === 'Rejected') {
-    $where_clauses[] = "status = '$status_filter'";
+    $where_clauses[] = "status = ?";
+    $res_params[] = $status_filter;
+    $res_types .= 's';
 }
 
 $where_clause = '';
@@ -107,13 +188,19 @@ if(!empty($where_clauses)) {
 
 // Fetch all reservations
 $sql = "SELECT * FROM reservations $where_clause ORDER BY created_at DESC";
-$result = $conn->query($sql);
+$res_stmt = $conn->prepare($sql);
+if(!empty($res_params)) {
+    $res_stmt->bind_param($res_types, ...$res_params);
+}
+$res_stmt->execute();
+$result = $res_stmt->get_result();
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Reservations - CCS Sit-in Monitoring System</title>
     <link rel="stylesheet" href="/SYSARCH/assets/css/admin_dashboard.css">
     <link rel="icon" type="image/png" href="../assets/images/uclogo.png">
@@ -172,6 +259,8 @@ $result = $conn->query($sql);
             text-decoration: none;
             font-size: 14px;
             transition: all 0.3s ease;
+            vertical-align: middle;
+            margin: 0;
         }
         
         .btn-approve:hover {
@@ -188,6 +277,8 @@ $result = $conn->query($sql);
             text-decoration: none;
             font-size: 14px;
             transition: all 0.3s ease;
+            vertical-align: middle;
+            margin: 0;
         }
         
         .btn-reject:hover {
@@ -276,18 +367,29 @@ $result = $conn->query($sql);
         <img class="admin-logo" src="/SYSARCH/assets/images/uclogo.png" alt="UC Logo">
         <span class="admin-title">Admin Dashboard</span>
     </div>
-
-    <ul class="dashboard-right">    
+    <ul class="dashboard-right" id="navRight">    
         <li><a href="admin_dashboard.php">Dashboard</a></li>
         <li><a href="manage_students.php">Manage Students</a></li>
         <li><a href="manage_sitin.php">Sit-in Logs</a></li>
         <li><a href="manage_reservations.php" class="active">Reservations</a></li>
-        <li><a href="#">Reports</a></li>
+        <li><a href="feedback_reports.php">Feedback Reports</a></li>
         <li><a href="#">Settings</a></li>
         <li><a href="/SYSARCH/logout.php" class="logout-btn">Log Out</a></li>
     </ul>
 
 </nav>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const navRight = document.getElementById('navRight');
+        
+        mobileMenuToggle.addEventListener('click', function() {
+            navRight.classList.toggle('active');
+            this.textContent = navRight.classList.contains('active') ? '✕' : '☰';
+        });
+    });
+</script>
 
 <!-- Main Content -->
 <div class="content">
@@ -298,10 +400,10 @@ $result = $conn->query($sql);
     <!-- Filter Tabs and Search -->
     <div class="add-student-row">
         <div class="filter-tabs">
-            <a href="?status=Pending" class="filter-tab <?php echo $status_filter === 'Pending' ? 'active' : ''; ?>">Pending</a>
-            <a href="?status=Approved" class="filter-tab <?php echo $status_filter === 'Approved' ? 'active' : ''; ?>">Approved</a>
-            <a href="?status=Rejected" class="filter-tab <?php echo $status_filter === 'Rejected' ? 'active' : ''; ?>">Rejected</a>
-            <a href="?" class="filter-tab <?php echo $status_filter === 'All' || $status_filter === '' ? 'active' : ''; ?>">All</a>
+            <a href="?status=Pending<?php echo $search !== '' ? '&search='.urlencode($search) : ''; ?>" class="filter-tab <?php echo $status_filter === 'Pending' ? 'active' : ''; ?>">Pending</a>
+            <a href="?status=Approved<?php echo $search !== '' ? '&search='.urlencode($search) : ''; ?>" class="filter-tab <?php echo $status_filter === 'Approved' ? 'active' : ''; ?>">Approved</a>
+            <a href="?status=Rejected<?php echo $search !== '' ? '&search='.urlencode($search) : ''; ?>" class="filter-tab <?php echo $status_filter === 'Rejected' ? 'active' : ''; ?>">Rejected</a>
+            <a href="?<?php echo $search !== '' ? 'search='.urlencode($search) : ''; ?>" class="filter-tab <?php echo $status_filter === 'All' || $status_filter === '' ? 'active' : ''; ?>">All</a>
         </div>
         <form method="GET" action="" class="search-form">
             <input type="hidden" name="status" value="<?php echo htmlspecialchars($status_filter); ?>">
@@ -315,6 +417,10 @@ $result = $conn->query($sql);
 
     <?php if(isset($_GET['success'])): ?>
         <p id="success-message" style="color: green; margin-bottom: 15px; text-align: center;">✅ <?php echo htmlspecialchars($_GET['success']); ?></p>
+    <?php endif; ?>
+
+    <?php if(isset($_GET['error'])): ?>
+        <p id="error-message" style="color: red; margin-bottom: 15px; text-align: center;">❌ <?php echo htmlspecialchars($_GET['error']); ?></p>
     <?php endif; ?>
 
     <table class="students-table">
@@ -376,11 +482,15 @@ $result = $conn->query($sql);
 </div>
 
 <script>
-    // Auto-hide success message after 3 seconds
+    // Auto-hide success/error messages after 3 seconds
     setTimeout(function() {
-        var message = document.getElementById('success-message');
-        if(message) {
-            message.style.display = 'none';
+        var successMsg = document.getElementById('success-message');
+        if(successMsg) {
+            successMsg.style.display = 'none';
+        }
+        var errorMsg = document.getElementById('error-message');
+        if(errorMsg) {
+            errorMsg.style.display = 'none';
         }
     }, 3000);
 </script>
@@ -391,6 +501,9 @@ $result = $conn->query($sql);
 <?php
 if(isset($result)) {
     $result->free();
+}
+if(isset($res_stmt)) {
+    $res_stmt->close();
 }
 $conn->close();
 ?>

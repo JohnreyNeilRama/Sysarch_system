@@ -25,6 +25,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($stmt->execute()) {
         $stmt->close();
+        
+        // Refresh session data from database to ensure it's up to date
+        $refresh_stmt = $conn->prepare("SELECT sessions FROM students WHERE id_number = ?");
+        $refresh_stmt->bind_param("s", $id_number);
+        $refresh_stmt->execute();
+        $refresh_result = $refresh_stmt->get_result();
+        if($refresh_row = $refresh_result->fetch_assoc()) {
+            $_SESSION['sessions'] = $refresh_row['sessions'];
+        }
+        $refresh_stmt->close();
+        
         $conn->close();
         header("Location: /SYSARCH/pages/userdb.php?reservation_success=1");
         exit;

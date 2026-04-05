@@ -27,6 +27,18 @@ $stmt_rejected->bind_param("s", $student_id);
 $stmt_rejected->execute();
 $result_rejected = $stmt_rejected->get_result();
 
+// Get all sit_in IDs that already have feedback
+$feedback_sql = "SELECT sit_in_id FROM feedback WHERE student_id = ?";
+$stmt_feedback = $conn->prepare($feedback_sql);
+$stmt_feedback->bind_param("s", $student_id);
+$stmt_feedback->execute();
+$result_feedback = $stmt_feedback->get_result();
+$feedback_submitted = [];
+while($row = $result_feedback->fetch_assoc()) {
+    $feedback_submitted[] = $row['sit_in_id'];
+}
+$stmt_feedback->close();
+
 // Combine results
 $all_records = [];
 while($row = $result_sitin->fetch_assoc()) {
@@ -46,6 +58,7 @@ usort($all_records, function($a, $b) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>History - CCS Sit-in Monitoring System</title>
     <link rel="stylesheet" href="/SYSARCH/assets/css/userdb.css">
     <link rel="icon" type="image/png" href="/SYSARCH/assets/images/uclogo.png">
@@ -244,6 +257,95 @@ usort($all_records, function($a, $b) {
         .feedback-submit-btn:hover {
             background: #0d4fa1;
         }
+        
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .history-container {
+                padding: 10px;
+            }
+            
+            .history-header h2 {
+                font-size: 22px;
+            }
+            
+            .history-table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            
+            .history-table thead,
+            .history-table tbody,
+            .history-table tr,
+            .history-table th,
+            .history-table td {
+                display: block;
+            }
+            
+            .history-table thead {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            
+            .history-table tr {
+                margin-bottom: 15px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                padding: 10px;
+                background: white;
+            }
+            
+            .history-table td {
+                border: none;
+                position: relative;
+                padding-left: 50%;
+                text-align: right;
+            }
+            
+            .history-table td:before {
+                content: attr(data-label);
+                position: absolute;
+                left: 10px;
+                width: 45%;
+                text-align: left;
+                font-weight: bold;
+                color: #555;
+            }
+            
+            .feedback-modal {
+                width: 95%;
+                margin: 10px;
+            }
+            
+            .feedback-modal-header {
+                padding: 15px;
+            }
+            
+            .feedback-modal-body {
+                padding: 15px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .history-header h2 {
+                font-size: 18px;
+            }
+            
+            .history-table td {
+                font-size: 12px;
+                padding-left: 45%;
+            }
+            
+            .history-table td:before {
+                font-size: 11px;
+            }
+            
+            .btn-feedback {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 
@@ -255,8 +357,8 @@ usort($all_records, function($a, $b) {
     <div class="dashboard-left">
         Dashboard
     </div>
-
-    <ul class="dashboard-right">    
+    <button class="mobile-menu-toggle" id="mobileMenuToggle">☰</button>
+    <ul class="dashboard-right" id="navRight">    
         <li><a href="#">Notification</a></li>
         <li><a href="/SYSARCH/userdb.php">Home</a></li>
         <li><a href="/SYSARCH/edit_profile.php">Edit Profile</a></li>
@@ -266,6 +368,18 @@ usort($all_records, function($a, $b) {
     </ul>
 
 </nav>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const navRight = document.getElementById('navRight');
+        
+        mobileMenuToggle.addEventListener('click', function() {
+            navRight.classList.toggle('active');
+            this.textContent = navRight.classList.contains('active') ? '✕' : '☰';
+        });
+    });
+</script>
 
 <div class="history-container">
     <div class="history-header">
@@ -291,14 +405,14 @@ usort($all_records, function($a, $b) {
             <tbody>
                 <?php foreach($all_records as $row): ?>
                     <tr>
-                        <td><?php echo htmlspecialchars($row['id_number']); ?></td>
-                        <td><?php echo htmlspecialchars($row['student_name']); ?></td>
-                        <td><?php echo htmlspecialchars($row['purpose']); ?></td>
-                        <td><?php echo htmlspecialchars($row['lab']); ?></td>
-                        <td><?php echo htmlspecialchars($row['login_time']); ?></td>
-                        <td><?php echo $row['logout_time'] ? htmlspecialchars($row['logout_time']) : '-'; ?></td>
-                        <td><?php echo htmlspecialchars($row['sit_in_date']); ?></td>
-                        <td>
+                        <td data-label="ID Number"><?php echo htmlspecialchars($row['id_number']); ?></td>
+                        <td data-label="Name"><?php echo htmlspecialchars($row['student_name']); ?></td>
+                        <td data-label="Purpose"><?php echo htmlspecialchars($row['purpose']); ?></td>
+                        <td data-label="Lab"><?php echo htmlspecialchars($row['lab']); ?></td>
+                        <td data-label="Login Time"><?php echo htmlspecialchars($row['login_time']); ?></td>
+                        <td data-label="Logout Time"><?php echo $row['logout_time'] ? htmlspecialchars($row['logout_time']) : '-'; ?></td>
+                        <td data-label="Date"><?php echo htmlspecialchars($row['sit_in_date']); ?></td>
+                        <td data-label="Status">
                             <?php if($row['status'] === 'Active'): ?>
                                 <span class="status-active">Active</span>
                             <?php elseif($row['status'] === 'Rejected'): ?>
@@ -307,9 +421,14 @@ usort($all_records, function($a, $b) {
                                 <span class="status-inactive">Completed</span>
                             <?php endif; ?>
                         </td>
-                        <td>
-                            <?php if($row['status'] === 'Inactive' || $row['status'] === 'Completed'): ?>
+                        <td data-label="Action">
+                            <?php 
+                            $sit_in_id = $row['id'];
+                            $has_feedback = in_array($sit_in_id, $feedback_submitted);
+                            if(($row['status'] === 'Inactive' || $row['status'] === 'Completed') && !$has_feedback): ?>
                                 <button class="btn-feedback" onclick="openFeedbackModal(<?php echo $row['id']; ?>, '<?php echo htmlspecialchars($row['purpose']); ?>', '<?php echo htmlspecialchars($row['lab']); ?>', '<?php echo htmlspecialchars($row['sit_in_date']); ?>')">Feedback</button>
+                            <?php elseif($has_feedback): ?>
+                                <button class="btn-feedback" disabled style="background: #aaa; cursor: not-allowed;">Submitted</button>
                             <?php else: ?>
                                 <button class="btn-feedback" disabled>Feedback</button>
                             <?php endif; ?>

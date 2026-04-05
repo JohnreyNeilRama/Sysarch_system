@@ -10,6 +10,9 @@ if(!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true){
 // Include database connection
 include '../includes/connect.php';
 
+// Set timezone to Philippines (Asia/Manila)
+date_default_timezone_set('Asia/Manila');
+
 // Get time range from request
 $range = isset($_GET['range']) ? $_GET['range'] : 'today';
 
@@ -18,6 +21,9 @@ $today = date('Y-m-d');
 $current_year = date('Y');
 $current_month = date('m');
 $current_week_start = date('Y-m-d', strtotime('monday this week'));
+if($current_week_start > $today) {
+    $current_week_start = date('Y-m-d', strtotime('monday last week'));
+}
 
 // Build query based on time range
 $where_clause = '';
@@ -26,13 +32,15 @@ switch($range) {
         $where_clause = "WHERE sit_in_date = '$today'";
         break;
     case 'week':
-        $where_clause = "WHERE sit_in_date >= '$current_week_start'";
+        $where_clause = "WHERE sit_in_date >= '$current_week_start' AND sit_in_date <= '$today'";
         break;
     case 'month':
-        $where_clause = "WHERE sit_in_date LIKE '$current_year-$current_month%'";
+        $first_day_of_month = date('Y-m-01');
+        $where_clause = "WHERE sit_in_date >= '$first_day_of_month' AND sit_in_date <= '$today'";
         break;
     case 'year':
-        $where_clause = "WHERE sit_in_date LIKE '$current_year%'";
+        $first_day_of_year = date('Y-01-01');
+        $where_clause = "WHERE sit_in_date >= '$first_day_of_year' AND sit_in_date <= '$today'";
         break;
     case 'all':
     default:
@@ -52,15 +60,22 @@ $purpose_data = array(
     'Other' => 0
 );
 
+// Check if status column exists
+$check_status = $conn->query("SHOW COLUMNS FROM sit_in LIKE 'status'");
+$has_status = ($check_status->num_rows > 0);
+
+// Build query - count ALL sit-ins within time range (not just active ones)
 $sql = "SELECT purpose, COUNT(*) as count FROM sit_in";
 if(!empty($where_clause)) {
     $sql .= " " . $where_clause;
 }
 $sql .= " GROUP BY purpose";
 
-$stmt = $conn->prepare($sql);
-$stmt->execute();
-$result = $stmt->get_result();
+$result = $conn->query($sql);
+if(!$result) {
+    echo json_encode(['error' => 'Query failed: ' . $conn->error, 'sql' => $sql]);
+    exit;
+}
 
 while($row = $result->fetch_assoc()){
     $purpose = $row['purpose'];
@@ -70,7 +85,6 @@ while($row = $result->fetch_assoc()){
         $purpose_data['Other'] += $row['count'];
     }
 }
-$stmt->close();
 
 // Return as JSON
 header('Content-Type: application/json');
