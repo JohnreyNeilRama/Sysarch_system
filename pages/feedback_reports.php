@@ -306,7 +306,7 @@ if($stats_row = $stats_result->fetch_assoc()){
         }
         
         th {
-            background: #0f5bbe;
+            background: #1a3a5f;
             color: white;
             padding: 15px;
             text-align: left;
