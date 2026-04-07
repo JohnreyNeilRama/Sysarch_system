@@ -158,6 +158,9 @@ $conn->query("UPDATE sit_in SET status = 'Active' WHERE status = 'Pending' AND T
 // Handle Search
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 
+// Filter by lab
+$lab_filter = isset($_GET['lab']) ? $_GET['lab'] : '';
+
 // Filter by status
 $status_filter = isset($_GET['status']) ? $_GET['status'] : 'All';
 
@@ -165,14 +168,23 @@ $res_params = [];
 $res_types = '';
 $where_clauses = [];
 
+if($lab_filter !== '') {
+    $where_clauses[] = "lab_room = ?";
+    $res_params[] = $lab_filter;
+    $res_types .= 's';
+}
+
 if($search !== '') {
-    $search_param = "%$search%";
-    $where_clauses[] = "(id_number LIKE ? OR student_name LIKE ? OR lab_room LIKE ? OR purpose LIKE ?)";
-    $res_params[] = $search_param;
-    $res_params[] = $search_param;
-    $res_params[] = $search_param;
-    $res_params[] = $search_param;
-    $res_types .= 'ssss';
+    // Validate search input - only allow letters, numbers, spaces
+    if (!preg_match('/^[a-zA-Z0-9\s]+$/', $search)) {
+        $search_error = "Invalid search input. Please enter only letters, numbers, and spaces.";
+    } else {
+        $search_param = "%$search%";
+        $where_clauses[] = "(id_number LIKE ? OR student_name LIKE ?)";
+        $res_params[] = $search_param;
+        $res_params[] = $search_param;
+        $res_types .= 'ss';
+    }
 }
 
 if($status_filter === 'Pending' || $status_filter === 'Approved' || $status_filter === 'Rejected') {
@@ -210,6 +222,50 @@ $result = $res_stmt->get_result();
             gap: 10px;
             margin-bottom: 20px;
             justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .filter-tabs-container {
+            text-align: center;
+            width: 100%;
+        }
+        
+        .search-row {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+            padding-right: 20px;
+        }
+        
+        .filter-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 20px;
+            gap: 20px;
+        }
+        
+        .lab-filter {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .lab-select {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            min-width: 150px;
+        }
+        
+        .lab-form {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         
         .filter-tab {
@@ -289,6 +345,20 @@ $result = $res_stmt->get_result();
         .btn-reject:disabled {
             background: #ccc;
             cursor: not-allowed;
+        }
+        
+        .action-buttons {
+            white-space: nowrap;
+            text-align: center;
+            min-width: 120px;
+        }
+        
+        .action-buttons .btn-approve,
+        .action-buttons .btn-reject {
+            margin: 2px 4px;
+            display: inline-block;
+            padding: 6px 12px;
+            font-size: 12px;
         }
         
         .reservation-details {
@@ -398,28 +468,48 @@ $result = $res_stmt->get_result();
     </div>
     
     <!-- Filter Tabs and Search -->
-    <div class="add-student-row">
+    <div class="filter-tabs-container">
         <div class="filter-tabs">
-            <a href="?status=Pending<?php echo $search !== '' ? '&search='.urlencode($search) : ''; ?>" class="filter-tab <?php echo $status_filter === 'Pending' ? 'active' : ''; ?>">Pending</a>
-            <a href="?status=Approved<?php echo $search !== '' ? '&search='.urlencode($search) : ''; ?>" class="filter-tab <?php echo $status_filter === 'Approved' ? 'active' : ''; ?>">Approved</a>
-            <a href="?status=Rejected<?php echo $search !== '' ? '&search='.urlencode($search) : ''; ?>" class="filter-tab <?php echo $status_filter === 'Rejected' ? 'active' : ''; ?>">Rejected</a>
-            <a href="?<?php echo $search !== '' ? 'search='.urlencode($search) : ''; ?>" class="filter-tab <?php echo $status_filter === 'All' || $status_filter === '' ? 'active' : ''; ?>">All</a>
+            <a href="?status=Pending<?php echo $lab_filter !== '' ? '&lab='.urlencode($lab_filter) : ''; echo $search !== '' ? '&search='.urlencode($search) : ''; ?>" class="filter-tab <?php echo $status_filter === 'Pending' ? 'active' : ''; ?>">Pending</a>
+            <a href="?status=Approved<?php echo $lab_filter !== '' ? '&lab='.urlencode($lab_filter) : ''; echo $search !== '' ? '&search='.urlencode($search) : ''; ?>" class="filter-tab <?php echo $status_filter === 'Approved' ? 'active' : ''; ?>">Approved</a>
+            <a href="?status=Rejected<?php echo $lab_filter !== '' ? '&lab='.urlencode($lab_filter) : ''; echo $search !== '' ? '&search='.urlencode($search) : ''; ?>" class="filter-tab <?php echo $status_filter === 'Rejected' ? 'active' : ''; ?>">Rejected</a>
+            <a href="?<?php echo $lab_filter !== '' ? 'lab='.urlencode($lab_filter).'&' : ''; echo $search !== '' ? 'search='.urlencode($search) : ''; ?>" class="filter-tab <?php echo $status_filter === 'All' || $status_filter === '' ? 'active' : ''; ?>">All</a>
         </div>
-        <form method="GET" action="" class="search-form">
-            <input type="hidden" name="status" value="<?php echo htmlspecialchars($status_filter); ?>">
-            <input type="text" name="search" placeholder="Search by ID, Name, Lab, or Purpose..." value="<?php echo htmlspecialchars($search); ?>">
-            <button type="submit" class="search-btn">Search</button>
-            <?php if($search !== ''): ?>
-                <a href="?status=<?php echo $status_filter; ?>" class="clear-search-btn">Clear</a>
-            <?php endif; ?>
-        </form>
+    </div>
+    <div class="filter-row">
+        <div class="lab-filter">
+            <form method="GET" action="" class="lab-form">
+                <select name="lab" onchange="this.form.submit()" class="lab-select">
+                    <option value="">All Labs</option>
+                    <option value="524" <?php echo $lab_filter === '524' ? 'selected' : ''; ?>>Room 524</option>
+                    <option value="525" <?php echo $lab_filter === '525' ? 'selected' : ''; ?>>Room 525</option>
+                    <option value="526" <?php echo $lab_filter === '526' ? 'selected' : ''; ?>>Room 526</option>
+                    <option value="527" <?php echo $lab_filter === '527' ? 'selected' : ''; ?>>Room 527</option>
+                    <option value="528" <?php echo $lab_filter === '528' ? 'selected' : ''; ?>>Room 528</option>
+                </select>
+                <input type="hidden" name="status" value="<?php echo htmlspecialchars($status_filter); ?>">
+            </form>
+        </div>
+        <div class="search-row">
+            <form method="GET" action="" class="search-form">
+                <input type="hidden" name="status" value="<?php echo htmlspecialchars($status_filter); ?>">
+                <input type="hidden" name="lab" value="<?php echo htmlspecialchars($lab_filter); ?>">
+                <input type="text" name="search" placeholder="Search by ID Number or Name..." value="<?php echo htmlspecialchars($search); ?>">
+                <button type="submit" class="search-btn">Search</button>
+                <?php if($search !== ''): ?>
+                    <a href="?status=<?php echo $status_filter; ?>&lab=<?php echo urlencode($lab_filter); ?>" class="clear-search-btn">Clear</a>
+                <?php endif; ?>
+            </form>
+        </div>
     </div>
 
     <?php if(isset($_GET['success'])): ?>
         <p id="success-message" style="color: green; margin-bottom: 15px; text-align: center;">✅ <?php echo htmlspecialchars($_GET['success']); ?></p>
     <?php endif; ?>
 
-    <?php if(isset($_GET['error'])): ?>
+    <?php if(isset($search_error)): ?>
+        <p id="error-message" style="color: red; margin-bottom: 15px; text-align: center;">❌ <?php echo htmlspecialchars($search_error); ?></p>
+    <?php elseif(isset($_GET['error'])): ?>
         <p id="error-message" style="color: red; margin-bottom: 15px; text-align: center;">❌ <?php echo htmlspecialchars($_GET['error']); ?></p>
     <?php endif; ?>
 
@@ -429,6 +519,7 @@ $result = $res_stmt->get_result();
                 <th>ID Number</th>
                 <th>Student Name</th>
                 <th>Lab Room</th>
+                <th>Computer</th>
                 <th>Date & Time</th>
                 <th>Purpose</th>
                 <th>Notes</th>
@@ -443,6 +534,7 @@ $result = $res_stmt->get_result();
                         <td><?php echo htmlspecialchars($row['id_number']); ?></td>
                         <td><?php echo htmlspecialchars($row['student_name']); ?></td>
                         <td><?php echo htmlspecialchars($row['lab_room']); ?></td>
+                        <td><?php echo htmlspecialchars($row['computer_unit'] ?: '-'); ?></td>
                         <td>
                             <div class="reservation-details">
                                 <strong>Date:</strong> <?php echo htmlspecialchars($row['reservation_date']); ?><br>

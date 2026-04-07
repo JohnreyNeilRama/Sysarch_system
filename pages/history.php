@@ -363,7 +363,7 @@ usort($all_records, function($a, $b) {
         <li><a href="/SYSARCH/userdb.php">Home</a></li>
         <li><a href="/SYSARCH/edit_profile.php">Edit Profile</a></li>
         <li><a href="/SYSARCH/history.php" class="active">History</a></li>
-        <li><a href="#" class="reservation-link" id="openReservation">Reservation</a></li>
+        <li><a href="/SYSARCH/userdb.php" id="openReservation">Reservation</a></li>
         <li><a href="/SYSARCH/logout.php" class="logout-btn">Log Out</a></li>
     </ul>
 
@@ -493,7 +493,7 @@ usort($all_records, function($a, $b) {
             <button class="reservation-close-btn" id="closeReservation">&times;</button>
         </div>
         <div class="reservation-modal-body">
-            <form class="reservation-form" action="/SYSARCH/includes/process_reservation.php" method="POST">
+            <form id="reservationFormStep1" class="reservation-form">
                 <div class="form-group">
                     <label for="lab-room">Laboratory Room</label>
                     <select id="lab-room" name="lab_room" required>
@@ -513,7 +513,35 @@ usort($all_records, function($a, $b) {
                 
                 <div class="form-group">
                     <label for="reservation-time">Reservation Time</label>
-                    <input type="time" id="reservation-time" name="reservation_time" required>
+                    <select id="reservation-time" name="reservation_time" required>
+                        <option value="">Select Time</option>
+                        <option value="07:30:00">7:30 AM</option>
+                        <option value="08:00:00">8:00 AM</option>
+                        <option value="08:30:00">8:30 AM</option>
+                        <option value="09:00:00">9:00 AM</option>
+                        <option value="09:30:00">9:30 AM</option>
+                        <option value="10:00:00">10:00 AM</option>
+                        <option value="10:30:00">10:30 AM</option>
+                        <option value="11:00:00">11:00 AM</option>
+                        <option value="11:30:00">11:30 AM</option>
+                        <option value="12:00:00">12:00 PM</option>
+                        <option value="12:30:00">12:30 PM</option>
+                        <option value="13:00:00">1:00 PM</option>
+                        <option value="13:30:00">1:30 PM</option>
+                        <option value="14:00:00">2:00 PM</option>
+                        <option value="14:30:00">2:30 PM</option>
+                        <option value="15:00:00">3:00 PM</option>
+                        <option value="15:30:00">3:30 PM</option>
+                        <option value="16:00:00">4:00 PM</option>
+                        <option value="16:30:00">4:30 PM</option>
+                        <option value="17:00:00">5:00 PM</option>
+                        <option value="17:30:00">5:30 PM</option>
+                        <option value="18:00:00">6:00 PM</option>
+                        <option value="18:30:00">6:30 PM</option>
+                        <option value="19:00:00">7:00 PM</option>
+                        <option value="19:30:00">7:30 PM</option>
+                        <option value="20:00:00">8:00 PM</option>
+                    </select>
                 </div>
                 
                 <div class="form-group">
@@ -537,66 +565,315 @@ usort($all_records, function($a, $b) {
                     <textarea id="additional-notes" name="additional_notes" placeholder="Enter any additional details..."></textarea>
                 </div>
                 
+                <button type="button" class="reservation-submit-btn" id="continueToStep2">Continue</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- COMPUTER SELECTION MODAL - Step 2 -->
+<div class="reservation-modal-overlay" id="computerModal">
+    <div class="reservation-modal computer-modal">
+        <div class="reservation-modal-header">
+            <h2>Select Computer - Step 2</h2>
+            <button class="reservation-close-btn" id="closeComputerModal">&times;</button>
+        </div>
+        <div class="reservation-modal-body">
+            <div class="computer-info">
+                <p><strong>Room:</strong> <span id="selectedRoom"></span></p>
+                <p><strong>Date:</strong> <span id="selectedDate"></span></p>
+                <p><strong>Time:</strong> <span id="selectedTime"></span></p>
+            </div>
+            <div class="computer-legend">
+                <span class="legend-item"><span class="computer-unit available"></span> Available</span>
+                <span class="legend-item"><span class="computer-unit occupied"></span> Unavailable</span>
+            </div>
+            <div class="computer-grid" id="computerGrid"></div>
+            <form id="reservationFormStep2" method="POST" action="/SYSARCH/includes/process_reservation.php">
+                <input type="hidden" name="lab_room" id="inputLabRoom">
+                <input type="hidden" name="reservation_date" id="inputReservationDate">
+                <input type="hidden" name="reservation_time" id="inputReservationTime">
+                <input type="hidden" name="purpose" id="inputPurpose">
+                <input type="hidden" name="additional_notes" id="inputAdditionalNotes">
+                <input type="hidden" name="computer_unit" id="inputComputerUnit">
                 <button type="submit" class="reservation-submit-btn">Submit Reservation</button>
             </form>
         </div>
     </div>
 </div>
 
+<style>
+.reservation-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.reservation-form .form-group {
+    margin-bottom: 0;
+}
+.reservation-form label {
+    display: block;
+    font-weight: 600;
+    color: #333 !important;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+.reservation-form input,
+.reservation-form select,
+.reservation-form textarea {
+    width: 100%;
+    padding: 12px 15px !important;
+    border: 2px solid #e0e0e0 !important;
+    border-radius: 10px !important;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    font-family: inherit;
+    background: white !important;
+    color: #333 !important;
+}
+.reservation-form input:focus,
+.reservation-form select:focus,
+.reservation-form textarea:focus {
+    outline: none;
+    border-color: #0f5bbe !important;
+    box-shadow: 0 0 0 3px rgba(15, 91, 190, 0.1);
+}
+.reservation-form textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+.computer-info {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 5px;
+}
+.computer-info p {
+    margin: 5px 0;
+}
+.computer-legend {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 15px;
+    justify-content: center;
+}
+.computer-legend .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.computer-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(10, 1fr);
+    grid-auto-flow: column;
+    gap: 8px;
+    margin-bottom: 20px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #f9f9f9;
+}
+.computer-unit {
+    width: 100%;
+    aspect-ratio: 1;
+    min-width: 35px;
+    max-width: 50px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.computer-unit.available {
+    background: linear-gradient(135deg, #4caf50 0%, #43a047 100%);
+    color: white;
+}
+.computer-unit.available:hover {
+    background: linear-gradient(135deg, #43a047 0%, #388e3c 100%);
+    transform: translateY(-2px);
+}
+.computer-unit.occupied {
+    background: linear-gradient(135deg, #e53935 0%, #c62828 100%);
+    color: white;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+.computer-unit.selected {
+    border: 3px solid #0f5bbe;
+    box-shadow: 0 0 10px rgba(15, 91, 190, 0.5);
+}
+.computer-modal {
+    max-width: 600px;
+}
+</style>
+
 <!-- JavaScript for Modal -->
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Feedback Modal
-        const feedbackModal = document.getElementById('feedbackModal');
-        const closeFeedbackBtn = document.getElementById('closeFeedback');
-        
-        // Reservation Modal
-        const reservationModal = document.getElementById('reservationModal');
-        const openReservationBtn = document.getElementById('openReservation');
-        const closeReservationBtn = document.getElementById('closeReservation');
-        
-        // Open reservation modal
-        openReservationBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            reservationModal.classList.add('active');
-        });
-        
-        // Close feedback modal with X button
-        closeFeedbackBtn.addEventListener('click', function() {
-            feedbackModal.classList.remove('active');
-        });
-        
-        // Close reservation modal with X button
-        closeReservationBtn.addEventListener('click', function() {
-            reservationModal.classList.remove('active');
-        });
-        
-        // Close modals when clicking outside
-        feedbackModal.addEventListener('click', function(e) {
-            if (e.target === feedbackModal) {
-                feedbackModal.classList.remove('active');
-            }
-        });
-        
-        reservationModal.addEventListener('click', function(e) {
-            if (e.target === reservationModal) {
-                reservationModal.classList.remove('active');
-            }
-        });
-        
-        // Close modals with Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                if (feedbackModal.classList.contains('active')) {
-                    feedbackModal.classList.remove('active');
-                }
-                if (reservationModal.classList.contains('active')) {
-                    reservationModal.classList.remove('active');
-                }
-            }
-        });
-    });
+document.addEventListener('DOMContentLoaded', function() {
+    var modal = document.getElementById('reservationModal');
+    var computerModal = document.getElementById('computerModal');
+    var openReservationBtn = document.getElementById('openReservation');
+    var closeReservationBtn = document.getElementById('closeReservation');
+    var closeComputerBtn = document.getElementById('closeComputerModal');
+    var continueBtn = document.getElementById('continueToStep2');
+    var selectedComputer = null;
     
+    if (!openReservationBtn || !modal) { return; }
+    
+    openReservationBtn.onclick = function(e) {
+        e.preventDefault();
+        modal.classList.add('active');
+    };
+    
+    if (closeReservationBtn) {
+        closeReservationBtn.onclick = function() {
+            modal.classList.remove('active');
+        };
+    }
+    
+    if (closeComputerBtn) {
+        closeComputerBtn.onclick = function() {
+            computerModal.classList.remove('active');
+        };
+    }
+    
+    if (modal) {
+        modal.onclick = function(e) {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        };
+    }
+    
+    if (continueBtn) {
+        continueBtn.onclick = function(e) {
+            e.preventDefault();
+            
+            var labRoom = document.getElementById('lab-room').value;
+            var reservationDate = document.getElementById('reservation-date').value;
+            var reservationTime = document.getElementById('reservation-time').value;
+            var purpose = document.getElementById('purpose').value;
+            
+            if (!labRoom || !reservationDate || !reservationTime || !purpose) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            if (computerModal) {
+                document.getElementById('selectedRoom').textContent = 'Room ' + labRoom;
+                document.getElementById('selectedDate').textContent = reservationDate;
+                
+                var timeParts = reservationTime.split(':');
+                var hour = parseInt(timeParts[0]);
+                var ampm = hour >= 12 ? 'PM' : 'AM';
+                hour = hour % 12;
+                hour = hour ? hour : 12;
+                document.getElementById('selectedTime').textContent = hour + ':' + timeParts[1] + ' ' + ampm;
+                
+                document.getElementById('inputLabRoom').value = labRoom;
+                document.getElementById('inputReservationDate').value = reservationDate;
+                document.getElementById('inputReservationTime').value = reservationTime;
+                document.getElementById('inputPurpose').value = purpose;
+                document.getElementById('inputAdditionalNotes').value = document.getElementById('additional-notes').value;
+            }
+            
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/SYSARCH/pages/api/get_computers.php', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    try {
+                        var data = JSON.parse(xhr.responseText);
+                        if (data.error) {
+                            alert('Error: ' + data.error);
+                            return;
+                        }
+                        
+                        var grid = document.getElementById('computerGrid');
+                        grid.innerHTML = '';
+                        
+                        if (data.computers.length === 0) {
+                            grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">No computers found.</p>';
+                            if (modal) modal.classList.remove('active');
+                            if (computerModal) computerModal.classList.add('active');
+                            return;
+                        }
+                        
+                        var computers = data.computers;
+                        var rowsPerCol = 10;
+                        var totalCols = Math.ceil(computers.length / rowsPerCol);
+                        var arranged = [];
+                        
+                        for (var col = totalCols - 1; col >= 0; col--) {
+                            var start = col * rowsPerCol;
+                            var end = Math.min(start + rowsPerCol, computers.length);
+                            var colData = computers.slice(start, end);
+                            
+                            if ((totalCols - 1 - col) % 2 === 0) {
+                                arranged.push.apply(arranged, colData);
+                            } else {
+                                arranged.push.apply(arranged, [].concat(colData).reverse());
+                            }
+                        }
+                        
+                        for (var i = 0; i < arranged.length; i++) {
+                            var comp = arranged[i];
+                            var unit = document.createElement('div');
+                            unit.className = 'computer-unit ' + (comp.available ? 'available' : 'occupied');
+                            unit.textContent = comp.computer_number;
+                            
+                            if (comp.available) {
+                                (function(u, c) {
+                                    u.onclick = function() {
+                                        var selected = document.querySelectorAll('.computer-unit.selected');
+                                        for (var j = 0; j < selected.length; j++) {
+                                            selected[j].classList.remove('selected');
+                                        }
+                                        u.classList.add('selected');
+                                        selectedComputer = c.computer_number;
+                                        document.getElementById('inputComputerUnit').value = selectedComputer;
+                                    };
+                                })(unit, comp);
+                            }
+                            
+                            grid.appendChild(unit);
+                        }
+                        
+                        if (modal) modal.classList.remove('active');
+                        if (computerModal) computerModal.classList.add('active');
+                    } catch(e) {
+                        alert('Error parsing response: ' + e.message);
+                    }
+                }
+            };
+            xhr.send('lab_room=' + encodeURIComponent(labRoom) + 
+                     '&reservation_date=' + encodeURIComponent(reservationDate) + 
+                     '&reservation_time=' + encodeURIComponent(reservationTime));
+        };
+    }
+    
+    var formStep2 = document.getElementById('reservationFormStep2');
+    if (formStep2) {
+        formStep2.onsubmit = function(e) {
+            if (!selectedComputer) {
+                e.preventDefault();
+                alert('Please select a computer unit');
+                return;
+            }
+            document.getElementById('inputComputerUnit').value = selectedComputer;
+        };
+    }
+});
+</script>
+
+<script>
     function openFeedbackModal(sitInId, purpose, lab, date) {
         document.getElementById('feedback-sit-in-id').value = sitInId;
         document.getElementById('feedback-details').innerHTML = 

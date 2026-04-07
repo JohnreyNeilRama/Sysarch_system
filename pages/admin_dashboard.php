@@ -515,8 +515,25 @@ $purpose_labels = json_encode(array_keys($purpose_data));
     
     // Function to update pie chart based on time range
     function updatePieChart(timeRange) {
-        // Fetch data via AJAX
-        fetch('get_purpose_stats.php?range=' + timeRange)
+        console.log('Updating pie chart for range:', timeRange);
+        
+        // Clear previous chart and legend before fetching new data
+        const legendContainer = document.getElementById('pieLegend');
+        legendContainer.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">Loading...</p>';
+        
+        // Destroy existing chart to prevent data overlay
+        if (pieChart) {
+            pieChart.destroy();
+            pieChart = null;
+        }
+        
+        // Clear the canvas
+        const canvas = document.getElementById('pieChart');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Fetch data via AJAX with cache-busting
+        fetch('get_purpose_stats.php?range=' + timeRange + '&t=' + Date.now())
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok: ' + response.status);
@@ -545,11 +562,6 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                 let maxVal = Math.max(...values);
                 let minVal = Math.min(...values.filter(v => v > 0));
                 if (minVal === Infinity) minVal = 0;
-                
-                // Destroy existing chart if exists
-                if (pieChart) {
-                    pieChart.destroy();
-                }
                 
                 // Create pie chart
                 const ctx = document.getElementById('pieChart').getContext('2d');
