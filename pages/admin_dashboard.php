@@ -42,9 +42,10 @@ $create_table_sql = "CREATE TABLE IF NOT EXISTS sit_in (
     student_name VARCHAR(200) NOT NULL,
     purpose VARCHAR(100) NOT NULL,
     lab VARCHAR(50) NOT NULL,
-    remaining_session INT NOT NULL,
+    computer_no VARCHAR(50) NOT NULL,
     sit_in_date DATE NOT NULL,
     sit_in_time TIME NOT NULL,
+    status VARCHAR(20) DEFAULT 'Active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )";
 $conn->query($create_table_sql);
@@ -55,13 +56,25 @@ if($check_column->num_rows == 0) {
     $conn->query("ALTER TABLE students ADD COLUMN sessions INT DEFAULT 30");
 }
 
+// Rename remaining_session to computer_no if it exists
+$check_old_column = $conn->query("SHOW COLUMNS FROM sit_in LIKE 'remaining_session'");
+if($check_old_column->num_rows > 0) {
+    $conn->query("ALTER TABLE sit_in CHANGE COLUMN remaining_session computer_no VARCHAR(50) NOT NULL");
+}
+
+// Drop sessions column if it exists
+$check_sessions_column = $conn->query("SHOW COLUMNS FROM sit_in LIKE 'sessions'");
+if($check_sessions_column->num_rows > 0) {
+    $conn->query("ALTER TABLE sit_in DROP COLUMN sessions");
+}
+
 // Handle Sit-in Form Submission
 if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id_number'])) {
     $id_number = $_POST['id_number'];
     $student_name = $_POST['student_name'];
     $purpose = $_POST['purpose'];
     $lab = $_POST['lab'];
-    $remaining_session = $_POST['remaining_session'];
+    $computer_no = $_POST['computer_no'];
     $sit_in_date = date('Y-m-d');
     $sit_in_time = date('H:i:s');
     
@@ -85,8 +98,8 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id_number'])) {
             echo "<script>alert('Error: Student has no remaining sessions. Please renew sessions first.');</script>";
         } else {
             // Insert sit-in record without deducting session (session will be deducted on logout)
-            $stmt = $conn->prepare("INSERT INTO sit_in (id_number, student_name, purpose, lab, remaining_session, sit_in_date, sit_in_time, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'Active')");
-            $stmt->bind_param("ssssiss", $id_number, $db_student_name, $purpose, $lab, $student_sessions, $sit_in_date, $sit_in_time);
+            $stmt = $conn->prepare("INSERT INTO sit_in (id_number, student_name, purpose, lab, computer_no, sit_in_date, sit_in_time, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'Active')");
+            $stmt->bind_param("sssssss", $id_number, $db_student_name, $purpose, $lab, $computer_no, $sit_in_date, $sit_in_time);
             
             if($stmt->execute()) {
                 // Redirect to prevent double submission
@@ -390,7 +403,7 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                     <span class="action-icon">📋</span>
                     <span class="action-text">View Reports</span>
                 </button>
-                <button class="action-btn">
+                <button class="action-btn" id="openManageLabs">
                     <span class="action-icon">⚙️</span>
                     <span class="action-text">Manage Labs</span>
                 </button>
@@ -477,8 +490,8 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                 </div>
 
                 <div class="form-group">
-                    <label>Remaining Session:</label>
-                    <input type="number" name="remaining_session" id="remainingSession" placeholder="Auto-filled after entering ID" readonly required>
+                    <label>Computer No.:</label>
+                    <input type="number" name="computer_no" id="computerNo" placeholder="Enter computer number" required>
                 </div>
 
                 <div class="modal-actions">
@@ -697,6 +710,7 @@ window.addEventListener("click", function(e){
     const sitInModal = document.getElementById("sitInModal");
     const editModal = document.getElementById("editModal");
     const announcementsModal = document.getElementById("announcementsModal");
+    const manageLabsModal = document.getElementById("manageLabsModal");
 
     if(e.target === sitInModal){
         sitInModal.classList.remove("active");
@@ -708,6 +722,10 @@ window.addEventListener("click", function(e){
 
     if(e.target === announcementsModal){
         announcementsModal.classList.remove("active");
+    }
+
+    if(e.target === manageLabsModal){
+        manageLabsModal.classList.remove("active");
     }
 });
 
@@ -740,6 +758,170 @@ function closeEditAnnouncement() {
     document.getElementById('editAnnouncementModal').classList.remove('active');
 }
 
+document.addEventListener("DOMContentLoaded", function() {
+    const manageLabsModal = document.getElementById("manageLabsModal");
+    const closeManageLabsBtn = document.getElementById("closeManageLabs");
+    const closeManageLabsBtn2 = document.getElementById("closeManageLabs2");
+    const manageLabsForm = document.getElementById("manageLabsForm");
+    const labComputerSection = document.getElementById("labComputerSection");
+    const labComputersGrid = document.getElementById("labComputersGrid");
+    const currentLabDisplay = document.getElementById("currentLabDisplay");
+
+    function resetManageLabsForm() {
+        if (labComputerSection) labComputerSection.style.display = "none";
+        if (manageLabsForm) manageLabsForm.reset();
+        if (labComputersGrid) labComputersGrid.innerHTML = "";
+    }
+
+    const openManageLabsBtn = document.getElementById("openManageLabs");
+
+    if(openManageLabsBtn && manageLabsModal) {
+        openManageLabsBtn.onclick = () => {
+            manageLabsModal.classList.add("active");
+        };
+    }
+
+    if(closeManageLabsBtn) {
+        closeManageLabsBtn.onclick = () => {
+            manageLabsModal.classList.remove("active");
+            resetManageLabsForm();
+        };
+    }
+
+    if(closeManageLabsBtn2) {
+        closeManageLabsBtn2.onclick = () => {
+            manageLabsModal.classList.remove("active");
+            resetManageLabsForm();
+        };
+    }
+
+    const manageLabBtn = document.getElementById("manageLabBtn");
+    if(manageLabBtn) {
+        manageLabBtn.addEventListener("click", function(e) {
+            e.preventDefault();
+            const labSelect = document.getElementById("labSelect");
+            const selectedLab = labSelect.value;
+            
+            if(selectedLab) {
+                loadLabComputers(selectedLab);
+            } else {
+                alert("Please select a lab first");
+            }
+        });
+    }
+
+    const saveLabBtn = document.getElementById("saveLabBtn");
+    if(saveLabBtn) {
+        saveLabBtn.addEventListener("click", function(e) {
+            e.preventDefault();
+            alert("Changes saved successfully!");
+            manageLabsModal.classList.remove("active");
+            resetManageLabsForm();
+        });
+    }
+
+    function loadLabComputers(labRoom) {
+        currentLabDisplay.textContent = "Lab " + labRoom;
+        labComputersGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #666;">Loading computers...</div>';
+        labComputerSection.style.display = "block";
+    
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/SYSARCH/pages/api/get_lab_computers.php", true);
+    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    xhr.onreadystatechange = function() {
+        if(xhr.readyState === 4 && xhr.status === 200) {
+            try {
+                const data = JSON.parse(xhr.responseText);
+                if(data.error) {
+                    labComputersGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #dc3545;">Error: ' + data.error + '</div>';
+                    return;
+                }
+                displayComputers(data.computers, labRoom);
+            } catch(e) {
+                labComputersGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #dc3545;">Error parsing response</div>';
+            }
+        }
+    };
+    xhr.onerror = function() {
+        console.error("XHR error:", xhr.statusText);
+        labComputersGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #dc3545;">Network error occurred</div>';
+    };
+    
+    xhr.send("lab_room=" + labRoom);
+}
+
+function displayComputers(computers, labRoom) {
+    labComputersGrid.innerHTML = "";
+    
+    if(computers.length === 0) {
+        labComputersGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #666;">No computers found for Lab ' + labRoom + '</div>';
+        return;
+    }
+    
+    var rowsPerCol = 10;
+    var totalCols = Math.ceil(computers.length / rowsPerCol);
+    var arranged = [];
+    
+    for(var col = totalCols - 1; col >= 0; col--) {
+        var start = col * rowsPerCol;
+        var end = Math.min(start + rowsPerCol, computers.length);
+        var colData = computers.slice(start, end);
+        
+        if((totalCols - 1 - col) % 2 === 0) {
+            arranged.push.apply(arranged, colData);
+        } else {
+            arranged.push.apply(arranged, [].concat(colData).reverse());
+        }
+    }
+    
+    for(var i = 0; i < arranged.length; i++) {
+        var comp = arranged[i];
+        var isAvailable = comp.status && (comp.status.toLowerCase() === "available" || comp.status === "Available");
+        var unit = document.createElement("div");
+        unit.className = "computer-unit " + (isAvailable ? "available" : "unavailable");
+        unit.textContent = comp.computer_number;
+        unit.dataset.id = comp.id;
+        unit.dataset.status = comp.status;
+        unit.title = "Click to toggle status";
+        
+        unit.onclick = function() {
+            toggleComputerStatus(this, labRoom);
+        };
+        
+        labComputersGrid.appendChild(unit);
+    }
+}
+
+function toggleComputerStatus(element, labRoom) {
+    var computerId = element.dataset.id;
+    var currentStatus = element.dataset.status;
+    var isCurrentlyAvailable = currentStatus && (currentStatus.toLowerCase() === "available" || currentStatus === "Available");
+    var newStatus = isCurrentlyAvailable ? "unavailable" : "available";
+    
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/SYSARCH/pages/api/update_computer_status.php", true);
+    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    xhr.onreadystatechange = function() {
+        if(xhr.readyState === 4 && xhr.status === 200) {
+            try {
+                const data = JSON.parse(xhr.responseText);
+                if(data.success) {
+                    var newIsAvailable = newStatus === "available";
+                    element.className = "computer-unit " + (newIsAvailable ? "available" : "unavailable");
+                    element.dataset.status = newIsAvailable ? "Available" : "unavailable";
+                } else {
+                    alert("Error updating computer status: " + (data.error || "Unknown error"));
+                }
+            } catch(e) {
+                alert("Error updating computer status");
+            }
+        }
+    };
+    xhr.send("computer_id=" + computerId + "&status=" + newStatus + "&lab_room=" + labRoom);
+}
+
+}); // End DOMContentLoaded for Manage Labs
+
 function confirmDeleteAnnouncement(id) {
     if(confirm('Are you sure you want to delete this announcement?')) {
         var form = document.createElement('form');
@@ -771,11 +953,9 @@ function fetchStudentInfo() {
                 
                 if(studentId) {
                     document.getElementById('studentName').value = studentName;
-                    document.getElementById('remainingSession').value = studentSessions;
                 } else {
                     alert('Student not found! Please check the ID Number.');
                     document.getElementById('studentName').value = '';
-                    document.getElementById('remainingSession').value = '';
                 }
             }
         } catch(e) {
@@ -830,6 +1010,151 @@ window.addEventListener("click", function(e){
         </div>
     </div>
 </div>
+
+<!-- Manage Labs Modal -->
+<div class="modal-overlay" id="manageLabsModal">
+    <div class="modal-box manage-labs-modal">
+        <div class="modal-header">
+            <div class="modal-title-with-icon">
+                <span class="modal-icon">🖥️</span>
+                <h2>Manage Labs</h2>
+            </div>
+            <span class="close-btn" id="closeManageLabs">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="lab-selection-info">
+                <p>Select a laboratory to manage its resources, view active sessions, and handle configurations.</p>
+            </div>
+            <form id="manageLabsForm">
+                <div class="form-group">
+                    <label><span class="input-icon">📍</span> Select Laboratory</label>
+                    <select name="lab_select" id="labSelect">
+                        <option value="">-- Choose a Lab --</option>
+                        <option value="524">Lab 524 - Computer Lab A</option>
+                        <option value="525">Lab 525 - Computer Lab B</option>
+                        <option value="526">Lab 526 - Computer Lab C</option>
+                        <option value="527">Lab 527 - Computer Lab D</option>
+                        <option value="528">Lab 528 - Computer Lab E</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-close" id="closeManageLabs2">Cancel</button>
+                    <button type="button" class="btn-submit" id="manageLabBtn">
+                        <span>⚙️</span> Manage Lab
+                    </button>
+                </div>
+            </form>
+            <!-- Lab Computer Section - Moved outside form -->
+            <div id="labComputerSection" class="lab-computer-section" style="display: none;">
+                <div class="lab-computer-header">
+                    <h3>Computers in <span id="currentLabDisplay">Lab</span></h3>
+                    <p class="computer-instructions">Click on a computer to toggle its availability status</p>
+                </div>
+                <div class="computer-legend">
+                    <span class="legend-item"><span class="computer-unit available" style="width: 20px; height: 20px; display: inline-block; border-radius: 4px;"></span> Available</span>
+                    <span class="legend-item"><span class="computer-unit unavailable" style="width: 20px; height: 20px; display: inline-block; border-radius: 4px;"></span> Unavailable</span>
+                </div>
+                <div class="computer-grid" id="labComputersGrid"></div>
+                <div class="modal-actions" style="margin-top: 20px;">
+                    <button type="button" class="btn-submit" id="saveLabBtn">
+                        <span>💾</span> Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.lab-computer-section {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 2px dashed #e0e0e0;
+}
+
+.lab-computer-header {
+    margin-bottom: 15px;
+}
+
+.lab-computer-header h3 {
+    font-size: 18px;
+    color: #1a3a5f;
+    margin: 0 0 8px 0;
+}
+
+.computer-instructions {
+    font-size: 13px;
+    color: #888;
+    margin: 0;
+}
+
+.lab-computer-section .computer-legend {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 15px;
+    justify-content: center;
+}
+
+.lab-computer-section .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #666;
+}
+
+.lab-computer-section .computer-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(10, 1fr);
+    grid-auto-flow: column;
+    gap: 8px;
+    max-height: 350px;
+    overflow-y: auto;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #f9f9f9;
+}
+
+.lab-computer-section .computer-unit {
+    width: 100%;
+    aspect-ratio: 1;
+    min-width: 40px;
+    max-width: 55px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 0 auto;
+}
+
+.lab-computer-section .computer-unit.available {
+    background: linear-gradient(135deg, #4caf50 0%, #43a047 100%);
+    color: white;
+}
+
+.lab-computer-section .computer-unit.available:hover {
+    background: linear-gradient(135deg, #43a047 0%, #388e3c 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(76, 175, 80, 0.4);
+}
+
+.lab-computer-section .computer-unit.unavailable {
+    background: linear-gradient(135deg, #e53935 0%, #c62828 100%);
+    color: white;
+}
+
+.lab-computer-section .computer-unit.unavailable:hover {
+    background: linear-gradient(135deg, #c62828 0%, #b71c1c 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(229, 57, 53, 0.4);
+}
+</style>
 
 </body>
 </html>

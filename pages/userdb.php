@@ -23,16 +23,16 @@ $create_reservations_table = "CREATE TABLE IF NOT EXISTS reservations (
     reservation_time TIME NOT NULL,
     purpose VARCHAR(100) NOT NULL,
     additional_notes TEXT,
-    computer_unit VARCHAR(10),
+    computer_no VARCHAR(10),
     status ENUM('Pending', 'Approved', 'Rejected') DEFAULT 'Pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )";
 $conn->query($create_reservations_table);
 
-// Add computer_unit column if it doesn't exist
-$check_column = $conn->query("SHOW COLUMNS FROM reservations LIKE 'computer_unit'");
-if ($check_column->num_rows == 0) {
-    $conn->query("ALTER TABLE reservations ADD COLUMN computer_unit VARCHAR(10) AFTER additional_notes");
+// Rename computer_unit to computer_no if it exists
+$check_old_column = $conn->query("SHOW COLUMNS FROM reservations LIKE 'computer_unit'");
+if ($check_old_column->num_rows > 0) {
+    $conn->query("ALTER TABLE reservations CHANGE COLUMN computer_unit computer_no VARCHAR(10)");
 }
 
 // Auto-create computers table if not exists
@@ -347,7 +347,7 @@ $conn->close();
                 <input type="hidden" name="reservation_time" id="inputReservationTime">
                 <input type="hidden" name="purpose" id="inputPurpose">
                 <input type="hidden" name="additional_notes" id="inputAdditionalNotes">
-                <input type="hidden" name="computer_unit" id="inputComputerUnit">
+                <input type="hidden" name="computer_no" id="inputComputerNo">
                 <button type="submit" class="reservation-submit-btn">Submit Reservation</button>
             </form>
         </div>
@@ -504,6 +504,12 @@ $conn->close();
     cursor: not-allowed;
     opacity: 0.7;
 }
+.computer-unit.unavailable {
+    background: linear-gradient(135deg, #e53935 0%, #c62828 100%);
+    color: white;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
 .computer-unit.selected {
     border: 3px solid #0f5bbe;
     box-shadow: 0 0 10px rgba(15, 91, 190, 0.5);
@@ -623,6 +629,7 @@ $conn->close();
                 } catch(e) {
                     throw new Error('Invalid JSON: ' + text);
                 }
+                console.log('API Response:', data);
                 if (data.error) {
                     alert('Error: ' + data.error);
                     return;
@@ -661,19 +668,22 @@ $conn->close();
                 
                 arranged.forEach(comp => {
                     const unit = document.createElement('div');
-                    unit.className = 'computer-unit ' + (comp.available ? 'available' : 'occupied');
+                    const adminStatus = (comp.admin_status || '').toLowerCase();
+                    const isAdminUnavailable = !comp.available || adminStatus === 'unavailable' || adminStatus === '';
+                    let statusClass = isAdminUnavailable ? 'unavailable' : 'available';
+                    console.log('Computer:', comp.computer_number, 'admin_status:', comp.admin_status, 'isAdminUnavailable:', isAdminUnavailable);
+                    unit.className = 'computer-unit ' + statusClass;
                     unit.textContent = comp.computer_number;
+                    unit.title = comp.available && adminStatus === 'available' ? 'Click to select' : 'Not available';
                     
-                    if (comp.available) {
+                    if (!isAdminUnavailable) {
                         unit.addEventListener('click', function() {
-                            // Remove selection from other units
                             document.querySelectorAll('.computer-unit.selected').forEach(el => {
                                 el.classList.remove('selected');
                             });
-                            // Select this unit
                             unit.classList.add('selected');
                             selectedComputer = comp.computer_number;
-                            document.getElementById('inputComputerUnit').value = selectedComputer;
+                            document.getElementById('inputComputerNo').value = selectedComputer;
                         });
                     }
                     
@@ -698,7 +708,7 @@ $conn->close();
                 return;
             }
             // Ensure the hidden input is set before submit
-            document.getElementById('inputComputerUnit').value = selectedComputer;
+            document.getElementById('inputComputerNo').value = selectedComputer;
         });
         
         // Auto-hide success/error messages after 3 seconds

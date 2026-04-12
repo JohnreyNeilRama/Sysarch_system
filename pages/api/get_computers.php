@@ -9,10 +9,10 @@ header('Access-Control-Allow-Headers: Content-Type');
 include '../../includes/connect.php';
 date_default_timezone_set('Asia/Manila');
 
-// Check and add computer_unit column if needed
-$check_column = $conn->query("SHOW COLUMNS FROM reservations LIKE 'computer_unit'");
+// Check and add computer_no column if needed
+$check_column = $conn->query("SHOW COLUMNS FROM reservations LIKE 'computer_no'");
 if ($check_column->num_rows == 0) {
-    $conn->query("ALTER TABLE reservations ADD COLUMN computer_unit VARCHAR(10)");
+    $conn->query("ALTER TABLE reservations ADD COLUMN computer_no VARCHAR(10)");
 }
 
 $lab_room = isset($_POST['lab_room']) ? $_POST['lab_room'] : '';
@@ -20,11 +20,17 @@ $reservation_date = isset($_POST['reservation_date']) ? $_POST['reservation_date
 $reservation_time = isset($_POST['reservation_time']) ? $_POST['reservation_time'] : '';
 
 if (empty($lab_room) || empty($reservation_date) || empty($reservation_time)) {
-    echo json_encode(['error' => 'Missing required fields', 'post' => $_POST]);
+    echo json_encode(['error' => 'Missing required fields']);
     exit;
 }
 
 try {
+    // Check if status column exists, add if not
+    $check_status = $conn->query("SHOW COLUMNS FROM computers LIKE 'status'");
+    if ($check_status->num_rows == 0) {
+        $conn->query("ALTER TABLE computers ADD COLUMN status VARCHAR(20) DEFAULT 'available'");
+    }
+    
     // Get all computers for the selected lab
     $computers = [];
     $sql = "SELECT id, computer_number, status FROM computers WHERE lab_room = ? ORDER BY CAST(computer_number AS UNSIGNED)";
@@ -44,12 +50,12 @@ try {
     // Check which computers are occupied at the selected time
     $occupied_units = [];
 
-    $res_sql = "SELECT computer_unit FROM reservations 
+    $res_sql = "SELECT computer_no FROM reservations 
                 WHERE lab_room = ? 
                 AND reservation_date = ? 
                 AND reservation_time = ? 
                 AND status = 'Approved'
-                AND computer_unit IS NOT NULL";
+                AND computer_no IS NOT NULL";
     $res_stmt = $conn->prepare($res_sql);
     if (!$res_stmt) {
         throw new Exception("Prepare failed: " . $conn->error);
@@ -59,8 +65,8 @@ try {
     $res_result = $res_stmt->get_result();
 
     while ($row = $res_result->fetch_assoc()) {
-        if ($row['computer_unit']) {
-            $occupied_units[] = $row['computer_unit'];
+        if ($row['computer_no']) {
+            $occupied_units[] = $row['computer_no'];
         }
     }
     $res_stmt->close();
@@ -90,11 +96,16 @@ try {
     // Build response with availability
     $response = [];
     foreach ($computers as $comp) {
-        $is_available = !in_array($comp['computer_number'], $occupied_units);
+        $status = isset($comp['status']) && $comp['status'] !== null ? $comp['status'] : 'available';
+        $is_admin_unavailable = (strtolower($status) === 'unavailable');
+        $is_reserved = in_array($comp['computer_number'], $occupied_units);
+        $is_available = !$is_admin_unavailable && !$is_reserved;
+        
         $response[] = [
             'id' => $comp['id'],
             'computer_number' => $comp['computer_number'],
-            'available' => $is_available
+            'available' => $is_available,
+            'admin_status' => $status
         ];
     }
 

@@ -363,7 +363,7 @@ usort($all_records, function($a, $b) {
         <li><a href="/SYSARCH/userdb.php">Home</a></li>
         <li><a href="/SYSARCH/edit_profile.php">Edit Profile</a></li>
         <li><a href="/SYSARCH/history.php" class="active">History</a></li>
-        <li><a href="/SYSARCH/userdb.php" id="openReservation">Reservation</a></li>
+        <li><a href="/SYSARCH/userdb.php" class="reservation-link" id="openReservation">Reservation</a></li>
         <li><a href="/SYSARCH/logout.php" class="logout-btn">Log Out</a></li>
     </ul>
 
@@ -493,7 +493,7 @@ usort($all_records, function($a, $b) {
             <button class="reservation-close-btn" id="closeReservation">&times;</button>
         </div>
         <div class="reservation-modal-body">
-            <form id="reservationFormStep1" class="reservation-form">
+            <form id="reservationFormStep1" class="reservation-form" action="/SYSARCH/includes/process_reservation.php" method="POST">
                 <div class="form-group">
                     <label for="lab-room">Laboratory Room</label>
                     <select id="lab-room" name="lab_room" required>
@@ -705,6 +705,12 @@ usort($all_records, function($a, $b) {
     cursor: not-allowed;
     opacity: 0.7;
 }
+.computer-unit.unavailable {
+    background: linear-gradient(135deg, #e53935 0%, #c62828 100%);
+    color: white;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
 .computer-unit.selected {
     border: 3px solid #0f5bbe;
     box-shadow: 0 0 10px rgba(15, 91, 190, 0.5);
@@ -717,160 +723,158 @@ usort($all_records, function($a, $b) {
 <!-- JavaScript for Modal -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    var modal = document.getElementById('reservationModal');
-    var computerModal = document.getElementById('computerModal');
-    var openReservationBtn = document.getElementById('openReservation');
-    var closeReservationBtn = document.getElementById('closeReservation');
-    var closeComputerBtn = document.getElementById('closeComputerModal');
-    var continueBtn = document.getElementById('continueToStep2');
-    var selectedComputer = null;
+    const modal = document.getElementById('reservationModal');
+    const computerModal = document.getElementById('computerModal');
+    const openReservationBtn = document.getElementById('openReservation');
+    const closeReservationBtn = document.getElementById('closeReservation');
+    const closeComputerBtn = document.getElementById('closeComputerModal');
+    const continueBtn = document.getElementById('continueToStep2');
+    let selectedComputer = null;
     
-    if (!openReservationBtn || !modal) { return; }
-    
-    openReservationBtn.onclick = function(e) {
+    openReservationBtn.addEventListener('click', function(e) {
         e.preventDefault();
         modal.classList.add('active');
-    };
+    });
     
-    if (closeReservationBtn) {
-        closeReservationBtn.onclick = function() {
+    closeReservationBtn.addEventListener('click', function() {
+        modal.classList.remove('active');
+    });
+    
+    closeComputerBtn.addEventListener('click', function() {
+        computerModal.classList.remove('active');
+    });
+    
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
             modal.classList.remove('active');
-        };
-    }
+        }
+    });
     
-    if (closeComputerBtn) {
-        closeComputerBtn.onclick = function() {
+    computerModal.addEventListener('click', function(e) {
+        if (e.target === computerModal) {
             computerModal.classList.remove('active');
-        };
-    }
+        }
+    });
     
-    if (modal) {
-        modal.onclick = function(e) {
-            if (e.target === modal) {
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            if (computerModal.classList.contains('active')) {
+                computerModal.classList.remove('active');
+            } else if (modal.classList.contains('active')) {
                 modal.classList.remove('active');
             }
-        };
-    }
+        }
+    });
     
-    if (continueBtn) {
-        continueBtn.onclick = function(e) {
-            e.preventDefault();
-            
-            var labRoom = document.getElementById('lab-room').value;
-            var reservationDate = document.getElementById('reservation-date').value;
-            var reservationTime = document.getElementById('reservation-time').value;
-            var purpose = document.getElementById('purpose').value;
-            
-            if (!labRoom || !reservationDate || !reservationTime || !purpose) {
-                alert('Please fill in all required fields');
+    continueBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        const labRoom = document.getElementById('lab-room').value;
+        const reservationDate = document.getElementById('reservation-date').value;
+        const reservationTime = document.getElementById('reservation-time').value;
+        const purpose = document.getElementById('purpose').value;
+        
+        if (!labRoom || !reservationDate || !reservationTime || !purpose) {
+            alert('Please fill in all required fields');
+            return;
+        }
+        
+        document.getElementById('selectedRoom').textContent = 'Room ' + labRoom;
+        document.getElementById('selectedDate').textContent = reservationDate;
+        
+        const timeParts = reservationTime.split(':');
+        let hour = parseInt(timeParts[0]);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        hour = hour % 12;
+        hour = hour ? hour : 12;
+        document.getElementById('selectedTime').textContent = hour + ':' + timeParts[1] + ' ' + ampm;
+        
+        document.getElementById('inputLabRoom').value = labRoom;
+        document.getElementById('inputReservationDate').value = reservationDate;
+        document.getElementById('inputReservationTime').value = reservationTime;
+        document.getElementById('inputPurpose').value = purpose;
+        document.getElementById('inputAdditionalNotes').value = document.getElementById('additional-notes').value;
+        
+        fetch('/SYSARCH/pages/api/get_computers.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'lab_room=' + encodeURIComponent(labRoom) + 
+                  '&reservation_date=' + encodeURIComponent(reservationDate) + 
+                  '&reservation_time=' + encodeURIComponent(reservationTime)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Error: ' + data.error);
                 return;
             }
             
-            if (computerModal) {
-                document.getElementById('selectedRoom').textContent = 'Room ' + labRoom;
-                document.getElementById('selectedDate').textContent = reservationDate;
-                
-                var timeParts = reservationTime.split(':');
-                var hour = parseInt(timeParts[0]);
-                var ampm = hour >= 12 ? 'PM' : 'AM';
-                hour = hour % 12;
-                hour = hour ? hour : 12;
-                document.getElementById('selectedTime').textContent = hour + ':' + timeParts[1] + ' ' + ampm;
-                
-                document.getElementById('inputLabRoom').value = labRoom;
-                document.getElementById('inputReservationDate').value = reservationDate;
-                document.getElementById('inputReservationTime').value = reservationTime;
-                document.getElementById('inputPurpose').value = purpose;
-                document.getElementById('inputAdditionalNotes').value = document.getElementById('additional-notes').value;
+            const grid = document.getElementById('computerGrid');
+            grid.innerHTML = '';
+            
+            if (data.computers.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">No computers found.</p>';
+                modal.classList.remove('active');
+                computerModal.classList.add('active');
+                return;
             }
             
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', '/SYSARCH/pages/api/get_computers.php', true);
-            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    try {
-                        var data = JSON.parse(xhr.responseText);
-                        if (data.error) {
-                            alert('Error: ' + data.error);
-                            return;
-                        }
-                        
-                        var grid = document.getElementById('computerGrid');
-                        grid.innerHTML = '';
-                        
-                        if (data.computers.length === 0) {
-                            grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">No computers found.</p>';
-                            if (modal) modal.classList.remove('active');
-                            if (computerModal) computerModal.classList.add('active');
-                            return;
-                        }
-                        
-                        var computers = data.computers;
-                        var rowsPerCol = 10;
-                        var totalCols = Math.ceil(computers.length / rowsPerCol);
-                        var arranged = [];
-                        
-                        for (var col = totalCols - 1; col >= 0; col--) {
-                            var start = col * rowsPerCol;
-                            var end = Math.min(start + rowsPerCol, computers.length);
-                            var colData = computers.slice(start, end);
-                            
-                            if ((totalCols - 1 - col) % 2 === 0) {
-                                arranged.push.apply(arranged, colData);
-                            } else {
-                                arranged.push.apply(arranged, [].concat(colData).reverse());
-                            }
-                        }
-                        
-                        for (var i = 0; i < arranged.length; i++) {
-                            var comp = arranged[i];
-                            var unit = document.createElement('div');
-                            unit.className = 'computer-unit ' + (comp.available ? 'available' : 'occupied');
-                            unit.textContent = comp.computer_number;
-                            
-                            if (comp.available) {
-                                (function(u, c) {
-                                    u.onclick = function() {
-                                        var selected = document.querySelectorAll('.computer-unit.selected');
-                                        for (var j = 0; j < selected.length; j++) {
-                                            selected[j].classList.remove('selected');
-                                        }
-                                        u.classList.add('selected');
-                                        selectedComputer = c.computer_number;
-                                        document.getElementById('inputComputerUnit').value = selectedComputer;
-                                    };
-                                })(unit, comp);
-                            }
-                            
-                            grid.appendChild(unit);
-                        }
-                        
-                        if (modal) modal.classList.remove('active');
-                        if (computerModal) computerModal.classList.add('active');
-                    } catch(e) {
-                        alert('Error parsing response: ' + e.message);
-                    }
+            // Rightmost column: 1-10 down, next: 20-11 up, etc.
+            const computers = data.computers;
+            const rowsPerCol = 10;
+            const totalCols = Math.ceil(computers.length / rowsPerCol);
+            const arranged = [];
+            
+            for (let col = totalCols - 1; col >= 0; col--) {
+                const start = col * rowsPerCol;
+                const end = Math.min(start + rowsPerCol, computers.length);
+                const colData = computers.slice(start, end);
+                
+                if ((totalCols - 1 - col) % 2 === 0) {
+                    arranged.push(...colData);
+                } else {
+                    arranged.push(...[...colData].reverse());
                 }
-            };
-            xhr.send('lab_room=' + encodeURIComponent(labRoom) + 
-                     '&reservation_date=' + encodeURIComponent(reservationDate) + 
-                     '&reservation_time=' + encodeURIComponent(reservationTime));
-        };
-    }
-    
-    var formStep2 = document.getElementById('reservationFormStep2');
-    if (formStep2) {
-        formStep2.onsubmit = function(e) {
-            if (!selectedComputer) {
-                e.preventDefault();
-                alert('Please select a computer unit');
-                return;
             }
-            document.getElementById('inputComputerUnit').value = selectedComputer;
-        };
-    }
-});
+            
+            arranged.forEach(comp => {
+                const unit = document.createElement('div');
+                const adminStatus = comp.admin_status ? comp.admin_status.toLowerCase() : '';
+                let statusClass = comp.available ? 'available' : 'occupied';
+                if (!comp.available && adminStatus === 'unavailable') {
+                    statusClass = 'unavailable';
+                }
+                unit.className = 'computer-unit ' + statusClass;
+                unit.textContent = comp.computer_number;
+                unit.title = comp.available ? 'Click to select' : (adminStatus === 'unavailable' ? 'Marked as unavailable by admin' : 'Already reserved');
+                
+                if (comp.available) {
+                    unit.addEventListener('click', function() {
+                        document.querySelectorAll('.computer-unit.selected').forEach(el => el.classList.remove('selected'));
+                        unit.classList.add('selected');
+                        selectedComputer = comp.computer_number;
+                        document.getElementById('inputComputerUnit').value = selectedComputer;
+                    });
+                }
+                
+                grid.appendChild(unit);
+            });
+            
+            modal.classList.remove('active');
+            computerModal.classList.add('active');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to load computers. Please try again.');
+        });
+    });
+    
+    document.getElementById('reservationFormStep2').addEventListener('submit', function(e) {
+        if (!selectedComputer) {
+            e.preventDefault();
+            alert('Please select a computer unit');
+        }
+    });
 </script>
 
 <script>

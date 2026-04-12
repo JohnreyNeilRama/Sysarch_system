@@ -29,7 +29,7 @@ $create_sitin_table = "CREATE TABLE IF NOT EXISTS sit_in (
     student_name VARCHAR(200) NOT NULL,
     purpose VARCHAR(100) NOT NULL,
     lab VARCHAR(50) NOT NULL,
-    remaining_session INT NOT NULL,
+    computer_no VARCHAR(50) NOT NULL,
     sit_in_date DATE NOT NULL,
     sit_in_time TIME NOT NULL,
     status VARCHAR(20) DEFAULT 'Active',
@@ -42,13 +42,24 @@ $check_status_column = $conn->query("SHOW COLUMNS FROM sit_in LIKE 'status'");
 if($check_status_column->num_rows == 0) {
     $conn->query("ALTER TABLE sit_in ADD COLUMN status VARCHAR(20) DEFAULT 'Active'");
 } else {
-    // Check if status column is ENUM and convert to VARCHAR if needed
     $check_enum = $conn->query("SHOW COLUMNS FROM sit_in LIKE 'status'");
     if($col = $check_enum->fetch_assoc()) {
         if(strpos($col['Type'], 'enum') !== false) {
             $conn->query("ALTER TABLE sit_in MODIFY COLUMN status VARCHAR(20) DEFAULT 'Active'");
         }
     }
+}
+
+// Rename remaining_session to computer_no if it exists
+$check_old_column = $conn->query("SHOW COLUMNS FROM sit_in LIKE 'remaining_session'");
+if($check_old_column->num_rows > 0) {
+    $conn->query("ALTER TABLE sit_in CHANGE COLUMN remaining_session computer_no VARCHAR(50) NOT NULL");
+}
+
+// Drop sessions column if it exists
+$check_sessions_column = $conn->query("SHOW COLUMNS FROM sit_in LIKE 'sessions'");
+if($check_sessions_column->num_rows > 0) {
+    $conn->query("ALTER TABLE sit_in DROP COLUMN sessions");
 }
 
 // Auto-create reservations table if not exists
@@ -61,10 +72,16 @@ $create_reservations_table = "CREATE TABLE IF NOT EXISTS reservations (
     reservation_time TIME NOT NULL,
     purpose VARCHAR(100) NOT NULL,
     additional_notes TEXT,
-    status ENUM('Pending', 'Approved', 'Rejected') DEFAULT 'Pending',
+    computer_no VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )";
 $conn->query($create_reservations_table);
+
+// Rename computer_unit to computer_no if it exists
+$check_old_column = $conn->query("SHOW COLUMNS FROM reservations LIKE 'computer_unit'");
+if($check_old_column->num_rows > 0) {
+    $conn->query("ALTER TABLE reservations CHANGE COLUMN computer_unit computer_no VARCHAR(50)");
+}
 
 // Handle Approve/Reject actions
 if(isset($_GET['action']) && isset($_GET['id'])) {
@@ -84,6 +101,7 @@ if(isset($_GET['action']) && isset($_GET['id'])) {
             $purpose = $res_row['purpose'];
             $sit_date = $res_row['reservation_date'];
             $sit_time = $res_row['reservation_time'];
+            $computer_no = $res_row['computer_no'];
             
             // Look up student in students table to get correct name and sessions
             $session_stmt = $conn->prepare("SELECT first_name, middle_name, last_name, sessions FROM students WHERE id_number = ?");
@@ -106,15 +124,15 @@ if(isset($_GET['action']) && isset($_GET['id'])) {
                 $scheduled_str = $sit_date . ' ' . $sit_time;
                 $sit_in_status = ($scheduled_str <= $now_str) ? 'Active' : 'Pending';
 
-                // Insert into sit_in table with correct sessions from students table
-                $sit_in_stmt = $conn->prepare("INSERT INTO sit_in (id_number, student_name, purpose, lab, remaining_session, sit_in_date, sit_in_time, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                // Insert into sit_in table with computer number from reservation
+                $sit_in_stmt = $conn->prepare("INSERT INTO sit_in (id_number, student_name, purpose, lab, computer_no, sit_in_date, sit_in_time, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
                 if (!$sit_in_stmt) {
                     $session_stmt->close();
                     $get_stmt->close();
                     header("Location: /SYSARCH/pages/manage_reservations.php?error=" . urlencode("Prepare failed: " . $conn->error));
                     exit;
                 }
-                $sit_in_stmt->bind_param("ssssisss", $student_id, $student_name, $purpose, $lab, $remaining_sessions, $sit_date, $sit_time, $sit_in_status);
+                $sit_in_stmt->bind_param("ssssisss", $student_id, $student_name, $purpose, $lab, $computer_no, $sit_date, $sit_time, $sit_in_status);
                 if (!$sit_in_stmt->execute()) {
                     $sit_in_stmt->close();
                     $session_stmt->close();
@@ -519,7 +537,7 @@ $result = $res_stmt->get_result();
                 <th>ID Number</th>
                 <th>Student Name</th>
                 <th>Lab Room</th>
-                <th>Computer</th>
+                <th>Computer No.</th>
                 <th>Date & Time</th>
                 <th>Purpose</th>
                 <th>Notes</th>
@@ -534,7 +552,7 @@ $result = $res_stmt->get_result();
                         <td><?php echo htmlspecialchars($row['id_number']); ?></td>
                         <td><?php echo htmlspecialchars($row['student_name']); ?></td>
                         <td><?php echo htmlspecialchars($row['lab_room']); ?></td>
-                        <td><?php echo htmlspecialchars($row['computer_unit'] ?: '-'); ?></td>
+                        <td><?php echo htmlspecialchars($row['computer_no'] ?: '-'); ?></td>
                         <td>
                             <div class="reservation-details">
                                 <strong>Date:</strong> <?php echo htmlspecialchars($row['reservation_date']); ?><br>

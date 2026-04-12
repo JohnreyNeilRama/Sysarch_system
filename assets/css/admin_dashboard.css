@@ -367,7 +367,7 @@
 /* CARD HEADER */
 
 .admin-dashboard-page .card-header{
-    background: linear-gradient(135deg, #0f5bbe 0%, #1976D2 100%);
+    background: #1a3a5f;
     color:white;
     padding:18px;
     font-size:18px;
@@ -377,7 +377,7 @@
 }
 
 .admin-dashboard-page .card-header:hover{
-    background: linear-gradient(135deg, #1976D2 0%, #0f5bbe 100%);
+    background: #1c4b81;
 }
 
 /* CARD BODY */
@@ -1085,5 +1085,160 @@
     .admin-dashboard-page .dashboard-right li{
         margin: 5px;
     }
+}
+
+/* Manage Labs Modal Styles */
+.manage-labs-modal {
+    width: 450px;
+    max-height: 90vh;
+    border-radius: 15px;
+    overflow-y: auto;
+}
+
+.manage-labs-modal .modal-header {
+    background: linear-gradient(135deg, #1a3a5f 0%, #2a4a6f 100%);
+    padding: 20px 25px;
+    border-bottom: none;
+}
+
+.modal-title-with-icon {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.modal-title-with-icon .modal-icon {
+    font-size: 24px;
+}
+
+.modal-title-with-icon h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: white;
+    margin: 0;
+}
+
+.manage-labs-modal .modal-body {
+    padding: 25px;
+    max-height: calc(90vh - 70px);
+    overflow-y: auto;
+}
+
+.lab-selection-info {
+    background: linear-gradient(135deg, #e8f4fc 0%, #f0f7ff 100%);
+    border-left: 4px solid #0f5bbe;
+    padding: 15px 18px;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 20px;
+}
+
+.lab-selection-info p {
+    margin: 0;
+    color: #555;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.manage-labs-modal .form-group {
+    margin-bottom: 20px;
+}
+
+.manage-labs-modal .form-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.manage-labs-modal .input-icon {
+    font-size: 16px;
+}
+
+.manage-labs-modal select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 15px;
+    color: #333;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+}
+
+.manage-labs-modal select:hover {
+    border-color: #b0b0b0;
+}
+
+.manage-labs-modal select:focus {
+    outline: none;
+    border-color: #0f5bbe;
+    box-shadow: 0 0 0 3px rgba(15, 91, 190, 0.15);
+}
+
+.manage-labs-modal .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+    margin-top: 10px;
+}
+
+.manage-labs-modal .btn-close {
+    padding: 12px 24px;
+    background: #f0f0f0;
+    color: #555;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.manage-labs-modal .btn-close:hover {
+    background: #e0e0e0;
+    transform: translateY(-1px);
+}
+
+.manage-labs-modal .btn-submit {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #0f5bbe 0%, #1976D2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.manage-labs-modal .btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(15, 91, 190, 0.4);
+}
+
+.manage-labs-modal .close-btn {
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    opacity: 0.8;
+}
+
+.manage-labs-modal .close-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
 }
 

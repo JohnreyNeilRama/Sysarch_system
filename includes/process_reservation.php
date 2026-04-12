@@ -18,11 +18,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $reservation_time = $_POST['reservation_time'];
     $purpose = $_POST['purpose'];
     $additional_notes = $_POST['additional_notes'] ?? '';
-    $computer_unit = $_POST['computer_unit'] ?? null;
+    $computer_no = $_POST['computer_no'] ?? null;
 
     // Insert reservation into database
-    $stmt = $conn->prepare("INSERT INTO reservations (id_number, student_name, lab_room, reservation_date, reservation_time, purpose, additional_notes, computer_unit, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending')");
-    $stmt->bind_param("ssssssss", $id_number, $student_name, $lab_room, $reservation_date, $reservation_time, $purpose, $additional_notes, $computer_unit);
+    $stmt = $conn->prepare("INSERT INTO reservations (id_number, student_name, lab_room, reservation_date, reservation_time, purpose, additional_notes, computer_no, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending')");
+    $stmt->bind_param("ssssssss", $id_number, $student_name, $lab_room, $reservation_date, $reservation_time, $purpose, $additional_notes, $computer_no);
 
     if ($stmt->execute()) {
         $stmt->close();

@@ -29,7 +29,7 @@ $create_table_sql = "CREATE TABLE IF NOT EXISTS sit_in (
     student_name VARCHAR(200) NOT NULL,
     purpose VARCHAR(100) NOT NULL,
     lab VARCHAR(50) NOT NULL,
-    remaining_session INT NOT NULL,
+    computer_no VARCHAR(50) NOT NULL,
     sit_in_date DATE NOT NULL,
     sit_in_time TIME NOT NULL,
     status VARCHAR(20) DEFAULT 'Active',
@@ -52,6 +52,18 @@ if($check_status_column->num_rows == 0) {
 $check_logout_column = $conn->query("SHOW COLUMNS FROM sit_in LIKE 'logout_time'");
 if($check_logout_column->num_rows == 0) {
     $conn->query("ALTER TABLE sit_in ADD COLUMN logout_time TIME NULL");
+}
+
+// Rename remaining_session to computer_no if it exists
+$check_old_column = $conn->query("SHOW COLUMNS FROM sit_in LIKE 'remaining_session'");
+if($check_old_column->num_rows > 0) {
+    $conn->query("ALTER TABLE sit_in CHANGE COLUMN remaining_session computer_no VARCHAR(50) NOT NULL");
+}
+
+// Drop sessions column if it exists
+$check_sessions_column = $conn->query("SHOW COLUMNS FROM sit_in LIKE 'sessions'");
+if($check_sessions_column->num_rows > 0) {
+    $conn->query("ALTER TABLE sit_in DROP COLUMN sessions");
 }
 
 // Auto-activate pending sit-ins where scheduled time has arrived (BEFORE cleanup)
@@ -295,12 +307,12 @@ $result = $stmt->get_result();
                 <th>Sit ID</th>
                 <th>ID Number</th>
                 <th>Student Name</th>
-                <th>Sit Lab</th>
+                <th>Lab Room</th>
+                <th>Computer No.</th>
                 <th>Purpose</th>
                 <th>Date</th>
                 <th>Login Time</th>
                 <th>Logout Time</th>
-                <th>Remaining Sessions</th>
                 <th>Status</th>
                 <th>Actions</th>
             </tr>
@@ -313,11 +325,11 @@ $result = $stmt->get_result();
                         <td><?php echo htmlspecialchars($row['id_number']); ?></td>
                         <td><?php echo htmlspecialchars($row['student_name']); ?></td>
                         <td><?php echo htmlspecialchars($row['lab']); ?></td>
+                        <td><?php echo htmlspecialchars($row['computer_no']); ?></td>
                         <td><?php echo htmlspecialchars($row['purpose']); ?></td>
                         <td><?php echo htmlspecialchars($row['sit_in_date']); ?></td>
                         <td><?php echo htmlspecialchars($row['sit_in_time']); ?></td>
                         <td><?php echo isset($row['logout_time']) && $row['logout_time'] ? htmlspecialchars($row['logout_time']) : '-'; ?></td>
-                        <td><?php echo htmlspecialchars($row['remaining_session']); ?></td>
                         <td>
                             <?php if($row['status'] === 'Active'): ?>
                                 <span class="status-active">Active</span>
