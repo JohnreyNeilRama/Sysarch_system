@@ -369,7 +369,7 @@ $purpose_labels = json_encode(array_keys($purpose_data));
 
                 <div class="form-group">
                     <label>Remaining Sessions</label>
-                    <input type="number" placeholder="Sessions">
+                    <input type="number" placeholder="Sessions" min="0" max="30">
                 </div>
 
                 <div class="modal-actions">
@@ -482,10 +482,11 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                     <select name="lab" required>
                         <option value="">Select Lab</option>
                         <option value="524">Lab 524</option>
-                        <option value="525">Lab 525</option>
                         <option value="526">Lab 526</option>
-                        <option value="527">Lab 527</option>
                         <option value="528">Lab 528</option>
+                        <option value="530">Lab 530</option>
+                        <option value="544">Lab 544</option>
+                        <option value="542">Lab 542</option>
                     </select>
                 </div>
 
@@ -1030,11 +1031,12 @@ window.addEventListener("click", function(e){
                     <label><span class="input-icon">📍</span> Select Laboratory</label>
                     <select name="lab_select" id="labSelect">
                         <option value="">-- Choose a Lab --</option>
-                        <option value="524">Lab 524 - Computer Lab A</option>
-                        <option value="525">Lab 525 - Computer Lab B</option>
-                        <option value="526">Lab 526 - Computer Lab C</option>
-                        <option value="527">Lab 527 - Computer Lab D</option>
-                        <option value="528">Lab 528 - Computer Lab E</option>
+                        <option value="524">Lab 524</option>
+                        <option value="526">Lab 526</option>
+                        <option value="528">Lab 528</option>
+                        <option value="530">Lab 530</option>
+                        <option value="544">Lab 544</option>
+                        <option value="542">Lab 542</option>
                     </select>
                 </div>
                 <div class="modal-actions">

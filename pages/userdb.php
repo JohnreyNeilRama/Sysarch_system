@@ -29,6 +29,18 @@ $create_reservations_table = "CREATE TABLE IF NOT EXISTS reservations (
 )";
 $conn->query($create_reservations_table);
 
+// Auto-create notifications table if not exists
+$create_notifications_table = "CREATE TABLE IF NOT EXISTS notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_number VARCHAR(50) NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    is_read TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)";
+$conn->query($create_notifications_table);
+
 // Rename computer_unit to computer_no if it exists
 $check_old_column = $conn->query("SHOW COLUMNS FROM reservations LIKE 'computer_unit'");
 if ($check_old_column->num_rows > 0) {
@@ -40,10 +52,20 @@ $create_computers_table = "CREATE TABLE IF NOT EXISTS computers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     lab_room VARCHAR(50) NOT NULL,
     computer_number VARCHAR(10) NOT NULL,
-    status ENUM('Available', 'Occupied', 'Maintenance') DEFAULT 'Available',
+    status VARCHAR(20) DEFAULT 'available',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY unique_computer (lab_room, computer_number)
 )";
 $conn->query($create_computers_table);
+
+// Check if status column is ENUM and convert to VARCHAR
+$check_status_type = $conn->query("SHOW COLUMNS FROM computers LIKE 'status'");
+if ($check_status_type->num_rows > 0) {
+    $status_row = $check_status_type->fetch_assoc();
+    if (strpos($status_row['Type'], 'enum') !== false) {
+        $conn->query("ALTER TABLE computers MODIFY COLUMN status VARCHAR(20) DEFAULT 'available'");
+    }
+}
 
 // Populate computers for each lab if not exists
 $lab_rooms = ['524', '525', '526', '527', '528'];
@@ -51,10 +73,63 @@ foreach ($lab_rooms as $lab) {
     for ($i = 1; $i <= 50; $i++) {
         $check = $conn->query("SELECT id FROM computers WHERE lab_room = '$lab' AND computer_number = '$i'");
         if ($check->num_rows == 0) {
-            $conn->query("INSERT INTO computers (lab_room, computer_number, status) VALUES ('$lab', '$i', 'Available')");
+            $conn->query("INSERT INTO computers (lab_room, computer_number, status) VALUES ('$lab', '$i', 'available')");
         }
     }
 }
+
+$conn->close();
+
+// Fetch notifications for the logged-in student
+include '../includes/connect.php';
+$notif_student_id = $_SESSION['id_number'];
+$notif_count_sql = "SELECT COUNT(*) as unread_count FROM notifications WHERE id_number = ? AND is_read = 0";
+$notif_count_stmt = $conn->prepare($notif_count_sql);
+$notif_count_stmt->bind_param("s", $notif_student_id);
+$notif_count_stmt->execute();
+$notif_count_result = $notif_count_stmt->get_result();
+$notif_count_row = $notif_count_result->fetch_assoc();
+$unread_notifications = $notif_count_row['unread_count'];
+$notif_count_stmt->close();
+
+$notif_sql = "SELECT * FROM notifications WHERE id_number = ? ORDER BY created_at DESC LIMIT 10";
+$notif_stmt = $conn->prepare($notif_sql);
+$notif_stmt->bind_param("s", $notif_student_id);
+$notif_stmt->execute();
+$notif_result = $notif_stmt->get_result();
+$notifications = [];
+while($row = $notif_result->fetch_assoc()) {
+    $notifications[] = $row;
+}
+$notif_stmt->close();
+
+if(isset($_GET['mark_notif_read'])) {
+    $notif_id = intval($_GET['mark_notif_read']);
+    $mark_read_stmt = $conn->prepare("UPDATE notifications SET is_read = 1 WHERE id = ? AND id_number = ?");
+    $mark_read_stmt->bind_param("is", $notif_id, $notif_student_id);
+    $mark_read_stmt->execute();
+    $mark_read_stmt->close();
+    header("Location: /SYSARCH/pages/userdb.php");
+    exit;
+}
+
+if(isset($_GET['mark_all_read'])) {
+    $mark_all_stmt = $conn->prepare("UPDATE notifications SET is_read = 1 WHERE id_number = ?");
+    $mark_all_stmt->bind_param("s", $notif_student_id);
+    $mark_all_stmt->execute();
+    $mark_all_stmt->close();
+    header("Location: /SYSARCH/pages/userdb.php");
+    exit;
+}
+
+// Fetch current sessions from database before closing connection
+$session_fetch_stmt = $conn->prepare("SELECT sessions FROM students WHERE id_number = ?");
+$session_fetch_stmt->bind_param("s", $notif_student_id);
+$session_fetch_stmt->execute();
+$session_fetch_result = $session_fetch_stmt->get_result();
+$session_fetch_row = $session_fetch_result->fetch_assoc();
+$current_sessions = $session_fetch_row ? $session_fetch_row['sessions'] : 30;
+$session_fetch_stmt->close();
 
 $conn->close();
 ?>
@@ -79,7 +154,9 @@ $conn->close();
     </div>
     <button class="mobile-menu-toggle" id="mobileMenuToggle">☰</button>
     <ul class="dashboard-right" id="navRight">    
-        <li><a href="#">Notification</a></li>
+        <li><a href="#" class="notification-link" id="openNotifications">
+            Notification <?php if($unread_notifications > 0): ?><span class="notif-badge"><?php echo $unread_notifications; ?></span><?php endif; ?>
+        </a></li>
         <li><a href="/SYSARCH/userdb.php">Home</a></li>
         <li><a href="/SYSARCH/edit_profile.php">Edit Profile</a></li>
         <li><a href="/SYSARCH/history.php">History</a></li>
@@ -90,14 +167,93 @@ $conn->close();
 </nav>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-        const navRight = document.getElementById('navRight');
+    // Auto-show notification pop-up on page load for reservation status changes
+    function checkNewNotifications() {
+        fetch('/SYSARCH/pages/api/check_new_notifications.php')
+            .then(response => response.json())
+            .then(data => {
+                if (data.newNotification) {
+                    showNotificationPopup(data.notification);
+                }
+            })
+            .catch(error => console.error('Error checking notifications:', error));
+    }
+    
+    function showNotificationPopup(notification) {
+        const popup = document.createElement('div');
+        popup.id = 'notif-popup';
         
-        mobileMenuToggle.addEventListener('click', function() {
-            navRight.classList.toggle('active');
-            this.textContent = navRight.classList.contains('active') ? '✕' : '☰';
-        });
+        let icon = '';
+        let bgColor = '';
+        
+        if (notification.type === 'reservation_approved') {
+            icon = '✓';
+            bgColor = 'linear-gradient(135deg, #4caf50 0%, #43a047 100%)';
+        } else if (notification.type === 'reservation_rejected') {
+            icon = '✕';
+            bgColor = 'linear-gradient(135deg, #f44336 0%, #c62828 100%)';
+        } else {
+            icon = 'ℹ';
+            bgColor = 'linear-gradient(135deg, #0f5bbe 0%, #1976D2 100%)';
+        }
+        
+        popup.innerHTML = `
+            <div class="notif-popup-icon" style="background: ${bgColor};">${icon}</div>
+            <div class="notif-popup-content">
+                <div class="notif-popup-title">${notification.title}</div>
+                <div class="notif-popup-message">${notification.message}</div>
+            </div>
+            <button class="notif-popup-close" onclick="this.parentElement.remove();">&times;</button>
+        `;
+        
+        document.body.appendChild(popup);
+        
+        setTimeout(() => {
+            popup.classList.add('show');
+        }, 100);
+        
+        setTimeout(() => {
+            if (popup.parentElement) {
+                popup.classList.remove('show');
+                setTimeout(() => popup.remove(), 300);
+            }
+        }, 8000);
+    }
+    
+    // Notification modal click handlers
+    document.addEventListener('DOMContentLoaded', function() {
+        const notificationModal = document.getElementById('notificationModal');
+        const openNotificationsBtn = document.getElementById('openNotifications');
+        const closeNotificationsBtn = document.getElementById('closeNotifications');
+        
+        if(openNotificationsBtn && notificationModal) {
+            openNotificationsBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                notificationModal.classList.add('active');
+            });
+        }
+        
+        if(closeNotificationsBtn && notificationModal) {
+            closeNotificationsBtn.addEventListener('click', function() {
+                notificationModal.classList.remove('active');
+            });
+        }
+        
+        if(notificationModal) {
+            notificationModal.addEventListener('click', function(e) {
+                if(e.target === notificationModal) {
+                    notificationModal.classList.remove('active');
+                }
+            });
+            
+            document.addEventListener('keydown', function(e) {
+                if(e.key === 'Escape') {
+                    if(notificationModal.classList.contains('active')) {
+                        notificationModal.classList.remove('active');
+                    }
+                }
+            });
+        }
     });
 </script>
 
@@ -105,11 +261,7 @@ $conn->close();
 
     <?php if(isset($_GET['reservation_success'])): ?>
         <div id="success-message" class="toast-message toast-success">Your reservation has been submitted successfully!</div>
-    <?php endif; ?>
-
-    <?php if(isset($_GET['reservation_error'])): ?>
-        <div id="error-message" class="toast-message toast-error">Error: <?php echo htmlspecialchars($_GET['reservation_error']); ?></div>
-    <?php endif; ?>
+<?php endif; ?>
 
     <!-- LEFT PANEL -->
     <div class="student-info">
@@ -131,7 +283,13 @@ $conn->close();
             <p><strong>Year Level:</strong> <span><?php echo $_SESSION['year_level']; ?></span></p>
             <p><strong>Email:</strong> <span><?php echo $_SESSION['email']; ?></span></p>
             <p><strong>Address:</strong> <span><?php echo $_SESSION['address']; ?></span></p>
-            <p><strong>Remaining Sessions:</strong> <span><?php echo isset($_SESSION['sessions']) ? $_SESSION['sessions'] : '30'; ?></span></p>
+            <?php 
+                $remaining_sessions = $current_sessions;
+                $sessions_used = 30 - $remaining_sessions;
+                $points_earned = floor($sessions_used / 3);
+            ?>
+            <p><strong>Remaining Sessions:</strong> <span><?php echo $remaining_sessions; ?></span></p>
+            <p><strong>Points Earned:</strong> <span><?php echo $points_earned; ?></span></p>
 
         </div>
 
@@ -355,167 +513,352 @@ $conn->close();
 </div>
 
 <style>
-.reservation-form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+.no-notifications {
+    text-align: center;
+    padding: 30px;
+    color: #666;
 }
 
-.reservation-form .form-group {
-    margin-bottom: 0;
-}
-
-.reservation-form label {
-    display: block;
-    font-weight: 600;
-    color: #333 !important;
-    margin-bottom: 8px;
-    font-size: 14px;
-}
-
-.reservation-form input,
-.reservation-form select,
-.reservation-form textarea {
-    width: 100%;
-    padding: 12px 15px !important;
-    border: 2px solid #e0e0e0 !important;
-    border-radius: 10px !important;
-    font-size: 14px;
-    transition: all 0.3s ease;
-    box-sizing: border-box;
-    font-family: inherit;
-    background: white !important;
-    color: #333 !important;
-}
-
-.reservation-form input:focus,
-.reservation-form select:focus,
-.reservation-form textarea:focus {
-    outline: none;
-    border-color: #0f5bbe !important;
-    box-shadow: 0 0 0 3px rgba(15, 91, 190, 0.1);
-}
-
-.reservation-form textarea {
-    resize: vertical;
-    min-height: 80px;
-}
-
-.computer-info {
-    margin-bottom: 15px;
-    padding: 10px;
-    background: #f5f5f5;
-    border-radius: 5px;
-}
-.computer-info p {
-    margin: 5px 0;
-}
-.computer-legend {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 15px;
-    justify-content: center;
-}
-
-.toast-message {
+#notif-popup {
     position: fixed;
-    top: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 15px 30px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    z-index: 9999;
-    animation: slideDown 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    bottom: 30px;
+    right: 30px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 10000;
+    transform: translateX(120%);
+    transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    max-width: 380px;
+    border-left: 5px solid #1976D2;
 }
 
-.toast-success {
-    background: #4caf50;
-    color: white;
+#notif-popup.show {
+    transform: translateX(0);
 }
 
-.toast-error {
-    background: #f44336;
-    color: white;
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateX(-50%) translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-    }
-}
-
-@keyframes fadeOut {
-    to {
-        opacity: 0;
-        transform: translateX(-50%) translateY(-20px);
-    }
-}
-
-.computer-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    grid-template-rows: repeat(10, 1fr);
-    grid-auto-flow: column;
-    gap: 8px;
-    margin-bottom: 20px;
-    max-height: 320px;
-    overflow-y: auto;
-    padding: 15px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background: #f9f9f9;
-    justify-content: flex-end;
-}
-.computer-unit {
-    width: 100%;
-    aspect-ratio: 1;
-    min-width: 35px;
-    max-width: 50px;
-    border-radius: 6px;
+.notif-popup-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
+    color: white;
+    font-size: 22px;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.notif-popup-content {
+    flex: 1;
+}
+
+.notif-popup-title {
+    font-weight: 700;
+    font-size: 15px;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+}
+
+.notif-popup-message {
     font-size: 13px;
-    font-weight: 600;
+    color: #555;
+    line-height: 1.4;
+}
+
+.notif-popup-close {
+    background: #f5f5f5;
+    border: none;
+    font-size: 20px;
+    color: #666;
     cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 50%;
     transition: all 0.2s ease;
 }
-.computer-unit.available {
-    background: linear-gradient(135deg, #4caf50 0%, #43a047 100%);
-    color: white;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+
+.notif-popup-close:hover {
+    background: #e0e0e0;
+    color: #333;
 }
-.computer-unit.available:hover {
-    background: linear-gradient(135deg, #43a047 0%, #388e3c 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+
+@media (max-width: 480px) {
+    #notif-popup {
+        bottom: 20px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
 }
-.computer-unit.occupied {
-    background: linear-gradient(135deg, #e53935 0%, #c62828 100%);
+</style>
+
+<!-- Notification Modal -->
+<div class="notification-modal-overlay" id="notificationModal">
+    <div class="notification-modal">
+        <div class="notification-modal-header">
+            <h2>Notifications</h2>
+            <button class="notification-close-btn" id="closeNotifications">&times;</button>
+        </div>
+        <div class="notification-modal-body">
+            <?php if(!empty($notifications)): ?>
+                <div class="notification-actions">
+                    <a href="?mark_all_read=1" class="mark-all-read-btn">Mark all as read</a>
+                </div>
+                <?php foreach($notifications as $notif): ?>
+                    <div class="notification-item <?php echo $notif['is_read'] ? 'read' : 'unread'; ?>">
+                        <div class="notification-header">
+                            <span class="notification-title <?php echo $notif['type']; ?>">
+                                <?php if($notif['type'] === 'reservation_approved'): ?>
+                                    <span class="notif-icon approved">✓</span>
+                                <?php elseif($notif['type'] === 'reservation_rejected'): ?>
+                                    <span class="notif-icon rejected">✕</span>
+                                <?php else: ?>
+                                    <span class="notif-icon">ℹ</span>
+                                <?php endif; ?>
+                                <?php echo htmlspecialchars($notif['title']); ?>
+                            </span>
+                            <span class="notification-time"><?php echo date('M d, g:i A', strtotime($notif['created_at'])); ?></span>
+                        </div>
+                        <div class="notification-message"><?php echo htmlspecialchars($notif['message']); ?></div>
+                        <?php if(!$notif['is_read']): ?>
+                            <a href="?mark_notif_read=<?php echo $notif['id']; ?>" class="mark-read-btn">Mark as read</a>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div class="no-notifications">
+                    <p>No notifications yet.</p>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+<style>
+.notification-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.notif-badge {
+    background: #f44336;
     color: white;
-    cursor: not-allowed;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: bold;
+    min-width: 18px;
+    text-align: center;
+}
+
+.notification-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.notification-modal-overlay.active {
+    display: flex;
+}
+
+.notification-modal {
+    background: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 420px;
+    max-height: 85vh;
+    overflow: hidden;
+    box-shadow: 0 10px 50px rgba(0,0,0,0.3);
+    animation: slideUp 0.3s ease;
+}
+
+.notification-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, #0f5bbe 0%, #1976D2 100%);
+    color: white;
+}
+
+.notification-modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.notification-close-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.notification-close-btn:hover {
+    background: rgba(255,255,255,0.3);
+    transform: scale(1.1);
+}
+
+.notification-modal-body {
+    padding: 20px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.notification-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 15px;
+}
+
+.mark-all-read-btn {
+    color: #1976D2;
+    font-size: 13px;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: #e3f2fd;
+    transition: all 0.2s ease;
+}
+
+.mark-all-read-btn:hover {
+    background: #bbdefb;
+    text-decoration: none;
+}
+
+.notification-item {
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    background: #f8f9fa;
+    border-left: none;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.notification-item:hover {
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+}
+
+.notification-item.unread {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f0f7ff 100%);
+    border-left: 4px solid #1976D2;
+}
+
+.notification-item.unread::before {
+    content: '';
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 8px;
+    height: 8px;
+    background: #1976D2;
+    border-radius: 50%;
+}
+
+.notification-item.read {
     opacity: 0.7;
+    border-left-color: #ccc;
 }
-.computer-unit.unavailable {
-    background: linear-gradient(135deg, #e53935 0%, #c62828 100%);
-    color: white;
-    cursor: not-allowed;
-    opacity: 0.7;
+
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
 }
-.computer-unit.selected {
-    border: 3px solid #0f5bbe;
-    box-shadow: 0 0 10px rgba(15, 91, 190, 0.5);
+
+.notification-title {
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
-.computer-modal {
-    max-width: 600px;
+
+.notification-title.reservation_approved {
+    color: #4caf50;
+}
+
+.notification-title.reservation_rejected {
+    color: #f44336;
+}
+
+.notif-icon {
+    font-size: 14px;
+}
+
+.notif-icon.approved {
+    color: #4caf50;
+}
+
+.notif-icon.rejected {
+    color: #f44336;
+}
+
+.notification-time {
+    font-size: 12px;
+    color: #888;
+    font-weight: 400;
+}
+
+.notification-message {
+    color: #555;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.mark-read-btn {
+    display: inline-block;
+    margin-top: 10px;
+    color: #1976D2;
+    font-size: 12px;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 15px;
+    background: rgba(25, 118, 210, 0.1);
+    transition: all 0.2s ease;
+}
+
+.mark-read-btn:hover {
+    text-decoration: underline;
+}
+
+.no-notifications {
+    text-align: center;
+    padding: 40px 20px;
+    color: #888;
+}
+
+.no-notifications p {
+    font-size: 15px;
+    margin: 0;
 }
 </style>
 
@@ -531,34 +874,44 @@ $conn->close();
         let selectedComputer = null;
         
         // Open modal
-        openBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            modal.classList.add('active');
-        });
+        if(openBtn) {
+            openBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if(modal) modal.classList.add('active');
+            });
+        }
         
         // Close modal with X button
-        closeBtn.addEventListener('click', function() {
-            modal.classList.remove('active');
-        });
+        if(closeBtn && modal) {
+            closeBtn.addEventListener('click', function() {
+                modal.classList.remove('active');
+            });
+        }
         
         // Close computer modal with X button
-        closeComputerBtn.addEventListener('click', function() {
-            computerModal.classList.remove('active');
-        });
+        if(closeComputerBtn && computerModal) {
+            closeComputerBtn.addEventListener('click', function() {
+                computerModal.classList.remove('active');
+            });
+        }
         
         // Close modal when clicking outside
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) {
-                modal.classList.remove('active');
-            }
-        });
+        if(modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        }
         
         // Close computer modal when clicking outside
-        computerModal.addEventListener('click', function(e) {
-            if (e.target === computerModal) {
-                computerModal.classList.remove('active');
-            }
-        });
+        if(computerModal) {
+            computerModal.addEventListener('click', function(e) {
+                if (e.target === computerModal) {
+                    computerModal.classList.remove('active');
+                }
+            });
+        }
         
         // Close modal with Escape key
         document.addEventListener('keydown', function(e) {
@@ -572,133 +925,146 @@ $conn->close();
         });
         
         // Continue to Step 2 - Select Computer
-        continueBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            const labRoom = document.getElementById('lab-room').value;
-            const reservationDate = document.getElementById('reservation-date').value;
-            const reservationTime = document.getElementById('reservation-time').value;
-            const purpose = document.getElementById('purpose').value;
-            
-            if (!labRoom || !reservationDate || !reservationTime || !purpose) {
-                alert('Please fill in all required fields');
-                return;
-            }
-            
-            // Set info for Step 2
-            document.getElementById('selectedRoom').textContent = 'Room ' + labRoom;
-            document.getElementById('selectedDate').textContent = reservationDate;
-            
-            // Format time for display
-            const timeParts = reservationTime.split(':');
-            let hour = parseInt(timeParts[0]);
-            const ampm = hour >= 12 ? 'PM' : 'AM';
-            hour = hour % 12;
-            hour = hour ? hour : 12;
-            const minute = timeParts[1];
-            document.getElementById('selectedTime').textContent = hour + ':' + minute + ' ' + ampm;
-            
-            // Set hidden form values
-            document.getElementById('inputLabRoom').value = labRoom;
-            document.getElementById('inputReservationDate').value = reservationDate;
-            document.getElementById('inputReservationTime').value = reservationTime;
-            document.getElementById('inputPurpose').value = purpose;
-            document.getElementById('inputAdditionalNotes').value = document.getElementById('additional-notes').value;
-            
-            // Fetch available computers
-            fetch('/SYSARCH/pages/api/get_computers.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: 'lab_room=' + encodeURIComponent(labRoom) + 
-                      '&reservation_date=' + encodeURIComponent(reservationDate) + 
-                      '&reservation_time=' + encodeURIComponent(reservationTime)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('HTTP error: ' + response.status);
-                }
-                return response.text();
-            })
-            .then(text => {
-                console.log('Raw response:', text);
-                let data;
-                try {
-                    data = JSON.parse(text);
-                } catch(e) {
-                    throw new Error('Invalid JSON: ' + text);
-                }
-                console.log('API Response:', data);
-                if (data.error) {
-                    alert('Error: ' + data.error);
+        if(continueBtn) {
+            continueBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const labRoom = document.getElementById('lab-room').value;
+                const reservationDate = document.getElementById('reservation-date').value;
+                const reservationTime = document.getElementById('reservation-time').value;
+                const purpose = document.getElementById('purpose').value;
+                
+                if (!labRoom || !reservationDate || !reservationTime || !purpose) {
+                    alert('Please fill in all required fields');
                     return;
                 }
+            
+                // Set info for Step 2
+                document.getElementById('selectedRoom').textContent = 'Room ' + labRoom;
+                document.getElementById('selectedDate').textContent = reservationDate;
                 
-                const grid = document.getElementById('computerGrid');
-                grid.innerHTML = '';
+                // Format time for display
+                const timeParts = reservationTime.split(':');
+                let hour = parseInt(timeParts[0]);
+                const ampm = hour >= 12 ? 'PM' : 'AM';
+                hour = hour % 12;
+                hour = hour ? hour : 12;
+                const minute = timeParts[1];
+                document.getElementById('selectedTime').textContent = hour + ':' + minute + ' ' + ampm;
                 
-                if (data.computers.length === 0) {
-                    grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">No computers found for this lab. Please try another lab.</p>';
+                // Set hidden form values
+                document.getElementById('inputLabRoom').value = labRoom;
+                document.getElementById('inputReservationDate').value = reservationDate;
+                document.getElementById('inputReservationTime').value = reservationTime;
+                document.getElementById('inputPurpose').value = purpose;
+                document.getElementById('inputAdditionalNotes').value = document.getElementById('additional-notes').value;
+                
+                // Fetch available computers
+                fetch('/SYSARCH/pages/api/get_computers.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'lab_room=' + encodeURIComponent(labRoom) + 
+                          '&reservation_date=' + encodeURIComponent(reservationDate) + 
+                          '&reservation_time=' + encodeURIComponent(reservationTime)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('HTTP error: ' + response.status);
+                    }
+                    return response.text();
+                })
+                .then(text => {
+                    console.log('Raw response:', text);
+                    let data;
+                    try {
+                        data = JSON.parse(text);
+                    } catch(e) {
+                        console.error('JSON parse error:', e);
+                        throw new Error('Invalid JSON: ' + text);
+                    }
+                    console.log('API Response:', data);
+                    console.log('Computers:', JSON.stringify(data.computers));
+                    if (data.error) {
+                        alert('Error: ' + data.error);
+                        return;
+                    }
+                    
+                    if (!data.computers) {
+                        console.error('No computers array in response');
+                        alert('Error: Invalid response from server');
+                        return;
+                    }
+                    
+                    const grid = document.getElementById('computerGrid');
+                    grid.innerHTML = '';
+                    
+                    if (data.computers.length === 0) {
+                        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">No computers found for this lab. Please try another lab.</p>';
+                        modal.classList.remove('active');
+                        computerModal.classList.add('active');
+                        return;
+                    }
+                    
+                    // Rightmost column: 1-10 down, next: 20-11 up, next: 21-30 down, etc.
+                    const computers = data.computers;
+                    const rowsPerCol = 10;
+                    const totalCols = Math.ceil(computers.length / rowsPerCol);
+                    const arranged = [];
+                    
+                    // Fill columns from right to left
+                    for (let col = totalCols - 1; col >= 0; col--) {
+                        const start = col * rowsPerCol;
+                        const end = Math.min(start + rowsPerCol, computers.length);
+                        const colData = computers.slice(start, end);
+                        
+                        if ((totalCols - 1 - col) % 2 === 0) {
+                            // Rightmost, 3rd from right, etc.: top to bottom (1-10, 21-30)
+                            arranged.push(...colData);
+                        } else {
+                            // 2nd from right, 4th from right, etc.: bottom to top (20-11, 40-31)
+                            arranged.push(...[...colData].reverse());
+                        }
+                    }
+                    
+                    arranged.forEach(comp => {
+                        const unit = document.createElement('div');
+                        const adminStatus = (comp.admin_status || 'available').toLowerCase();
+                        const isAdminUnavailable = adminStatus === 'unavailable';
+                        const isOccupied = !comp.available && !isAdminUnavailable;
+                        let statusClass = (isAdminUnavailable || isOccupied) ? 'unavailable' : 'available';
+                        console.log('Computer:', comp.computer_number, 'admin_status:', comp.admin_status, 'isAdminUnavailable:', isAdminUnavailable);
+                        unit.className = 'computer-unit ' + statusClass;
+                        unit.textContent = comp.computer_number;
+                        unit.title = statusClass === 'available' ? 'Click to select Computer ' + comp.computer_number : 'Computer ' + comp.computer_number + ' is not available';
+                        
+                        if (statusClass === 'available') {
+                            unit.addEventListener('click', function() {
+                                document.querySelectorAll('.computer-unit.selected').forEach(el => {
+                                    el.classList.remove('selected');
+                                });
+                                unit.classList.add('selected');
+                                selectedComputer = comp.computer_number;
+                                document.getElementById('inputComputerNo').value = selectedComputer;
+                            });
+                        }
+                        
+                        grid.appendChild(unit);
+                    });
+                    
+                    // Hide step 1 modal and show step 2 modal
+                    console.log('Showing computer modal, computers found:', data.computers.length);
                     modal.classList.remove('active');
                     computerModal.classList.add('active');
-                    return;
-                }
-                
-                // Rightmost column: 1-10 down, next: 20-11 up, next: 21-30 down, etc.
-                const computers = data.computers;
-                const rowsPerCol = 10;
-                const totalCols = Math.ceil(computers.length / rowsPerCol);
-                const arranged = [];
-                
-                // Fill columns from right to left
-                for (let col = totalCols - 1; col >= 0; col--) {
-                    const start = col * rowsPerCol;
-                    const end = Math.min(start + rowsPerCol, computers.length);
-                    const colData = computers.slice(start, end);
-                    
-                    if ((totalCols - 1 - col) % 2 === 0) {
-                        // Rightmost, 3rd from right, etc.: top to bottom (1-10, 21-30)
-                        arranged.push(...colData);
-                    } else {
-                        // 2nd from right, 4th from right, etc.: bottom to top (20-11, 40-31)
-                        arranged.push(...[...colData].reverse());
-                    }
-                }
-                
-                arranged.forEach(comp => {
-                    const unit = document.createElement('div');
-                    const adminStatus = (comp.admin_status || '').toLowerCase();
-                    const isAdminUnavailable = !comp.available || adminStatus === 'unavailable' || adminStatus === '';
-                    let statusClass = isAdminUnavailable ? 'unavailable' : 'available';
-                    console.log('Computer:', comp.computer_number, 'admin_status:', comp.admin_status, 'isAdminUnavailable:', isAdminUnavailable);
-                    unit.className = 'computer-unit ' + statusClass;
-                    unit.textContent = comp.computer_number;
-                    unit.title = comp.available && adminStatus === 'available' ? 'Click to select' : 'Not available';
-                    
-                    if (!isAdminUnavailable) {
-                        unit.addEventListener('click', function() {
-                            document.querySelectorAll('.computer-unit.selected').forEach(el => {
-                                el.classList.remove('selected');
-                            });
-                            unit.classList.add('selected');
-                            selectedComputer = comp.computer_number;
-                            document.getElementById('inputComputerNo').value = selectedComputer;
-                        });
-                    }
-                    
-                    grid.appendChild(unit);
+                    console.log('Computer modal should be visible now');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to load computers: ' + error.message + '\nCheck console for details');
                 });
-                
-                // Hide step 1 modal and show step 2 modal
-                modal.classList.remove('active');
-                computerModal.classList.add('active');
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Failed to load computers: ' + error.message + '\nCheck console for details');
             });
-        });
+        }
         
         // Handle form submission from Step 2
         document.getElementById('reservationFormStep2').addEventListener('submit', function(e) {

@@ -142,6 +142,14 @@ if(isset($_GET['action']) && isset($_GET['id'])) {
                 }
                 $sit_in_stmt->close();
                 
+                // Create notification for the student
+                $notif_title = "Reservation Approved";
+                $notif_message = "Your reservation for Room $lab on $sit_date at $sit_time has been approved! Computer $computer_no has been assigned.";
+                $notif_stmt = $conn->prepare("INSERT INTO notifications (id_number, type, title, message) VALUES (?, 'reservation_approved', ?, ?)");
+                $notif_stmt->bind_param("sss", $student_id, $notif_title, $notif_message);
+                $notif_stmt->execute();
+                $notif_stmt->close();
+                
                 $session_stmt->close();
                 $get_stmt->close();
                 
@@ -160,11 +168,37 @@ if(isset($_GET['action']) && isset($_GET['id'])) {
         header("Location: /SYSARCH/pages/manage_reservations.php?error=" . urlencode("Reservation not found."));
         exit;
     } elseif($action === 'reject') {
-        $stmt = $conn->prepare("UPDATE reservations SET status = 'Rejected' WHERE id = ?");
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        $stmt->close();
-        header("Location: /SYSARCH/pages/manage_reservations.php?success=Reservation rejected!");
+        // First get the reservation details for notification
+        $get_stmt = $conn->prepare("SELECT * FROM reservations WHERE id = ?");
+        $get_stmt->bind_param("i", $id);
+        $get_stmt->execute();
+        $res_result = $get_stmt->get_result();
+        
+        if($res_row = $res_result->fetch_assoc()) {
+            $student_id = $res_row['id_number'];
+            $lab = $res_row['lab_room'];
+            $reservation_date = $res_row['reservation_date'];
+            $reservation_time = $res_row['reservation_time'];
+            
+            $stmt = $conn->prepare("UPDATE reservations SET status = 'Rejected' WHERE id = ?");
+            $stmt->bind_param("i", $id);
+            $stmt->execute();
+            $stmt->close();
+            
+            // Create notification for the student
+            $notif_title = "Reservation Rejected";
+            $notif_message = "Your reservation for Room $lab on $reservation_date at $reservation_time has been rejected.";
+            $notif_stmt = $conn->prepare("INSERT INTO notifications (id_number, type, title, message) VALUES (?, 'reservation_rejected', ?, ?)");
+            $notif_stmt->bind_param("sss", $student_id, $notif_title, $notif_message);
+            $notif_stmt->execute();
+            $notif_stmt->close();
+            
+            $get_stmt->close();
+            header("Location: /SYSARCH/pages/manage_reservations.php?success=Reservation rejected!");
+            exit;
+        }
+        $get_stmt->close();
+        header("Location: /SYSARCH/pages/manage_reservations.php?error=Reservation not found.");
         exit;
     }
 }

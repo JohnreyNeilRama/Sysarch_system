@@ -27,6 +27,15 @@ try {
         $conn->query("ALTER TABLE computers ADD COLUMN status VARCHAR(20) DEFAULT 'available'");
     }
     
+    // Check if status column is ENUM and convert to VARCHAR
+    $check_status_type = $conn->query("SHOW COLUMNS FROM computers LIKE 'status'");
+    if ($check_status_type->num_rows > 0) {
+        $status_row = $check_status_type->fetch_assoc();
+        if (strpos($status_row['Type'], 'enum') !== false) {
+            $conn->query("ALTER TABLE computers MODIFY COLUMN status VARCHAR(20) DEFAULT 'available'");
+        }
+    }
+    
     $check_table = $conn->query("SHOW TABLES LIKE 'computers'");
     if ($check_table->num_rows == 0) {
         $create_table = "CREATE TABLE IF NOT EXISTS computers (

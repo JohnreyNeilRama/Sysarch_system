@@ -199,18 +199,25 @@ $result = $stmt->get_result();
                 <th>Course</th>
                 <th>Year Level</th>
                 <th>Remaining Sessions</th>
+                <th>Points Earned</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             <?php if($result->num_rows > 0): ?>
                 <?php while($row = $result->fetch_assoc()): ?>
+                    <?php 
+                        $student_sessions = (isset($row['sessions']) && $row['sessions'] !== null) ? intval($row['sessions']) : 30;
+                        $sessions_used = 30 - $student_sessions;
+                        $points_earned = floor($sessions_used / 3);
+                    ?>
                     <tr>
                         <td><?php echo htmlspecialchars($row['id_number']); ?></td>
                         <td><?php echo htmlspecialchars($row['last_name'] . ', ' . $row['first_name']); ?></td>
                         <td><?php echo htmlspecialchars($row['course']); ?></td>
                         <td><?php echo htmlspecialchars($row['year_level']); ?></td>
-                        <td><?php echo htmlspecialchars($row['sessions']); ?></td>
+                        <td><?php echo $student_sessions; ?></td>
+                        <td><?php echo $points_earned; ?></td>
                         <td class="action-buttons">
                             <a href="edit_student.php?id=<?php echo $row['id']; ?>" class="btn-edit">Edit</a>
                             <a href="delete_student.php?id=<?php echo $row['id']; ?>" class="btn-delete" onclick="return confirm('Are you sure you want to delete this student?');">Delete</a>
@@ -219,7 +226,7 @@ $result = $stmt->get_result();
                 <?php endwhile; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="6" style="text-align: center;">No students found.</td>
+                    <td colspan="7" style="text-align: center;">No students found.</td>
                 </tr>
             <?php endif; ?>
         </tbody>

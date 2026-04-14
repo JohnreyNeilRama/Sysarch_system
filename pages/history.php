@@ -52,6 +52,47 @@ while($row = $result_rejected->fetch_assoc()) {
 usort($all_records, function($a, $b) {
     return strtotime($b['sit_in_date'] . ' ' . $b['login_time']) - strtotime($a['sit_in_date'] . ' ' . $a['login_time']);
 });
+
+// Fetch notifications for the logged-in student
+$notif_student_id = $_SESSION['id_number'];
+$notif_count_sql = "SELECT COUNT(*) as unread_count FROM notifications WHERE id_number = ? AND is_read = 0";
+$notif_count_stmt = $conn->prepare($notif_count_sql);
+$notif_count_stmt->bind_param("s", $notif_student_id);
+$notif_count_stmt->execute();
+$notif_count_result = $notif_count_stmt->get_result();
+$notif_count_row = $notif_count_result->fetch_assoc();
+$unread_notifications = $notif_count_row['unread_count'];
+$notif_count_stmt->close();
+
+$notif_sql = "SELECT * FROM notifications WHERE id_number = ? ORDER BY created_at DESC LIMIT 10";
+$notif_stmt = $conn->prepare($notif_sql);
+$notif_stmt->bind_param("s", $notif_student_id);
+$notif_stmt->execute();
+$notif_result = $notif_stmt->get_result();
+$notifications = [];
+while($row = $notif_result->fetch_assoc()) {
+    $notifications[] = $row;
+}
+$notif_stmt->close();
+
+if(isset($_GET['mark_notif_read'])) {
+    $notif_id = intval($_GET['mark_notif_read']);
+    $mark_read_stmt = $conn->prepare("UPDATE notifications SET is_read = 1 WHERE id = ? AND id_number = ?");
+    $mark_read_stmt->bind_param("is", $notif_id, $notif_student_id);
+    $mark_read_stmt->execute();
+    $mark_read_stmt->close();
+    header("Location: /SYSARCH/pages/history.php");
+    exit;
+}
+
+if(isset($_GET['mark_all_read'])) {
+    $mark_all_stmt = $conn->prepare("UPDATE notifications SET is_read = 1 WHERE id_number = ?");
+    $mark_all_stmt->bind_param("s", $notif_student_id);
+    $mark_all_stmt->execute();
+    $mark_all_stmt->close();
+    header("Location: /SYSARCH/pages/history.php");
+    exit;
+}
 ?>
 
 <!DOCTYPE html>
@@ -346,6 +387,81 @@ usort($all_records, function($a, $b) {
                 font-size: 12px;
             }
         }
+        
+        #notif-popup {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 10000;
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            max-width: 400px;
+        }
+
+        #notif-popup.show {
+            transform: translateX(0);
+        }
+
+        .notif-popup-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .notif-popup-content {
+            flex: 1;
+        }
+
+        .notif-popup-title {
+            font-weight: 700;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .notif-popup-message {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .notif-popup-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #999;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+
+        .notif-popup-close:hover {
+            color: #333;
+        }
+
+        @media (max-width: 480px) {
+            #notif-popup {
+                bottom: 20px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+        }
     </style>
 </head>
 
@@ -359,7 +475,9 @@ usort($all_records, function($a, $b) {
     </div>
     <button class="mobile-menu-toggle" id="mobileMenuToggle">☰</button>
     <ul class="dashboard-right" id="navRight">    
-        <li><a href="#">Notification</a></li>
+        <li><a href="#" class="notification-link" id="openNotifications">
+            Notification <?php if($unread_notifications > 0): ?><span class="notif-badge"><?php echo $unread_notifications; ?></span><?php endif; ?>
+        </a></li>
         <li><a href="/SYSARCH/userdb.php">Home</a></li>
         <li><a href="/SYSARCH/edit_profile.php">Edit Profile</a></li>
         <li><a href="/SYSARCH/history.php" class="active">History</a></li>
@@ -371,14 +489,100 @@ usort($all_records, function($a, $b) {
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        checkNewNotifications();
+        
         const mobileMenuToggle = document.getElementById('mobileMenuToggle');
         const navRight = document.getElementById('navRight');
+        
+        // Notification modal
+        const notificationModal = document.getElementById('notificationModal');
+        const openNotificationsBtn = document.getElementById('openNotifications');
+        const closeNotificationsBtn = document.getElementById('closeNotifications');
+        
+        if(openNotificationsBtn) {
+            openNotificationsBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                notificationModal.classList.add('active');
+            });
+        }
+        
+        if(closeNotificationsBtn) {
+            closeNotificationsBtn.addEventListener('click', function() {
+                notificationModal.classList.remove('active');
+            });
+        }
+        
+        notificationModal.addEventListener('click', function(e) {
+            if(e.target === notificationModal) {
+                notificationModal.classList.remove('active');
+            }
+        });
+        
+        document.addEventListener('keydown', function(e) {
+            if(e.key === 'Escape') {
+                if(notificationModal.classList.contains('active')) {
+                    notificationModal.classList.remove('active');
+                }
+            }
+        });
         
         mobileMenuToggle.addEventListener('click', function() {
             navRight.classList.toggle('active');
             this.textContent = navRight.classList.contains('active') ? '✕' : '☰';
         });
     });
+    
+    function checkNewNotifications() {
+        fetch('/SYSARCH/pages/api/check_new_notifications.php')
+            .then(response => response.json())
+            .then(data => {
+                if (data.newNotification) {
+                    showNotificationPopup(data.notification);
+                }
+            })
+            .catch(error => console.error('Error checking notifications:', error));
+    }
+    
+    function showNotificationPopup(notification) {
+        const popup = document.createElement('div');
+        popup.id = 'notif-popup';
+        
+        let icon = '';
+        let bgColor = '';
+        
+        if (notification.type === 'reservation_approved') {
+            icon = '✓';
+            bgColor = 'linear-gradient(135deg, #4caf50 0%, #43a047 100%)';
+        } else if (notification.type === 'reservation_rejected') {
+            icon = '✕';
+            bgColor = 'linear-gradient(135deg, #f44336 0%, #c62828 100%)';
+        } else {
+            icon = 'ℹ';
+            bgColor = 'linear-gradient(135deg, #0f5bbe 0%, #1976D2 100%)';
+        }
+        
+        popup.innerHTML = `
+            <div class="notif-popup-icon" style="background: ${bgColor};">${icon}</div>
+            <div class="notif-popup-content">
+                <div class="notif-popup-title">${notification.title}</div>
+                <div class="notif-popup-message">${notification.message}</div>
+            </div>
+            <button class="notif-popup-close" onclick="this.parentElement.remove();">&times;</button>
+        `;
+        
+        document.body.appendChild(popup);
+        
+        setTimeout(() => {
+            popup.classList.add('show');
+        }, 100);
+        
+        setTimeout(() => {
+            if (popup.parentElement) {
+                popup.classList.remove('show');
+                setTimeout(() => popup.remove(), 300);
+            }
+        }, 8000);
+    }
 </script>
 
 <div class="history-container">
@@ -720,6 +924,218 @@ usort($all_records, function($a, $b) {
 }
 </style>
 
+<!-- Notification Modal -->
+<div class="notification-modal-overlay" id="notificationModal">
+    <div class="notification-modal">
+        <div class="notification-modal-header">
+            <h2>Notifications</h2>
+            <button class="notification-close-btn" id="closeNotifications">&times;</button>
+        </div>
+        <div class="notification-modal-body">
+            <?php if(!empty($notifications)): ?>
+                <div class="notification-actions">
+                    <a href="?mark_all_read=1" class="mark-all-read-btn">Mark all as read</a>
+                </div>
+                <?php foreach($notifications as $notif): ?>
+                    <div class="notification-item <?php echo $notif['is_read'] ? 'read' : 'unread'; ?>">
+                        <div class="notification-header">
+                            <span class="notification-title <?php echo $notif['type']; ?>">
+                                <?php if($notif['type'] === 'reservation_approved'): ?>
+                                    <span class="notif-icon approved">✓</span>
+                                <?php elseif($notif['type'] === 'reservation_rejected'): ?>
+                                    <span class="notif-icon rejected">✕</span>
+                                <?php else: ?>
+                                    <span class="notif-icon">ℹ</span>
+                                <?php endif; ?>
+                                <?php echo htmlspecialchars($notif['title']); ?>
+                            </span>
+                            <span class="notification-time"><?php echo date('M d, g:i A', strtotime($notif['created_at'])); ?></span>
+                        </div>
+                        <div class="notification-message"><?php echo htmlspecialchars($notif['message']); ?></div>
+                        <?php if(!$notif['is_read']): ?>
+                            <a href="?mark_notif_read=<?php echo $notif['id']; ?>" class="mark-read-btn">Mark as read</a>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div class="no-notifications">
+                    <p>No notifications yet.</p>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+<style>
+.notification-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.notif-badge {
+    background: #f44336;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: bold;
+    min-width: 18px;
+    text-align: center;
+}
+
+.notification-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.notification-modal-overlay.active {
+    display: flex;
+}
+
+.notification-modal {
+    background: white;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 450px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.notification-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.notification-modal-header h2 {
+    margin: 0;
+    color: #333;
+    font-size: 20px;
+}
+
+.notification-close-btn {
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #666;
+}
+
+.notification-modal-body {
+    padding: 15px;
+}
+
+.notification-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+
+.mark-all-read-btn {
+    color: #0f5bbe;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.mark-all-read-btn:hover {
+    text-decoration: underline;
+}
+
+.notification-item {
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background: #f5f5f5;
+    border-left: 4px solid #0f5bbe;
+}
+
+.notification-item.unread {
+    background: #e3f2fd;
+    border-left-color: #0f5bbe;
+}
+
+.notification-item.read {
+    opacity: 0.7;
+    border-left-color: #ccc;
+}
+
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.notification-title {
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.notification-title.reservation_approved {
+    color: #4caf50;
+}
+
+.notification-title.reservation_rejected {
+    color: #f44336;
+}
+
+.notif-icon {
+    font-size: 14px;
+}
+
+.notif-icon.approved {
+    color: #4caf50;
+}
+
+.notif-icon.rejected {
+    color: #f44336;
+}
+
+.notification-time {
+    font-size: 12px;
+    color: #666;
+}
+
+.notification-message {
+    color: #555;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.mark-read-btn {
+    display: inline-block;
+    margin-top: 8px;
+    color: #0f5bbe;
+    font-size: 12px;
+    text-decoration: none;
+}
+
+.mark-read-btn:hover {
+    text-decoration: underline;
+}
+
+.no-notifications {
+    text-align: center;
+    padding: 30px;
+    color: #666;
+}
+</style>
+
 <!-- JavaScript for Modal -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -875,6 +1291,7 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Please select a computer unit');
         }
     });
+});
 </script>
 
 <script>

@@ -51,23 +51,28 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     $year_level = $_POST['year_level'];
     $sessions = $_POST['sessions'];
     
-    $update_stmt = $conn->prepare("UPDATE students SET id_number = ?, first_name = ?, last_name = ?, course = ?, year_level = ?, sessions = ? WHERE id = ?");
-    $update_stmt->bind_param("sssssii", $id_number, $first_name, $last_name, $course, $year_level, $sessions, $student_id);
-    
-    if($update_stmt->execute()){
-        $message = "Student updated successfully!";
-        // Refresh student data
-        $stmt = $conn->prepare("SELECT id, id_number, first_name, last_name, course, year_level, email, sessions FROM students WHERE id = ?");
-        $stmt->bind_param("i", $student_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $student = $result->fetch_assoc();
-        $stmt->close();
+    // Validate sessions - must be between 0 and 30
+    if($sessions < 0 || $sessions > 30){
+        $message = "Error: Sessions must be between 0 and 30.";
     } else {
-        $message = "Error updating student: " . $conn->error;
+        $update_stmt = $conn->prepare("UPDATE students SET id_number = ?, first_name = ?, last_name = ?, course = ?, year_level = ?, sessions = ? WHERE id = ?");
+        $update_stmt->bind_param("sssssii", $id_number, $first_name, $last_name, $course, $year_level, $sessions, $student_id);
+        
+        if($update_stmt->execute()){
+            $message = "Student updated successfully!";
+            // Refresh student data
+            $stmt = $conn->prepare("SELECT id, id_number, first_name, last_name, course, year_level, email, sessions FROM students WHERE id = ?");
+            $stmt->bind_param("i", $student_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $student = $result->fetch_assoc();
+            $stmt->close();
+        } else {
+            $message = "Error updating student: " . $conn->error;
+        }
+        
+        $update_stmt->close();
     }
-    
-    $update_stmt->close();
 }
 
 $conn->close();
@@ -188,7 +193,6 @@ $conn->close();
         <img class="admin-logo" src="/SYSARCH/assets/images/uclogo.png" alt="UC Logo">
         <span class="admin-title">Admin Dashboard</span>
     </div>
-    <button class="mobile-menu-toggle" id="mobileMenuToggle">☰</button>
     <ul class="dashboard-right" id="navRight">    
         <li><a href="admin_dashboard.php">Dashboard</a></li>
         <li><a href="manage_students.php" class="active">Manage Students</a></li>
@@ -199,18 +203,6 @@ $conn->close();
         <li><a href="/SYSARCH/logout.php" class="logout-btn">Log Out</a></li>
     </ul>
 </nav>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-        const navRight = document.getElementById('navRight');
-        
-        mobileMenuToggle.addEventListener('click', function() {
-            navRight.classList.toggle('active');
-            this.textContent = navRight.classList.contains('active') ? '✕' : '☰';
-        });
-    });
-</script>
 
 <div class="edit-container">
     <h2>Edit Student</h2>
@@ -253,8 +245,8 @@ $conn->close();
         </div>
         
         <div class="form-group">
-            <label>Remaining Sessions</label>
-            <input type="number" name="sessions" value="<?php echo htmlspecialchars($student['sessions']); ?>" required min="0">
+            <label>Remaining Sessions (Max: 30)</label>
+            <input type="number" name="sessions" value="<?php echo htmlspecialchars($student['sessions']); ?>" required min="0" max="30">
         </div>
         
         <div class="button-group">
