@@ -209,10 +209,17 @@ if(isset($_GET['mark_all_read'])) {
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.6);
             z-index: 1000;
             justify-content: center;
             align-items: center;
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         
         .feedback-modal-overlay.active {
@@ -221,82 +228,164 @@ if(isset($_GET['mark_all_read'])) {
         
         .feedback-modal {
             background: white;
-            border-radius: 10px;
+            border-radius: 16px;
             width: 90%;
-            max-width: 500px;
+            max-width: 480px;
             max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0,3);
+            animation: slideUp 0.3s ease;
+        }
+        
+        .feedback-modal-content {
+            max-height: calc(90vh - 80px);
             overflow-y: auto;
+            border-radius: 0 0 16px 16px;
+        }
+        
+        .feedback-modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .feedback-modal-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .feedback-modal-content::-webkit-scrollbar-thumb {
+            background: rgba(15, 91, 190, 0.3);
+            border-radius: 4px;
+        }
+        
+        .feedback-modal-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(15, 91, 190, 0.5);
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
         
         .feedback-modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px;
+            padding: 24px;
             border-bottom: 1px solid #eee;
+            background: linear-gradient(135deg, #0f5bbe 0%, #1a73e8 100%);
+            border-radius: 16px 16px 0 0;
         }
         
         .feedback-modal-header h3 {
             margin: 0;
-            color: #333;
+            color: white;
+            font-size: 20px;
+            font-weight: 600;
         }
         
         .feedback-close-btn {
-            background: none;
+            background: rgba(255,255,255,0.2);
             border: none;
-            font-size: 28px;
+            font-size: 24px;
             cursor: pointer;
-            color: #666;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        
+        .feedback-close-btn:hover {
+            background: rgba(255,255,255,0.3);
         }
         
         .feedback-modal-body {
-            padding: 20px;
+            padding: 24px;
         }
         
         .feedback-form .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         
         .feedback-form label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-weight: 600;
             color: #333;
+            font-size: 14px;
         }
         
         .feedback-form textarea {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
             font-size: 14px;
             resize: vertical;
-            min-height: 100px;
+            min-height: 120px;
+            transition: border-color 0.3s ease;
+            font-family: inherit;
+        }
+        
+        .feedback-form textarea:focus {
+            outline: none;
+            border-color: #0f5bbe;
         }
         
         .feedback-form select {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
             font-size: 14px;
+            transition: border-color 0.3s ease;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .feedback-form select:focus {
+            outline: none;
+            border-color: #0f5bbe;
         }
         
         .feedback-submit-btn {
             width: 100%;
-            padding: 12px;
-            background: #0f5bbe;
+            padding: 16px;
+            background: linear-gradient(135deg, #0f5bbe 0%, #1a73e8 100%);
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 10px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(15, 91, 190, 0.3);
         }
         
         .feedback-submit-btn:hover {
-            background: #0d4fa1;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(15, 91, 190, 0.4);
+        }
+        
+        .feedback-details-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 16px;
+            border-radius: 10px;
+            border-left: 4px solid #0f5bbe;
+        }
+        
+        .feedback-details-card p {
+            margin: 0;
+            color: #495057;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .feedback-details-card strong {
+            color: #0f5bbe;
+            font-weight: 600;
         }
         
         /* Responsive Styles */
@@ -655,7 +744,8 @@ if(isset($_GET['mark_all_read'])) {
             <h3>Submit Feedback</h3>
             <button class="feedback-close-btn" id="closeFeedback">&times;</button>
         </div>
-        <div class="feedback-modal-body">
+        <div class="feedback-modal-content">
+            <div class="feedback-modal-body">
             <form class="feedback-form" action="/SYSARCH/includes/process_feedback.php" method="POST">
                 <input type="hidden" name="sit_in_id" id="feedback-sit-in-id">
                 <input type="hidden" name="student_id" value="<?php echo $_SESSION['id_number']; ?>">
@@ -663,7 +753,9 @@ if(isset($_GET['mark_all_read'])) {
                 
                 <div class="form-group">
                     <label>Sit-in Details</label>
-                    <p id="feedback-details" style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin: 0;"></p>
+                    <div class="feedback-details-card">
+                        <p id="feedback-details"></p>
+                    </div>
                 </div>
                 
                 <div class="form-group">
@@ -685,6 +777,7 @@ if(isset($_GET['mark_all_read'])) {
                 
                 <button type="submit" class="feedback-submit-btn">Submit Feedback</button>
             </form>
+        </div>
         </div>
     </div>
 </div>
@@ -1141,9 +1234,11 @@ if(isset($_GET['mark_all_read'])) {
 document.addEventListener('DOMContentLoaded', function() {
     const modal = document.getElementById('reservationModal');
     const computerModal = document.getElementById('computerModal');
+    const feedbackModal = document.getElementById('feedbackModal');
     const openReservationBtn = document.getElementById('openReservation');
     const closeReservationBtn = document.getElementById('closeReservation');
     const closeComputerBtn = document.getElementById('closeComputerModal');
+    const closeFeedbackBtn = document.getElementById('closeFeedback');
     const continueBtn = document.getElementById('continueToStep2');
     let selectedComputer = null;
     
@@ -1160,15 +1255,13 @@ document.addEventListener('DOMContentLoaded', function() {
         computerModal.classList.remove('active');
     });
     
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) {
-            modal.classList.remove('active');
-        }
+    closeFeedbackBtn.addEventListener('click', function() {
+        feedbackModal.classList.remove('active');
     });
     
-    computerModal.addEventListener('click', function(e) {
-        if (e.target === computerModal) {
-            computerModal.classList.remove('active');
+    feedbackModal.addEventListener('click', function(e) {
+        if (e.target === feedbackModal) {
+            feedbackModal.classList.remove('active');
         }
     });
     
@@ -1178,6 +1271,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 computerModal.classList.remove('active');
             } else if (modal.classList.contains('active')) {
                 modal.classList.remove('active');
+            } else if (feedbackModal.classList.contains('active')) {
+                feedbackModal.classList.remove('active');
             }
         }
     });
@@ -1301,6 +1396,11 @@ document.addEventListener('DOMContentLoaded', function() {
             '<strong>Purpose:</strong> ' + purpose + '<br>' +
             '<strong>Laboratory:</strong> ' + lab + '<br>' +
             '<strong>Date:</strong> ' + date;
+        
+        // Reset form fields
+        document.getElementById('rating').value = '';
+        document.getElementById('feedback-comment').value = '';
+        
         document.getElementById('feedbackModal').classList.add('active');
     }
 </script>
