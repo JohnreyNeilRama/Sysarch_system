@@ -67,14 +67,19 @@ if ($check_status_type->num_rows > 0) {
     }
 }
 
-// Populate computers for each lab if not exists
+// Populate computers for each lab if not exists (optimized with bulk insert)
 $lab_rooms = ['524', '525', '526', '527', '528'];
-foreach ($lab_rooms as $lab) {
-    for ($i = 1; $i <= 50; $i++) {
-        $check = $conn->query("SELECT id FROM computers WHERE lab_room = '$lab' AND computer_number = '$i'");
-        if ($check->num_rows == 0) {
-            $conn->query("INSERT INTO computers (lab_room, computer_number, status) VALUES ('$lab', '$i', 'available')");
+$check_existing = $conn->query("SELECT COUNT(*) as cnt FROM computers");
+$row = $check_existing->fetch_assoc();
+if ($row['cnt'] == 0) {
+    $values = [];
+    foreach ($lab_rooms as $lab) {
+        for ($i = 1; $i <= 50; $i++) {
+            $values[] = "('$lab', '$i', 'available')";
         }
+    }
+    if (!empty($values)) {
+        $conn->query("INSERT INTO computers (lab_room, computer_number, status) VALUES " . implode(",", $values));
     }
 }
 
@@ -123,12 +128,13 @@ if(isset($_GET['mark_all_read'])) {
 }
 
 // Fetch current sessions from database before closing connection
-$session_fetch_stmt = $conn->prepare("SELECT sessions FROM students WHERE id_number = ?");
+$session_fetch_stmt = $conn->prepare("SELECT sessions, points_earned FROM students WHERE id_number = ?");
 $session_fetch_stmt->bind_param("s", $notif_student_id);
 $session_fetch_stmt->execute();
 $session_fetch_result = $session_fetch_stmt->get_result();
 $session_fetch_row = $session_fetch_result->fetch_assoc();
 $current_sessions = $session_fetch_row ? $session_fetch_row['sessions'] : 30;
+$current_points_earned = $session_fetch_row ? $session_fetch_row['points_earned'] : 0;
 $session_fetch_stmt->close();
 
 $conn->close();
@@ -285,8 +291,7 @@ $conn->close();
             <p><strong>Address:</strong> <span><?php echo $_SESSION['address']; ?></span></p>
             <?php 
                 $remaining_sessions = $current_sessions;
-                $sessions_used = 30 - $remaining_sessions;
-                $points_earned = floor($sessions_used / 3);
+                $points_earned = $current_points_earned;
             ?>
             <p><strong>Remaining Sessions:</strong> <span><?php echo $remaining_sessions; ?></span></p>
             <p><strong>Points Earned:</strong> <span><?php echo $points_earned; ?></span></p>

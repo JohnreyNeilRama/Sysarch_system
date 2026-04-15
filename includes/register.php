@@ -60,7 +60,7 @@ if($result->num_rows > 0){
 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
 // Use prepared statement for security
-$stmt = $conn->prepare("INSERT INTO students (id_number, last_name, first_name, middle_name, course, year_level, email, password, address, sessions) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 30)");
+$stmt = $conn->prepare("INSERT INTO students (id_number, last_name, first_name, middle_name, course, year_level, email, password, address, sessions, points_earned) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 30, 0)");
 $stmt->bind_param("sssssssss", $id_number, $last_name, $first_name, $middle_name, $course, $year_level, $email, $hashed_password, $address);
 
 if($stmt->execute()){

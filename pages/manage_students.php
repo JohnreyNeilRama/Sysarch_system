@@ -34,11 +34,11 @@ $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 if($search !== '') {
     // Search by ID number or name
     $search_param = "%$search%";
-    $stmt = $conn->prepare("SELECT id, id_number, first_name, last_name, course, year_level, email, sessions FROM students WHERE id_number LIKE ? OR first_name LIKE ? OR last_name LIKE ? ORDER BY last_name ASC");
+    $stmt = $conn->prepare("SELECT id, id_number, first_name, last_name, course, year_level, email, sessions, points_earned FROM students WHERE id_number LIKE ? OR first_name LIKE ? OR last_name LIKE ? ORDER BY last_name ASC");
     $stmt->bind_param("sss", $search_param, $search_param, $search_param);
 } else {
     // Fetch all students
-    $stmt = $conn->prepare("SELECT id, id_number, first_name, last_name, course, year_level, email, sessions FROM students ORDER BY last_name ASC");
+    $stmt = $conn->prepare("SELECT id, id_number, first_name, last_name, course, year_level, email, sessions, points_earned FROM students ORDER BY last_name ASC");
 }
 $stmt->execute();
 $result = $stmt->get_result();

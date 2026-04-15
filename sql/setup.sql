@@ -34,11 +34,18 @@ CREATE TABLE IF NOT EXISTS students (
     address TEXT NOT NULL,
     profile_picture VARCHAR(255) DEFAULT 'default.png',
     sessions INT DEFAULT 30,
+    points_earned INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- If table already exists, add profile_picture column:
 -- ALTER TABLE students ADD COLUMN profile_picture VARCHAR(255) DEFAULT 'default.png';
+
+-- If sessions column doesn't exist (run this for existing database):
+-- ALTER TABLE students ADD COLUMN sessions INT DEFAULT 30;
+
+-- If points_earned column doesn't exist (run this for existing database):
+-- ALTER TABLE students ADD COLUMN points_earned INT DEFAULT 0 AFTER sessions;
 
 -- Create announcements table
 CREATE TABLE IF NOT EXISTS announcements (

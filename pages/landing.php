@@ -1,3 +1,26 @@
+<?php
+// Include database connection
+include_once __DIR__ . '/../includes/connect.php';
+
+// Get top students by points earned
+$leaderboard = [];
+$stmt = $conn->prepare("SELECT id_number, first_name, last_name, course, points_earned, profile_picture FROM students WHERE points_earned > 0 ORDER BY points_earned DESC LIMIT 10");
+$stmt->execute();
+$result = $stmt->get_result();
+while($row = $result->fetch_assoc()){
+    $leaderboard[] = $row;
+}
+$stmt->close();
+$conn->close();
+
+function getProfilePicture($picture) {
+    if($picture && file_exists(__DIR__ . '/../assets/images/profile/' . $picture)) {
+        return '/SYSARCH/assets/images/profile/' . $picture;
+    }
+    return '/SYSARCH/assets/images/profile/default.png';
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -59,6 +82,41 @@
         <a href="/SYSARCH/login.php" class="start-btn">Get Started →</a>
     </div>
 </main>
+
+    <!-- Student Leaderboard Section -->
+    <section class="leaderboard-section">
+        <div class="leaderboard-container">
+            <h2 class="leaderboard-title">🏆 Top 10 Students Leaderboard</h2>
+            <p class="leaderboard-subtitle">Students with the highest points earned</p>
+            
+            <?php if(count($leaderboard) > 0): ?>
+            <div class="leaderboard-grid">
+                <?php foreach($leaderboard as $index => $student): ?>
+                <div class="leaderboard-card <?php echo $index < 3 ? 'top-three' : ''; ?>">
+                    <div class="rank-badge">
+                        <?php if($index == 0): ?><span class="medal">🥇</span>
+                        <?php elseif($index == 1): ?><span class="medal">🥈</span>
+                        <?php elseif($index == 2): ?><span class="medal">🥉</span>
+                        <?php else: ?><span class="rank-num"><?php echo $index + 1; ?></span><?php endif; ?>
+                    </div>
+                    <div class="profile-container">
+                        <img src="<?php echo getProfilePicture($student['profile_picture']); ?>" alt="Profile" class="profile-pic">
+                    </div>
+                    <div class="student-name"><?php echo htmlspecialchars($student['first_name'] . ' ' . $student['last_name']); ?></div>
+                    <div class="student-id"><?php echo htmlspecialchars($student['id_number']); ?></div>
+                    <div class="student-course"><?php echo htmlspecialchars($student['course']); ?></div>
+                    <div class="points-badge">
+                        <span class="points-value"><?php echo intval($student['points_earned']); ?></span>
+                        <span class="points-label">POINTS</span>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php else: ?>
+            <p class="no-data">No students have earned points yet.</p>
+            <?php endif; ?>
+        </div>
+    </section>
 
 </body>
 </html>

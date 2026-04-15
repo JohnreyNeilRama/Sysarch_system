@@ -50,6 +50,7 @@ if($row = $result->fetch_assoc()){
         $_SESSION['address'] = $row['address'];
         $_SESSION['profile_picture'] = $row['profile_picture'];
         $_SESSION['sessions'] = isset($row['sessions']) ? $row['sessions'] : 30;
+        $_SESSION['points_earned'] = isset($row['points_earned']) ? $row['points_earned'] : 0;
         $_SESSION['is_admin'] = false;
         
         $stmt->close();

@@ -541,3 +541,232 @@
         font-size: 14px;
     }
 }
+
+/* Student Leaderboard Styles */
+.leaderboard-section {
+    padding: 60px 20px;
+    min-height: 500px;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #1a3a5c 0%, #0f5bbe 50%, #1a3a5c 100%);
+}
+
+.leaderboard-section::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    height: 400px;
+    background-image: url("../images/uclogo.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    filter: blur(10px);
+    opacity: 0.1;
+    z-index: 0;
+}
+
+.leaderboard-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.97);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    position: relative;
+    z-index: 1;
+}
+
+.leaderboard-title {
+    text-align: center;
+    font-size: 32px;
+    color: #1a1a2e;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+
+.leaderboard-subtitle {
+    text-align: center;
+    color: #666;
+    margin-bottom: 35px;
+    font-size: 16px;
+}
+
+.leaderboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+    justify-items: center;
+}
+
+.leaderboard-card {
+    background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 16px;
+    padding: 25px 15px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    width: 100%;
+    max-width: 200px;
+    position: relative;
+    border: 2px solid transparent;
+}
+
+.leaderboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.leaderboard-card.top-three {
+    border-color: #ffd700;
+    background: linear-gradient(145deg, #fffef5 0%, #fff8e1 100%);
+}
+
+.leaderboard-card:nth-child(1) {
+    border-color: #ffd700;
+    background: linear-gradient(145deg, #fff9c4 0%, #ffecb3 100%);
+}
+
+.leaderboard-card:nth-child(2) {
+    border-color: #c0c0c0;
+    background: linear-gradient(145deg, #f5f5f5 0%, #e0e0e0 100%);
+}
+
+.leaderboard-card:nth-child(3) {
+    border-color: #cd7f32;
+    background: linear-gradient(145deg, #ffe0b2 0%, #ffcc80 100%);
+}
+
+.rank-badge {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0f5bbe;
+    color: white;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.rank-badge .medal {
+    font-size: 20px;
+}
+
+.rank-badge .rank-num {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.profile-container {
+    width: 70px;
+    height: 70px;
+    margin: 10px auto 15px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #0f5bbe;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.profile-pic {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.student-name {
+    font-weight: 600;
+    color: #1a1a2e;
+    font-size: 15px;
+    margin-bottom: 4px;
+}
+
+.student-id {
+    color: #666;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.student-course {
+    color: #888;
+    font-size: 11px;
+    margin-bottom: 12px;
+}
+
+.points-badge {
+    background: linear-gradient(135deg, #0f5bbe 0%, #1a3a5c 100%);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 25px;
+    display: inline-block;
+}
+
+.points-value {
+    font-size: 20px;
+    font-weight: bold;
+    display: block;
+    line-height: 1;
+}
+
+.points-label {
+    font-size: 10px;
+    opacity: 0.9;
+    letter-spacing: 1px;
+}
+
+.no-data {
+    text-align: center;
+    color: #666;
+    padding: 40px;
+    font-size: 16px;
+}
+
+/* Responsive Leaderboard */
+@media (max-width: 768px) {
+    .leaderboard-section {
+        padding: 40px 15px;
+    }
+    
+    .leaderboard-container {
+        padding: 25px 15px;
+    }
+    
+    .leaderboard-title {
+        font-size: 24px;
+    }
+    
+    .leaderboard-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 15px;
+    }
+    
+    .leaderboard-card {
+        padding: 20px 10px;
+        max-width: 160px;
+    }
+    
+    .profile-container {
+        width: 55px;
+        height: 55px;
+    }
+    
+    .student-name {
+        font-size: 13px;
+    }
+    
+    .points-value {
+        font-size: 18px;
+    }
+    
+    .leaderboard-section::after {
+        width: 250px;
+        height: 250px;
+    }
+}

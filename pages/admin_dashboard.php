@@ -56,6 +56,12 @@ if($check_column->num_rows == 0) {
     $conn->query("ALTER TABLE students ADD COLUMN sessions INT DEFAULT 30");
 }
 
+// Add points_earned column to students table if not exists
+$check_points_column = $conn->query("SHOW COLUMNS FROM students LIKE 'points_earned'");
+if($check_points_column->num_rows == 0) {
+    $conn->query("ALTER TABLE students ADD COLUMN points_earned INT DEFAULT 0 AFTER sessions");
+}
+
 // Rename remaining_session to computer_no if it exists
 $check_old_column = $conn->query("SHOW COLUMNS FROM sit_in LIKE 'remaining_session'");
 if($check_old_column->num_rows > 0) {
@@ -220,6 +226,22 @@ while($row = $result->fetch_assoc()){
 }
 $stmt->close();
 
+// Get most visited lab room (by total sit-in sessions)
+$most_visited_lab = "None";
+$most_visited_count = 0;
+$stmt = $conn->prepare("SELECT lab, COUNT(*) as session_count FROM sit_in GROUP BY lab ORDER BY session_count DESC LIMIT 1");
+if($stmt) {
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if($row = $result->fetch_assoc()){
+        $most_visited_lab = $row['lab'];
+        $most_visited_count = $row['session_count'];
+    }
+    $stmt->close();
+} else {
+    $most_visited_lab = "Error: " . $conn->error;
+}
+
 $conn->close();
 
 // Convert purpose data to JavaScript arrays
@@ -316,12 +338,19 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                 <option value="year">This Year</option>
             </select>
         </div>
-        <div class="card-body">
-            <div class="pie-chart-container">
-                <div class="pie-chart-wrapper">
-                    <canvas id="pieChart"></canvas>
+        <div class="card-body" style="text-align: center;">
+            <div class="pie-chart-layout">
+                <div class="pie-chart-left">
+                    <div class="pie-chart-wrapper">
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                    <div class="pie-chart-legend" id="pieLegend"></div>
                 </div>
-                <div class="pie-chart-legend" id="pieLegend"></div>
+                <div class="pie-chart-stats">
+                    <div class="stats-label">Most Visited Lab</div>
+                    <div class="stats-value"><?php echo htmlspecialchars($most_visited_lab); ?></div>
+                    <div style="font-size: 10px; color: #999; margin-top: 4px;"><?php echo $most_visited_count; ?> sessions</div>
+                </div>
             </div>
         </div>
     </div>

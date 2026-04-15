@@ -28,7 +28,7 @@ if(!isset($_GET['id']) || empty($_GET['id'])){
 $student_id = $_GET['id'];
 
 // Fetch student data
-$stmt = $conn->prepare("SELECT id, id_number, first_name, last_name, course, year_level, email, sessions FROM students WHERE id = ?");
+$stmt = $conn->prepare("SELECT id, id_number, first_name, last_name, course, year_level, email, sessions, points_earned FROM students WHERE id = ?");
 $stmt->bind_param("i", $student_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -55,13 +55,14 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     if($sessions < 0 || $sessions > 30){
         $message = "Error: Sessions must be between 0 and 30.";
     } else {
-        $update_stmt = $conn->prepare("UPDATE students SET id_number = ?, first_name = ?, last_name = ?, course = ?, year_level = ?, sessions = ? WHERE id = ?");
-        $update_stmt->bind_param("sssssii", $id_number, $first_name, $last_name, $course, $year_level, $sessions, $student_id);
+        $points_earned = floor((30 - $sessions) / 3);
+        $update_stmt = $conn->prepare("UPDATE students SET id_number = ?, first_name = ?, last_name = ?, course = ?, year_level = ?, sessions = ?, points_earned = ? WHERE id = ?");
+        $update_stmt->bind_param("sssssii", $id_number, $first_name, $last_name, $course, $year_level, $sessions, $points_earned, $student_id);
         
         if($update_stmt->execute()){
             $message = "Student updated successfully!";
             // Refresh student data
-            $stmt = $conn->prepare("SELECT id, id_number, first_name, last_name, course, year_level, email, sessions FROM students WHERE id = ?");
+            $stmt = $conn->prepare("SELECT id, id_number, first_name, last_name, course, year_level, email, sessions, points_earned FROM students WHERE id = ?");
             $stmt->bind_param("i", $student_id);
             $stmt->execute();
             $result = $stmt->get_result();
