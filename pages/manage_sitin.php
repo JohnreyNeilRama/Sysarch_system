@@ -67,8 +67,15 @@ if($check_sessions_column->num_rows > 0) {
 }
 
 // Auto-activate pending sit-ins where scheduled time has arrived (BEFORE cleanup)
+// Only activate if student doesn't already have an active session
 $now = date('Y-m-d H:i:s');
-$activate_sql = "UPDATE sit_in SET status = 'Active' WHERE status = 'Pending' AND TIMESTAMP(sit_in_date, sit_in_time) <= '$now'";
+$activate_sql = "UPDATE sit_in 
+SET status = 'Active' 
+WHERE status = 'Pending' 
+AND TIMESTAMP(sit_in_date, sit_in_time) <= '$now'
+AND id_number NOT IN (
+    SELECT id_number FROM sit_in WHERE status = 'Active'
+)";
 $conn->query($activate_sql);
 
 // Auto-delete inactive sit-in records older than 30 days (keep active/pending)
@@ -100,6 +107,14 @@ if(isset($_GET['action']) && $_GET['action'] === 'logout' && isset($_GET['id']))
         $update_session->bind_param("s", $student_id);
         $update_session->execute();
         $update_session->close();
+        
+        // Create notification for the student
+        $notif_title = "Logged Out";
+        $notif_message = "Your sit-in session has ended. A session has been deducted from your remaining sessions.";
+        $notif_stmt = $conn->prepare("INSERT INTO notifications (id_number, type, title, message) VALUES (?, 'logout', ?, ?)");
+        $notif_stmt->bind_param("sss", $student_id, $notif_title, $notif_message);
+        $notif_stmt->execute();
+        $notif_stmt->close();
     }
     $get_stmt->close();
     

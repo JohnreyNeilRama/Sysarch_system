@@ -172,6 +172,11 @@ $conn->close();
 
 </nav>
 
+<!-- Welcome Message -->
+<div class="welcome-message">
+    Welcome, <span><?php echo htmlspecialchars($_SESSION['first_name']); ?></span>!
+</div>
+
 <script>
     // Auto-show notification pop-up on page load for reservation status changes
     function checkNewNotifications() {
@@ -190,21 +195,27 @@ $conn->close();
         popup.id = 'notif-popup';
         
         let icon = '';
-        let bgColor = '';
+        let iconClass = '';
         
         if (notification.type === 'reservation_approved') {
             icon = '✓';
-            bgColor = 'linear-gradient(135deg, #4caf50 0%, #43a047 100%)';
+            iconClass = 'approved';
         } else if (notification.type === 'reservation_rejected') {
             icon = '✕';
-            bgColor = 'linear-gradient(135deg, #f44336 0%, #c62828 100%)';
+            iconClass = 'rejected';
+        } else if (notification.type === 'login') {
+            icon = '→';
+            iconClass = 'login';
+        } else if (notification.type === 'logout') {
+            icon = '←';
+            iconClass = 'logout';
         } else {
             icon = 'ℹ';
-            bgColor = 'linear-gradient(135deg, #0f5bbe 0%, #1976D2 100%)';
+            iconClass = 'approved';
         }
         
         popup.innerHTML = `
-            <div class="notif-popup-icon" style="background: ${bgColor};">${icon}</div>
+            <div class="notif-popup-icon ${iconClass}">${icon}</div>
             <div class="notif-popup-content">
                 <div class="notif-popup-title">${notification.title}</div>
                 <div class="notif-popup-message">${notification.message}</div>
@@ -529,17 +540,17 @@ $conn->close();
     bottom: 30px;
     right: 30px;
     background: white;
-    border-radius: 16px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.25);
-    padding: 18px 22px;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.05);
+    padding: 20px;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 16px;
     z-index: 10000;
     transform: translateX(120%);
-    transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
     max-width: 380px;
-    border-left: 5px solid #1976D2;
+    border: none;
 }
 
 #notif-popup.show {
@@ -547,49 +558,73 @@ $conn->close();
 }
 
 .notif-popup-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 22px;
-    font-weight: bold;
+    font-size: 24px;
     flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.notif-popup-icon.approved {
+    background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+}
+
+.notif-popup-icon.rejected {
+    background: linear-gradient(135deg, #f44336 0%, #c62828 100%);
+}
+
+.notif-popup-icon.login {
+    background: linear-gradient(135deg, #2196f3 0%, #1565c0 100%);
+}
+
+.notif-popup-icon.logout {
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
 }
 
 .notif-popup-content {
     flex: 1;
+    padding-right: 8px;
 }
 
 .notif-popup-title {
     font-weight: 700;
-    font-size: 15px;
+    font-size: 16px;
     color: #1a1a1a;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    letter-spacing: -0.3px;
 }
 
 .notif-popup-message {
-    font-size: 13px;
-    color: #555;
-    line-height: 1.4;
+    font-size: 14px;
+    color: #5a5a5a;
+    line-height: 1.5;
 }
 
 .notif-popup-close {
-    background: #f5f5f5;
+    background: #f8f9fa;
     border: none;
-    font-size: 20px;
-    color: #666;
+    font-size: 18px;
+    color: #888;
     cursor: pointer;
-    padding: 4px 8px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: all 0.2s ease;
+    flex-shrink: 0;
 }
 
 .notif-popup-close:hover {
-    background: #e0e0e0;
+    background: #e9ecef;
     color: #333;
+    transform: rotate(90deg);
 }
 
 @media (max-width: 480px) {
@@ -598,6 +633,14 @@ $conn->close();
         right: 10px;
         left: 10px;
         max-width: none;
+        padding: 16px;
+    }
+    
+    .notif-popup-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 20px;
+        border-radius: 12px;
     }
 }
 </style>
@@ -637,6 +680,7 @@ $conn->close();
                 <?php endforeach; ?>
             <?php else: ?>
                 <div class="no-notifications">
+                    <div class="no-notifications-icon">🔔</div>
                     <p>No notifications yet.</p>
                 </div>
             <?php endif; ?>
@@ -670,7 +714,8 @@ $conn->close();
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.6);
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
     z-index: 2000;
     justify-content: center;
     align-items: center;
@@ -683,52 +728,53 @@ $conn->close();
 
 .notification-modal {
     background: white;
-    border-radius: 16px;
+    border-radius: 24px;
     width: 90%;
-    max-width: 420px;
+    max-width: 480px;
     max-height: 85vh;
     overflow: hidden;
-    box-shadow: 0 10px 50px rgba(0,0,0,0.3);
-    animation: slideUp 0.3s ease;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.25);
+    animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .notification-modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 24px;
-    background: linear-gradient(135deg, #0f5bbe 0%, #1976D2 100%);
+    padding: 24px 28px;
+    background: linear-gradient(135deg, #0a47c2 0%, #1565c0 50%, #1976D2 100%);
     color: white;
 }
 
 .notification-modal-header h2 {
     margin: 0;
-    font-size: 20px;
-    font-weight: 600;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
 }
 
 .notification-close-btn {
-    background: rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.15);
     border: none;
-    font-size: 24px;
+    font-size: 22px;
     cursor: pointer;
     color: white;
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: all 0.25s ease;
 }
 
 .notification-close-btn:hover {
-    background: rgba(255,255,255,0.3);
-    transform: scale(1.1);
+    background: rgba(255,255,255,0.25);
+    transform: scale(1.1) rotate(90deg);
 }
 
 .notification-modal-body {
-    padding: 20px;
+    padding: 24px;
     max-height: 60vh;
     overflow-y: auto;
 }
@@ -736,16 +782,16 @@ $conn->close();
 .notification-actions {
     display: flex;
     justify-content: flex-end;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
 
 .mark-all-read-btn {
-    color: #1976D2;
-    font-size: 13px;
+    color: #1565c0;
+    font-size: 14px;
     text-decoration: none;
-    font-weight: 500;
-    padding: 8px 16px;
-    border-radius: 20px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 25px;
     background: #e3f2fd;
     transition: all 0.2s ease;
 }
@@ -753,65 +799,73 @@ $conn->close();
 .mark-all-read-btn:hover {
     background: #bbdefb;
     text-decoration: none;
-}
-
-.notification-item {
-    padding: 16px;
-    border-radius: 12px;
-    margin-bottom: 12px;
-    background: #f8f9fa;
-    border-left: none;
-    transition: all 0.2s ease;
-    position: relative;
-}
-
-.notification-item:hover {
-    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
     transform: translateY(-1px);
 }
 
+.notification-item {
+    padding: 20px;
+    border-radius: 16px;
+    margin-bottom: 14px;
+    background: #f8f9fa;
+    transition: all 0.25s ease;
+    position: relative;
+    border: 1px solid transparent;
+}
+
+.notification-item:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+    border-color: #e0e0e0;
+}
+
 .notification-item.unread {
-    background: linear-gradient(135deg, #e3f2fd 0%, #f0f7ff 100%);
-    border-left: 4px solid #1976D2;
+    background: linear-gradient(135deg, #e8f4fd 0%, #f0f7ff 100%);
+    border-left: 4px solid #1565c0;
 }
 
 .notification-item.unread::before {
     content: '';
     position: absolute;
-    top: 12px;
-    right: 12px;
-    width: 8px;
-    height: 8px;
-    background: #1976D2;
+    top: 16px;
+    right: 16px;
+    width: 10px;
+    height: 10px;
+    background: linear-gradient(135deg, #1565c0 0%, #1976D2 100%);
     border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.4);
 }
 
 .notification-item.read {
-    opacity: 0.7;
-    border-left-color: #ccc;
+    opacity: 0.65;
+    background: #f5f5f5;
 }
 
 .notification-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 .notification-title {
-    font-weight: 600;
-    color: #333;
+    font-weight: 700;
+    color: #1a1a1a;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    font-size: 15px;
 }
 
-.notification-title.reservation_approved {
-    color: #4caf50;
+.notification-title.reservation_approved, .notification-title.login {
+    color: #2e7d32;
 }
 
-.notification-title.reservation_rejected {
-    color: #f44336;
+.notification-title.reservation_rejected, .notification-title.logout {
+    color: #c62828;
+}
+
+.notification-title.login {
+    color: #1565c0;
 }
 
 .notif-icon {
@@ -857,13 +911,20 @@ $conn->close();
 
 .no-notifications {
     text-align: center;
-    padding: 40px 20px;
-    color: #888;
+    padding: 60px 30px;
+    color: #9e9e9e;
 }
 
 .no-notifications p {
-    font-size: 15px;
+    font-size: 16px;
     margin: 0;
+    opacity: 0.8;
+}
+
+.no-notifications-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
 }
 </style>
 

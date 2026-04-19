@@ -76,18 +76,6 @@ $result = $stmt->get_result();
 
 </nav>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-        const navRight = document.getElementById('navRight');
-        
-        mobileMenuToggle.addEventListener('click', function() {
-            navRight.classList.toggle('active');
-            this.textContent = navRight.classList.contains('active') ? '✕' : '☰';
-        });
-    });
-</script>
-
 <!-- Main Content -->
 <div class="content">
     <div class="header-row">

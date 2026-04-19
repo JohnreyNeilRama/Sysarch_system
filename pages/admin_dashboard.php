@@ -103,18 +103,38 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id_number'])) {
         if($student_sessions <= 0) {
             echo "<script>alert('Error: Student has no remaining sessions. Please renew sessions first.');</script>";
         } else {
-            // Insert sit-in record without deducting session (session will be deducted on logout)
-            $stmt = $conn->prepare("INSERT INTO sit_in (id_number, student_name, purpose, lab, computer_no, sit_in_date, sit_in_time, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'Active')");
-            $stmt->bind_param("sssssss", $id_number, $db_student_name, $purpose, $lab, $computer_no, $sit_in_date, $sit_in_time);
+            // Check if student already has an active session
+            $active_check_stmt = $conn->prepare("SELECT id FROM sit_in WHERE id_number = ? AND status = 'Active'");
+            $active_check_stmt->bind_param("s", $id_number);
+            $active_check_stmt->execute();
+            $active_check_result = $active_check_stmt->get_result();
             
-            if($stmt->execute()) {
-                // Redirect to prevent double submission
-                header("Location: /SYSARCH/admin_dashboard.php");
-                exit;
+            if($active_check_result->num_rows > 0) {
+                $active_check_stmt->close();
+                echo "<script>alert('Error: Student already has an active session. Please end the current session before starting a new one.');</script>";
             } else {
-                $sit_in_error = $stmt->error;
+                $active_check_stmt->close();
+                // Insert sit-in record without deducting session (session will be deducted on logout)
+                $stmt = $conn->prepare("INSERT INTO sit_in (id_number, student_name, purpose, lab, computer_no, sit_in_date, sit_in_time, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'Active')");
+                $stmt->bind_param("sssssss", $id_number, $db_student_name, $purpose, $lab, $computer_no, $sit_in_date, $sit_in_time);
+                
+                if($stmt->execute()) {
+                    // Create notification for the student
+                    $notif_title = "Logged In";
+                    $notif_message = "You have been logged in to the SIT-IN system by an admin. Lab: $lab, Computer: $computer_no, Purpose: $purpose";
+                    $notif_stmt = $conn->prepare("INSERT INTO notifications (id_number, type, title, message) VALUES (?, 'login', ?, ?)");
+                    $notif_stmt->bind_param("sss", $id_number, $notif_title, $notif_message);
+                    $notif_stmt->execute();
+                    $notif_stmt->close();
+                    
+                    // Redirect to prevent double submission
+                    header("Location: /SYSARCH/admin_dashboard.php");
+                    exit;
+                } else {
+                    $sit_in_error = $stmt->error;
+                }
+                $stmt->close();
             }
-            $stmt->close();
         }
     }
     $check_stmt->close();
@@ -341,7 +361,7 @@ $purpose_labels = json_encode(array_keys($purpose_data));
         <div class="card-body" style="text-align: center;">
             <div class="pie-chart-layout">
                 <div class="pie-chart-left">
-                    <div class="pie-chart-wrapper">
+<div class="pie-chart-wrapper">
                         <canvas id="pieChart"></canvas>
                     </div>
                     <div class="pie-chart-legend" id="pieLegend"></div>
@@ -371,18 +391,18 @@ $purpose_labels = json_encode(array_keys($purpose_data));
             <form class="edit-form">
 
                 <div class="form-group">
-                    <label>ID Number</label>
-                    <input type="text" placeholder="Student ID" readonly>
+                    <label for="editIdNumber">ID Number</label>
+                    <input type="text" id="editIdNumber" name="id_number" placeholder="Student ID" readonly>
                 </div>
 
                 <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" placeholder="Enter full name">
+                    <label for="editFullName">Full Name</label>
+                    <input type="text" id="editFullName" name="full_name" placeholder="Enter full name">
                 </div>
 
                 <div class="form-group">
-                    <label>Year Level</label>
-                    <select>
+                    <label for="editYearLevel">Year Level</label>
+                    <select id="editYearLevel" name="year_level">
                         <option>Select Year</option>
                         <option>1st Year</option>
                         <option>2nd Year</option>
@@ -392,13 +412,13 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                 </div>
 
                 <div class="form-group">
-                    <label>Course</label>
-                    <input type="text" placeholder="Enter course">
+                    <label for="editCourse">Course</label>
+                    <input type="text" id="editCourse" name="course" placeholder="Enter course">
                 </div>
 
                 <div class="form-group">
-                    <label>Remaining Sessions</label>
-                    <input type="number" placeholder="Sessions" min="0" max="30">
+                    <label for="editSessions">Remaining Sessions</label>
+                    <input type="number" id="editSessions" name="sessions" placeholder="Sessions" min="0" max="30">
                 </div>
 
                 <div class="modal-actions">
@@ -446,16 +466,16 @@ $purpose_labels = json_encode(array_keys($purpose_data));
         <div class="card-body">
             <form class="announcement-form" method="POST" action="">
                 <div class="form-group">
-                    <label>Admin Name</label>
-                    <input type="text" name="admin_name" value="<?php echo $_SESSION['admin_username']; ?>" readonly>
+                    <label for="announcementAdminName">Admin Name</label>
+                    <input type="text" id="announcementAdminName" name="admin_name" value="<?php echo $_SESSION['admin_username']; ?>" autocomplete="name" readonly>
                 </div>
                 <div class="form-group">
-                    <label>Date</label>
-                    <input type="date" name="announcement_date" required>
+                    <label for="announcementDate">Date</label>
+                    <input type="date" id="announcementDate" name="announcement_date" autocomplete="off" required>
                 </div>
                 <div class="form-group">
-                    <label>Message</label>
-                    <textarea name="message" rows="4" placeholder="Enter your announcement..." required></textarea>
+                    <label for="announcementMessage">Message</label>
+                    <textarea id="announcementMessage" name="message" rows="4" placeholder="Enter your announcement..." autocomplete="off" required></textarea>
                 </div>
                 <button type="submit" class="submit-btn">Post Announcement</button>
             </form>
@@ -481,18 +501,18 @@ $purpose_labels = json_encode(array_keys($purpose_data));
             <form method="POST" action="">
 
                 <div class="form-group">
-                    <label>ID Number:</label>
-                    <input type="text" name="id_number" id="idNumber" placeholder="Enter ID Number" onblur="fetchStudentInfo()" required>
+                    <label for="idNumber">ID Number:</label>
+                    <input type="text" name="id_number" id="idNumber" placeholder="Enter ID Number" onblur="fetchStudentInfo()" autocomplete="off" required>
                 </div>
 
                 <div class="form-group">
-                    <label>Student Name:</label>
-                    <input type="text" name="student_name" id="studentName" placeholder="Auto-filled after entering ID" readonly required>
+                    <label for="studentName">Student Name:</label>
+                    <input type="text" name="student_name" id="studentName" placeholder="Auto-filled after entering ID" autocomplete="name" readonly required>
                 </div>
 
                 <div class="form-group">
-                    <label>Purpose:</label>
-                    <select name="purpose" required>
+                    <label for="sitInPurpose">Purpose:</label>
+                    <select id="sitInPurpose" name="purpose" autocomplete="off" required>
                         <option value="">Select Purpose</option>
                         <option value="C Programming">C Programming</option>
                         <option value="Java Programming">Java Programming</option>
@@ -507,8 +527,8 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                 </div>
 
                 <div class="form-group">
-                    <label>Lab:</label>
-                    <select name="lab" required>
+                    <label for="sitInLab">Lab:</label>
+                    <select id="sitInLab" name="lab" autocomplete="off" required>
                         <option value="">Select Lab</option>
                         <option value="524">Lab 524</option>
                         <option value="526">Lab 526</option>
@@ -520,8 +540,8 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                 </div>
 
                 <div class="form-group">
-                    <label>Computer No.:</label>
-                    <input type="number" name="computer_no" id="computerNo" placeholder="Enter computer number" required>
+                    <label for="computerNo">Computer No.:</label>
+                    <input type="number" name="computer_no" id="computerNo" placeholder="Enter computer number" autocomplete="off" required>
                 </div>
 
                 <div class="modal-actions">
@@ -560,20 +580,12 @@ $purpose_labels = json_encode(array_keys($purpose_data));
     function updatePieChart(timeRange) {
         console.log('Updating pie chart for range:', timeRange);
         
-        // Clear previous chart and legend before fetching new data
+        // Clear previous legend before fetching new data
         const legendContainer = document.getElementById('pieLegend');
         legendContainer.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">Loading...</p>';
         
-        // Destroy existing chart to prevent data overlay
-        if (pieChart) {
-            pieChart.destroy();
-            pieChart = null;
-        }
-        
-        // Clear the canvas
+        // Get canvas for chart creation
         const canvas = document.getElementById('pieChart');
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
         
         // Fetch data via AJAX with cache-busting
         fetch('get_purpose_stats.php?range=' + timeRange + '&t=' + Date.now())
@@ -597,6 +609,10 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                 const totalCount = values.reduce((a, b) => a + b, 0);
                 if (totalCount === 0) {
                     console.log('No sit-in data found');
+                    if (pieChart) {
+                        pieChart.destroy();
+                        pieChart = null;
+                    }
                     document.getElementById('pieLegend').innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No sit-in data available for this period.</p>';
                     return;
                 }
@@ -606,10 +622,18 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                 let minVal = Math.min(...values.filter(v => v > 0));
                 if (minVal === Infinity) minVal = 0;
                 
-                // Create pie chart
+                // Update existing chart or create new one
                 const ctx = document.getElementById('pieChart').getContext('2d');
-                pieChart = new Chart(ctx, {
-                    type: 'pie',
+                
+                if (pieChart) {
+                    // Update existing chart data for smooth transition
+                    pieChart.data.labels = labels;
+                    pieChart.data.datasets[0].data = values;
+                    pieChart.update();
+                } else {
+                    // Create new pie chart
+                    pieChart = new Chart(ctx, {
+                        type: 'pie',
                     data: {
                         labels: labels,
                         datasets: [{
@@ -621,33 +645,31 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 800,
+                            easing: 'easeInOutQuart'
+                        },
                         plugins: {
                             legend: {
                                 display: false
                             },
                             tooltip: {
+                                enabled: true,
                                 callbacks: {
                                     label: function(context) {
                                         let label = context.label || '';
                                         let value = context.raw || 0;
                                         let total = context.dataset.data.reduce((a, b) => a + b, 0);
                                         let percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                        
-                                        let indicator = '';
-                                        if (value === maxVal && maxVal > 0) {
-                                            indicator = ' (Highest)';
-                                        } else if (value === minVal && minVal > 0 && value !== maxVal) {
-                                            indicator = ' (Lowest)';
-                                        }
-                                        
-                                        return label + ': ' + value + ' (' + percentage + '%)' + indicator;
+                                        return label + ': ' + value + ' (' + percentage + '%)';
                                     }
                                 }
                             }
                         }
                     }
                 });
+                }
                 
                 // Update custom legend
                 const legendContainer = document.getElementById('pieLegend');
@@ -1028,12 +1050,12 @@ window.addEventListener("click", function(e){
                 <input type="hidden" name="edit_announcement" value="1">
                 <input type="hidden" id="editAnnId" name="announcement_id" value="">
                 <div class="form-group">
-                    <label>Date</label>
-                    <input type="date" id="editAnnDate" name="edit_date" required>
+                    <label for="editAnnDate">Date</label>
+                    <input type="date" id="editAnnDate" name="edit_date" autocomplete="off" required>
                 </div>
                 <div class="form-group">
-                    <label>Message</label>
-                    <textarea id="editAnnMessage" name="edit_message" rows="4" required></textarea>
+                    <label for="editAnnMessage">Message</label>
+                    <textarea id="editAnnMessage" name="edit_message" rows="4" autocomplete="off" required></textarea>
                 </div>
                 <button type="submit" class="submit-btn">Save Changes</button>
             </form>
@@ -1057,7 +1079,7 @@ window.addEventListener("click", function(e){
             </div>
             <form id="manageLabsForm">
                 <div class="form-group">
-                    <label><span class="input-icon">📍</span> Select Laboratory</label>
+                    <label for="labSelect"><span class="input-icon">📍</span> Select Laboratory</label>
                     <select name="lab_select" id="labSelect">
                         <option value="">-- Choose a Lab --</option>
                         <option value="524">Lab 524</option>

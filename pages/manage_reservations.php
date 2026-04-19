@@ -124,6 +124,23 @@ if(isset($_GET['action']) && isset($_GET['id'])) {
                 $scheduled_str = $sit_date . ' ' . $sit_time;
                 $sit_in_status = ($scheduled_str <= $now_str) ? 'Active' : 'Pending';
 
+                // Check if student already has an active session (only block if this would be Active)
+                if($sit_in_status === 'Active') {
+                    $active_check_stmt = $conn->prepare("SELECT id FROM sit_in WHERE id_number = ? AND status = 'Active'");
+                    $active_check_stmt->bind_param("s", $student_id);
+                    $active_check_stmt->execute();
+                    $active_check_result = $active_check_stmt->get_result();
+                    
+                    if($active_check_result->num_rows > 0) {
+                        $active_check_stmt->close();
+                        $session_stmt->close();
+                        $get_stmt->close();
+                        header("Location: /SYSARCH/pages/manage_reservations.php?error=" . urlencode("Student already has an active session. Cannot approve reservation."));
+                        exit;
+                    }
+                    $active_check_stmt->close();
+                }
+
                 // Insert into sit_in table with computer number from reservation
                 $sit_in_stmt = $conn->prepare("INSERT INTO sit_in (id_number, student_name, purpose, lab, computer_no, sit_in_date, sit_in_time, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
                 if (!$sit_in_stmt) {

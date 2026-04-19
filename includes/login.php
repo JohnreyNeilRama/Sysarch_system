@@ -1,5 +1,7 @@
 <?php
 session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 include 'connect.php';
 
 $email = $_POST['email'];
@@ -52,6 +54,16 @@ if($row = $result->fetch_assoc()){
         $_SESSION['sessions'] = isset($row['sessions']) ? $row['sessions'] : 30;
         $_SESSION['points_earned'] = isset($row['points_earned']) ? $row['points_earned'] : 0;
         $_SESSION['is_admin'] = false;
+        
+        // Create notification for login
+        $notif_title = "Logged In";
+        $notif_message = "You have successfully logged in to the SIT-IN system.";
+        $notif_stmt = $conn->prepare("INSERT INTO notifications (id_number, type, title, message) VALUES (?, 'login', ?, ?)");
+        $notif_stmt->bind_param("sss", $_SESSION['id_number'], $notif_title, $notif_message);
+        if (!$notif_stmt->execute()) {
+            error_log("Login notification error: " . $conn->error);
+        }
+        $notif_stmt->close();
         
         $stmt->close();
         $conn->close();

@@ -57,7 +57,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     } else {
         $points_earned = floor((30 - $sessions) / 3);
         $update_stmt = $conn->prepare("UPDATE students SET id_number = ?, first_name = ?, last_name = ?, course = ?, year_level = ?, sessions = ?, points_earned = ? WHERE id = ?");
-        $update_stmt->bind_param("sssssii", $id_number, $first_name, $last_name, $course, $year_level, $sessions, $points_earned, $student_id);
+        $update_stmt->bind_param("sssssiii", $id_number, $first_name, $last_name, $course, $year_level, $sessions, $points_earned, $student_id);
         
         if($update_stmt->execute()){
             $message = "Student updated successfully!";
