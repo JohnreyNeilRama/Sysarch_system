@@ -63,7 +63,7 @@ try {
     $check_lab->close();
     
     $default_computers = [
-        '524' => 50, '525' => 50, '526' => 50, '527' => 50, '528' => 50
+        '524' => 50, '526' => 50, '528' => 50, '530' => 50, '544' => 50, '542' => 50
     ];
     
     if ($lab_count['count'] == 0 && isset($default_computers[$lab_room])) {

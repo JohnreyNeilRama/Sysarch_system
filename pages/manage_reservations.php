@@ -29,13 +29,21 @@ $create_sitin_table = "CREATE TABLE IF NOT EXISTS sit_in (
     student_name VARCHAR(200) NOT NULL,
     purpose VARCHAR(100) NOT NULL,
     lab VARCHAR(50) NOT NULL,
-    computer_no VARCHAR(50) NOT NULL,
+    computer_no VARCHAR(50),
     sit_in_date DATE NOT NULL,
     sit_in_time TIME NOT NULL,
     status VARCHAR(20) DEFAULT 'Active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )";
 $conn->query($create_sitin_table);
+
+// Make computer_no nullable if it's currently NOT NULL
+$check_computer_no = $conn->query("SHOW COLUMNS FROM sit_in LIKE 'computer_no'");
+if($col = $check_computer_no->fetch_assoc()) {
+    if(strpos($col['Null'], 'NO') !== false) {
+        $conn->query("ALTER TABLE sit_in MODIFY COLUMN computer_no VARCHAR(50) NULL");
+    }
+}
 
 // Add status column to sit_in table if not exists
 $check_status_column = $conn->query("SHOW COLUMNS FROM sit_in LIKE 'status'");
@@ -101,7 +109,7 @@ if(isset($_GET['action']) && isset($_GET['id'])) {
             $purpose = $res_row['purpose'];
             $sit_date = $res_row['reservation_date'];
             $sit_time = $res_row['reservation_time'];
-            $computer_no = $res_row['computer_no'];
+            $computer_no = $res_row['computer_no'] ?: 'Not Assigned';
             
             // Look up student in students table to get correct name and sessions
             $session_stmt = $conn->prepare("SELECT first_name, middle_name, last_name, sessions FROM students WHERE id_number = ?");
@@ -149,7 +157,12 @@ if(isset($_GET['action']) && isset($_GET['id'])) {
                     header("Location: /SYSARCH/pages/manage_reservations.php?error=" . urlencode("Prepare failed: " . $conn->error));
                     exit;
                 }
-                $sit_in_stmt->bind_param("ssssisss", $student_id, $student_name, $purpose, $lab, $computer_no, $sit_date, $sit_time, $sit_in_status);
+                if ($computer_no === 'Not Assigned' || $computer_no === null) {
+                    $null = null;
+                    $sit_in_stmt->bind_param("sssssiss", $student_id, $student_name, $purpose, $lab, $null, $sit_date, $sit_time, $sit_in_status);
+                } else {
+                    $sit_in_stmt->bind_param("ssssisss", $student_id, $student_name, $purpose, $lab, $computer_no, $sit_date, $sit_time, $sit_in_status);
+                }
                 if (!$sit_in_stmt->execute()) {
                     $sit_in_stmt->close();
                     $session_stmt->close();

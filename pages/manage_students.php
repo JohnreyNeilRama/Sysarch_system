@@ -21,11 +21,20 @@ include '../includes/connect.php';
 
 // Handle Reset All Sessions (only 1st, 2nd, and 3rd year students)
 if(isset($_POST['reset_all_sessions'])) {
-    $reset_stmt = $conn->prepare("UPDATE students SET sessions = 30 WHERE year_level IN ('1st Year', '2nd Year', '3rd Year')");
-    $reset_stmt->execute();
-    $reset_stmt->close();
-    header("Location: /SYSARCH/manage_students.php?reset_success=1");
-    exit;
+    $reset_stmt = $conn->prepare("UPDATE students SET sessions = 30, points_earned = 0 WHERE year_level IN ('1st Year', '2nd Year', '3rd Year')");
+    if($reset_stmt->execute()) {
+        $affected_rows = $reset_stmt->affected_rows;
+        error_log("Reset successful. Affected rows: " . $affected_rows);
+        $reset_stmt->close();
+        header("Location: /SYSARCH/manage_students.php?reset_success=1&affected=" . $affected_rows);
+        exit;
+    } else {
+        $error_msg = $conn->error;
+        error_log("Reset failed: " . $error_msg);
+        $reset_stmt->close();
+        header("Location: /SYSARCH/manage_students.php?error=" . urlencode("Reset failed: " . $error_msg));
+        exit;
+    }
 }
 
 // Handle Search
@@ -172,7 +181,7 @@ $result = $stmt->get_result();
     <?php endif; ?>
 
     <?php if(isset($_GET['reset_success'])): ?>
-        <p id="success-message" style="color: green; margin-bottom: 15px;">✅ Sessions have been reset to 30 for 1st, 2nd, and 3rd year students!</p>
+        <p id="success-message" style="color: green; margin-bottom: 15px;">✅ Sessions have been reset to 30 and points earned to 0 for <?php echo isset($_GET['affected']) ? $_GET['affected'] : 'multiple'; ?> students (1st, 2nd, and 3rd year)!</p>
     <?php endif; ?>
 
     <?php if(isset($_GET['error'])): ?>
@@ -258,7 +267,7 @@ $result = $stmt->get_result();
             // Create a form and submit it
             var form = document.createElement('form');
             form.method = 'POST';
-            form.action = 'manage_students.php';
+            form.action = '/SYSARCH/manage_students.php';
             
             var input = document.createElement('input');
             input.type = 'hidden';

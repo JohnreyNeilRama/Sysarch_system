@@ -68,7 +68,7 @@ if ($check_status_type->num_rows > 0) {
 }
 
 // Populate computers for each lab if not exists (optimized with bulk insert)
-$lab_rooms = ['524', '525', '526', '527', '528'];
+$lab_rooms = ['524', '526', '528', '530', '544', '542'];
 $check_existing = $conn->query("SELECT COUNT(*) as cnt FROM computers");
 $row = $check_existing->fetch_assoc();
 if ($row['cnt'] == 0) {
@@ -136,6 +136,27 @@ $session_fetch_row = $session_fetch_result->fetch_assoc();
 $current_sessions = $session_fetch_row ? $session_fetch_row['sessions'] : 30;
 $current_points_earned = $session_fetch_row ? $session_fetch_row['points_earned'] : 0;
 $session_fetch_stmt->close();
+
+// Refresh session data with latest student information from database
+$refresh_stmt = $conn->prepare("SELECT id, id_number, first_name, middle_name, last_name, course, year_level, email, address, profile_picture, sessions, points_earned FROM students WHERE id_number = ?");
+$refresh_stmt->bind_param("s", $notif_student_id);
+$refresh_stmt->execute();
+$refresh_result = $refresh_stmt->get_result();
+if($refresh_row = $refresh_result->fetch_assoc()) {
+    $_SESSION['student_id'] = $refresh_row['id'];
+    $_SESSION['id_number'] = $refresh_row['id_number'];
+    $_SESSION['last_name'] = $refresh_row['last_name'];
+    $_SESSION['first_name'] = $refresh_row['first_name'];
+    $_SESSION['middle_name'] = $refresh_row['middle_name'];
+    $_SESSION['course'] = $refresh_row['course'];
+    $_SESSION['year_level'] = $refresh_row['year_level'];
+    $_SESSION['email'] = $refresh_row['email'];
+    $_SESSION['address'] = $refresh_row['address'];
+    $_SESSION['profile_picture'] = $refresh_row['profile_picture'];
+    $_SESSION['sessions'] = $refresh_row['sessions'];
+    $_SESSION['points_earned'] = $refresh_row['points_earned'];
+}
+$refresh_stmt->close();
 
 $conn->close();
 ?>
@@ -425,10 +446,11 @@ $conn->close();
                     <select id="lab-room" name="lab_room" required>
                         <option value="">Select Laboratory</option>
                         <option value="524">Room 524</option>
-                        <option value="525">Room 525</option>
                         <option value="526">Room 526</option>
-                        <option value="527">Room 527</option>
                         <option value="528">Room 528</option>
+                        <option value="530">Room 530</option>
+                        <option value="544">Room 544</option>
+                        <option value="542">Room 542</option>
                     </select>
                 </div>
                 
