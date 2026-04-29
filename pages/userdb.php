@@ -128,14 +128,44 @@ if(isset($_GET['mark_all_read'])) {
 }
 
 // Fetch current sessions from database before closing connection
-$session_fetch_stmt = $conn->prepare("SELECT sessions, points_earned FROM students WHERE id_number = ?");
+$session_fetch_stmt = $conn->prepare("SELECT sessions FROM students WHERE id_number = ?");
 $session_fetch_stmt->bind_param("s", $notif_student_id);
 $session_fetch_stmt->execute();
 $session_fetch_result = $session_fetch_stmt->get_result();
 $session_fetch_row = $session_fetch_result->fetch_assoc();
-$current_sessions = $session_fetch_row ? $session_fetch_row['sessions'] : 30;
-$current_points_earned = $session_fetch_row ? $session_fetch_row['points_earned'] : 0;
+$current_sessions = $session_fetch_row ? intval($session_fetch_row['sessions']) : 30;
 $session_fetch_stmt->close();
+
+// Calculate points earned correctly: 3 sessions used = 1 point
+// Sessions used = 30 - remaining sessions
+$sessions_used = 30 - $current_sessions;
+$current_points_earned = floor($sessions_used / 3);
+
+// Fetch sit-in statistics for the student
+$stats_sql = "SELECT 
+    COUNT(*) as total_sessions,
+    SUM(CASE WHEN logout_time IS NOT NULL THEN TIMESTAMPDIFF(SECOND, CONCAT(sit_in_date, ' ', sit_in_time), CONCAT(sit_in_date, ' ', logout_time)) ELSE 0 END) as total_seconds,
+    AVG(CASE WHEN logout_time IS NOT NULL THEN TIMESTAMPDIFF(SECOND, CONCAT(sit_in_date, ' ', sit_in_time), CONCAT(sit_in_date, ' ', logout_time)) ELSE NULL END) as avg_seconds,
+    MAX(CASE WHEN logout_time IS NOT NULL THEN TIMESTAMPDIFF(SECOND, CONCAT(sit_in_date, ' ', sit_in_time), CONCAT(sit_in_date, ' ', logout_time)) ELSE NULL END) as max_seconds
+FROM sit_in 
+WHERE id_number = ?";
+$stats_stmt = $conn->prepare($stats_sql);
+$stats_stmt->bind_param("s", $notif_student_id);
+$stats_stmt->execute();
+$stats_result = $stats_stmt->get_result();
+$stats_row = $stats_result->fetch_assoc();
+
+$total_sessions = $stats_row['total_sessions'] ? intval($stats_row['total_sessions']) : 0;
+$total_seconds = $stats_row['total_seconds'] ? intval($stats_row['total_seconds']) : 0;
+$avg_seconds = $stats_row['avg_seconds'] ? floatval($stats_row['avg_seconds']) : 0;
+$max_seconds = $stats_row['max_seconds'] ? intval($stats_row['max_seconds']) : 0;
+
+// Convert seconds to hours and minutes
+$total_hours = $total_seconds / 3600;
+$avg_minutes = $avg_seconds / 60;
+$max_hours = $max_seconds / 3600;
+
+$stats_stmt->close();
 
 // Refresh session data with latest student information from database
 $refresh_stmt = $conn->prepare("SELECT id, id_number, first_name, middle_name, last_name, course, year_level, email, address, profile_picture, sessions, points_earned FROM students WHERE id_number = ?");
@@ -302,34 +332,76 @@ $conn->close();
 <?php endif; ?>
 
     <!-- LEFT PANEL -->
-    <div class="student-info">
+    <div class="left-column">
+        <div class="student-info">
 
-        <div class="student-header">
-             Student Information
+            <div class="student-header">
+                 Student Information
+            </div>
+
+            <div class="student-profile">
+                <img src="/SYSARCH/assets/images/profile/<?php echo isset($_SESSION['profile_picture']) ? $_SESSION['profile_picture'] : 'default.png'; ?>" 
+                     alt="Profile Picture">
+            </div>
+
+            <div class="student-details">
+
+                <p><strong>ID Number:</strong> <span><?php echo $_SESSION['id_number']; ?></span></p>
+                <p><strong>Full Name:</strong> <span><?php echo $_SESSION['first_name'] . ' ' . $_SESSION['middle_name'] . ' ' . $_SESSION['last_name']; ?></span></p>
+                <p><strong>Course:</strong> <span><?php echo $_SESSION['course']; ?></span></p>
+                <p><strong>Year Level:</strong> <span><?php echo $_SESSION['year_level']; ?></span></p>
+                <p><strong>Email:</strong> <span><?php echo $_SESSION['email']; ?></span></p>
+                <p><strong>Address:</strong> <span><?php echo $_SESSION['address']; ?></span></p>
+                <?php 
+                    $remaining_sessions = $current_sessions;
+                    $points_earned = $current_points_earned;
+                ?>
+                <p><strong>Remaining Sessions:</strong> <span><?php echo $remaining_sessions; ?></span></p>
+                <p><strong>Points Earned:</strong> <span><?php echo $points_earned; ?></span></p>
+
+            </div>
+
         </div>
 
-        <div class="student-profile">
-            <img src="/SYSARCH/assets/images/profile/<?php echo isset($_SESSION['profile_picture']) ? $_SESSION['profile_picture'] : 'default.png'; ?>" 
-                 alt="Profile Picture">
+       <!-- SIT-IN SUMMARY CARD -->
+       <div class="sitin-summary-card">
+            <div class="summary-header">Sit-in Summary</div>
+            <div class="summary-body">
+                <div class="summary-item">
+                    <div class="summary-label">Total Sitting Hours</div>
+                    <div class="summary-value"><?php echo number_format($total_hours, 2); ?> <span class="summary-unit">hrs</span></div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Number of Sessions</div>
+                    <div class="summary-value"><?php echo $total_sessions; ?> <span class="summary-unit">sessions</span></div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Average Session Duration</div>
+                    <div class="summary-value">
+                        <?php 
+                            if ($avg_minutes >= 60) {
+                                echo number_format($avg_minutes / 60, 2) . ' <span class="summary-unit">hrs</span>';
+                            } else {
+                                echo number_format($avg_minutes, 2) . ' <span class="summary-unit">mins</span>';
+                            }
+                        ?>
+                    </div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Longest Session</div>
+                    <div class="summary-value">
+                        <?php 
+                            if ($max_hours >= 1) {
+                                echo number_format($max_hours, 2) . ' <span class="summary-unit">hrs</span>';
+                            } else {
+                                $max_minutes = $max_seconds / 60;
+                                echo number_format($max_minutes, 2) . ' <span class="summary-unit">mins</span>';
+                            }
+                        ?>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <div class="student-details">
-
-            <p><strong>ID Number:</strong> <span><?php echo $_SESSION['id_number']; ?></span></p>
-            <p><strong>Full Name:</strong> <span><?php echo $_SESSION['first_name'] . ' ' . $_SESSION['middle_name'] . ' ' . $_SESSION['last_name']; ?></span></p>
-            <p><strong>Course:</strong> <span><?php echo $_SESSION['course']; ?></span></p>
-            <p><strong>Year Level:</strong> <span><?php echo $_SESSION['year_level']; ?></span></p>
-            <p><strong>Email:</strong> <span><?php echo $_SESSION['email']; ?></span></p>
-            <p><strong>Address:</strong> <span><?php echo $_SESSION['address']; ?></span></p>
-            <?php 
-                $remaining_sessions = $current_sessions;
-                $points_earned = $current_points_earned;
-            ?>
-            <p><strong>Remaining Sessions:</strong> <span><?php echo $remaining_sessions; ?></span></p>
-            <p><strong>Points Earned:</strong> <span><?php echo $points_earned; ?></span></p>
-
-        </div>
-
     </div>
 
    <div class="dashboard-main">

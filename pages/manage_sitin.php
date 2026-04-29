@@ -102,7 +102,8 @@ if(isset($_GET['action']) && $_GET['action'] === 'logout' && isset($_GET['id']))
         
         $student_id = $row['id_number'];
         
-        // Deduct 1 session from the student and update points_earned based on sessions used
+        // Deduct 1 session from the student and update points_earned
+        // Points formula: floor(sessions_used / 3), where sessions_used = 30 - remaining_sessions
         $update_session = $conn->prepare("UPDATE students SET sessions = sessions - 1, points_earned = FLOOR((30 - (sessions - 1)) / 3) WHERE id_number = ?");
         $update_session->bind_param("s", $student_id);
         $update_session->execute();
