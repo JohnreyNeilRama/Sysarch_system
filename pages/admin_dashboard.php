@@ -290,6 +290,7 @@ $purpose_labels = json_encode(array_keys($purpose_data));
 
     <ul class="dashboard-right">    
         <li><a href="admin_dashboard.php" class="active">Dashboard</a></li>
+        <li><a href="analytics.php">Analytics</a></li>
         <li><a href="manage_students.php">Manage Students</a></li>
         <li><a href="manage_sitin.php">Sit-in Logs</a></li>
         <li><a href="manage_reservations.php">Reservations</a></li>
@@ -448,9 +449,9 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                     <span class="action-icon">📢</span>
                     <span class="action-text">Announcements</span>
                 </button>
-                <button class="action-btn">
+                <button class="action-btn" id="openReports">
                     <span class="action-icon">📋</span>
-                    <span class="action-text">View Reports</span>
+                    <span class="action-text">Generate Reports</span>
                 </button>
                 <button class="action-btn" id="openManageLabs">
                     <span class="action-icon">⚙️</span>
@@ -1208,6 +1209,339 @@ window.addEventListener("click", function(e){
     box-shadow: 0 4px 10px rgba(229, 57, 53, 0.4);
 }
 </style>
+
+<!-- REPORTS MODAL -->
+<div class="modal-overlay" id="reportsModal">
+    <div class="modal-box report-modal">
+        <div class="modal-header">
+            <div class="modal-title-with-icon">
+                <span class="modal-icon">📊</span>
+                <h2>Generate Reports</h2>
+            </div>
+            <span class="close-btn" id="closeReports">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="report-options">
+                <div class="report-option-card" onclick="generatePDF('students')">
+                    <div class="option-icon">👥</div>
+                    <div class="option-details">
+                        <h3>Students List</h3>
+                        <p>Generate a complete list of all registered students.</p>
+                    </div>
+                    <div class="option-action">
+                        <span>Download PDF</span>
+                    </div>
+                </div>
+                
+                <div class="report-option-card" onclick="generatePDF('sitin')">
+                    <div class="option-icon">💻</div>
+                    <div class="option-details">
+                        <h3>Sit-in Logs</h3>
+                        <p>Export all historical sit-in activity logs.</p>
+                    </div>
+                    <div class="option-action">
+                        <span>Download PDF</span>
+                    </div>
+                </div>
+                
+                <div class="report-option-card" onclick="generatePDF('reservations')">
+                    <div class="option-icon">📅</div>
+                    <div class="option-details">
+                        <h3>Reservations</h3>
+                        <p>Generate a report of all student laboratory reservations.</p>
+                    </div>
+                    <div class="option-action">
+                        <span>Download PDF</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.report-modal {
+    width: 650px !important;
+    max-width: 90%;
+}
+
+.report-options {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    padding: 10px 0;
+}
+
+.report-option-card {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #eef2f7;
+    border-radius: 16px;
+    padding: 24px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    gap: 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.report-option-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: #0f5bbe;
+    transform: scaleY(0);
+    transition: transform 0.3s ease;
+}
+
+.report-option-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    border-color: #dbeafe;
+}
+
+.report-option-card:hover::before {
+    transform: scaleY(1);
+}
+
+.option-icon {
+    font-size: 32px;
+    background: #f0f7ff;
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    color: #0f5bbe;
+    transition: all 0.3s ease;
+}
+
+.report-option-card:hover .option-icon {
+    background: #0f5bbe;
+    color: #ffffff;
+    transform: scale(1.1);
+}
+
+.option-details {
+    flex: 1;
+}
+
+.option-details h3 {
+    margin: 0 0 6px 0;
+    color: #1e293b;
+    font-size: 19px;
+    font-weight: 700;
+}
+
+.option-details p {
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.option-action {
+    color: #0f5bbe;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #eff6ff;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.report-option-card:hover .option-action {
+    background: #0f5bbe;
+    color: #ffffff;
+}
+
+.option-action i {
+    font-style: normal;
+}
+</style>
+
+<!-- PDF Generation Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const reportsModal = document.getElementById("reportsModal");
+    const openReportsBtn = document.getElementById("openReports");
+    const closeReportsBtn = document.getElementById("closeReports");
+
+    if(openReportsBtn) {
+        openReportsBtn.onclick = () => {
+            reportsModal.classList.add("active");
+        };
+    }
+
+    if(closeReportsBtn) {
+        closeReportsBtn.onclick = () => {
+            reportsModal.classList.remove("active");
+        };
+    }
+
+    // Update global click listener for reports modal
+    window.addEventListener("click", function(e){
+        if(e.target === reportsModal){
+            reportsModal.classList.remove("active");
+        }
+    });
+});
+
+async function generatePDF(type) {
+    const { jsPDF } = window.jspdf;
+    
+    // Determine orientation based on content
+    // Sit-in and Reservations usually have more columns, so landscape is better
+    const orientation = (type === 'sitin' || type === 'reservations') ? 'l' : 'p';
+    const doc = new jsPDF(orientation, 'mm', 'a4');
+    
+    console.log('Generating report for:', type);
+    
+    try {
+        const response = await fetch(`/SYSARCH/pages/api/get_report_data.php?type=${type}`);
+        const data = await response.json();
+        
+        if (data.error) {
+            alert('Error fetching data: ' + data.error);
+            return;
+        }
+
+        if (data.length === 0) {
+            alert('No data found for this report.');
+            return;
+        }
+
+        let title = "";
+        let columns = [];
+        let rows = [];
+
+        if (type === 'students') {
+            title = "List of Registered Students";
+            columns = ["ID Number", "Full Name", "Course", "Year", "Sessions", "Points"];
+            rows = data.map(item => [
+                item.id_number,
+                `${item.last_name}, ${item.first_name}`,
+                item.course,
+                item.year_level,
+                item.sessions,
+                item.points_earned
+            ]);
+        } else if (type === 'sitin') {
+            title = "Sit-in Logs Report";
+            columns = ["ID Number", "Student Name", "Purpose", "Lab", "Comp", "Date", "Time", "Status"];
+            rows = data.map(item => [
+                item.id_number,
+                item.student_name,
+                item.purpose,
+                item.lab,
+                item.computer_no,
+                item.sit_in_date,
+                item.sit_in_time,
+                item.status
+            ]);
+        } else if (type === 'reservations') {
+            title = "Laboratory Reservations Report";
+            columns = ["ID Number", "Student Name", "Lab", "Date", "Time", "Purpose", "Status"];
+            rows = data.map(item => [
+                item.id_number,
+                item.student_name,
+                item.lab_room,
+                item.reservation_date,
+                item.reservation_time,
+                item.purpose,
+                item.status
+            ]);
+        }
+
+        // AutoTable Configuration
+        doc.autoTable({
+            head: [columns],
+            body: rows,
+            startY: 45,
+            theme: 'striped',
+            headStyles: { 
+                fillColor: [15, 91, 190], 
+                textColor: [255, 255, 255],
+                fontSize: 10,
+                fontStyle: 'bold',
+                halign: 'center'
+            },
+            bodyStyles: { 
+                fontSize: 9,
+                valign: 'middle'
+            },
+            alternateRowStyles: { 
+                fillColor: [245, 248, 252] 
+            },
+            columnStyles: {
+                0: { cellWidth: 25 }, // ID Number
+                1: { cellWidth: 'auto' } // Name
+            },
+            margin: { top: 45, bottom: 20 },
+            didDrawPage: function(data) {
+                // Header
+                doc.setFontSize(18);
+                doc.setTextColor(15, 91, 190);
+                doc.setFont('helvetica', 'bold');
+                const pageWidth = doc.internal.pageSize.width;
+                doc.text("UNIVERSITY OF CEBU", pageWidth / 2, 15, { align: "center" });
+                
+                doc.setFontSize(12);
+                doc.setTextColor(60, 60, 60);
+                doc.text("College of Computer Studies", pageWidth / 2, 22, { align: "center" });
+                
+                doc.setFontSize(14);
+                doc.setTextColor(33, 33, 33);
+                doc.text(title.toUpperCase(), pageWidth / 2, 32, { align: "center" });
+                
+                // Horizontal line
+                doc.setDrawColor(15, 91, 190);
+                doc.setLineWidth(0.5);
+                doc.line(15, 36, pageWidth - 15, 36);
+                
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(100);
+                doc.text(`Generated on: ${new Date().toLocaleString()}`, 15, 42);
+                
+                // Footer - Page Number
+                const str = "Page " + doc.internal.getNumberOfPages();
+                doc.setFontSize(9);
+                const pageSize = doc.internal.pageSize;
+                const pageHeight = pageSize.height ? pageSize.height : pageSize.getHeight();
+                doc.text(str, pageWidth - 20, pageHeight - 10);
+                doc.text("CCS Sit-in Monitoring System - Confidential Report", 15, pageHeight - 10);
+            }
+        });
+
+        // Save PDF
+        const fileName = `${type}_report_${new Date().toISOString().slice(0,10)}.pdf`;
+        doc.save(fileName);
+        
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        alert('An error occurred while generating the PDF. Check console for details.');
+    }
+}
+</script>
+
+
+
+
+
+
 
 </body>
 </html>

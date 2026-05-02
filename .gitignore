@@ -1,0 +1,5 @@
+brain/
+.gemini/
+*.log
+vendor/
+.env

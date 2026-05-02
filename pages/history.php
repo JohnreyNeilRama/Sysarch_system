@@ -93,6 +93,43 @@ if(isset($_GET['mark_all_read'])) {
     header("Location: /SYSARCH/pages/history.php");
     exit;
 }
+
+// Fetch current sessions
+$session_fetch_stmt = $conn->prepare("SELECT sessions FROM students WHERE id_number = ?");
+$session_fetch_stmt->bind_param("s", $notif_student_id);
+$session_fetch_stmt->execute();
+$session_fetch_result = $session_fetch_stmt->get_result();
+$session_fetch_row = $session_fetch_result->fetch_assoc();
+$current_sessions = $session_fetch_row ? intval($session_fetch_row['sessions']) : 30;
+$session_fetch_stmt->close();
+
+// Statistics logic
+$sessions_used = 30 - $current_sessions;
+$current_points_earned = floor($sessions_used / 3);
+
+$stats_sql = "SELECT 
+    COUNT(*) as total_sessions,
+    SUM(CASE WHEN logout_time IS NOT NULL THEN TIMESTAMPDIFF(SECOND, CONCAT(sit_in_date, ' ', sit_in_time), CONCAT(sit_in_date, ' ', logout_time)) ELSE 0 END) as total_seconds,
+    AVG(CASE WHEN logout_time IS NOT NULL THEN TIMESTAMPDIFF(SECOND, CONCAT(sit_in_date, ' ', sit_in_time), CONCAT(sit_in_date, ' ', logout_time)) ELSE NULL END) as avg_seconds,
+    MAX(CASE WHEN logout_time IS NOT NULL THEN TIMESTAMPDIFF(SECOND, CONCAT(sit_in_date, ' ', sit_in_time), CONCAT(sit_in_date, ' ', logout_time)) ELSE NULL END) as max_seconds
+FROM sit_in 
+WHERE id_number = ?";
+$stats_stmt = $conn->prepare($stats_sql);
+$stats_stmt->bind_param("s", $notif_student_id);
+$stats_stmt->execute();
+$stats_result = $stats_stmt->get_result();
+$stats_row = $stats_result->fetch_assoc();
+
+$total_sessions = $stats_row['total_sessions'] ? intval($stats_row['total_sessions']) : 0;
+$total_seconds = $stats_row['total_seconds'] ? intval($stats_row['total_seconds']) : 0;
+$avg_seconds = $stats_row['avg_seconds'] ? floatval($stats_row['avg_seconds']) : 0;
+$max_seconds = $stats_row['max_seconds'] ? intval($stats_row['max_seconds']) : 0;
+
+$total_hours = $total_seconds / 3600;
+$avg_minutes = $avg_seconds / 60;
+$max_hours = $max_seconds / 3600;
+
+$stats_stmt->close();
 ?>
 
 <!DOCTYPE html>
@@ -567,10 +604,11 @@ if(isset($_GET['mark_all_read'])) {
         <li><a href="#" class="notification-link" id="openNotifications">
             Notification <?php if($unread_notifications > 0): ?><span class="notif-badge"><?php echo $unread_notifications; ?></span><?php endif; ?>
         </a></li>
-        <li><a href="/SYSARCH/userdb.php">Home</a></li>
-        <li><a href="/SYSARCH/edit_profile.php">Edit Profile</a></li>
-        <li><a href="/SYSARCH/history.php" class="active">History</a></li>
-        <li><a href="/SYSARCH/userdb.php" class="reservation-link" id="openReservation">Reservation</a></li>
+        <li><a href="/SYSARCH/pages/userdb.php">Home</a></li>
+        <li><a href="/SYSARCH/pages/software_availability.php">Software</a></li>
+        <li><a href="/SYSARCH/pages/edit_profile.php">Edit Profile</a></li>
+        <li><a href="/SYSARCH/pages/history.php" class="active">History</a></li>
+        <li><a href="#" class="reservation-link">Reservation</a></li>
         <li><a href="/SYSARCH/logout.php" class="logout-btn">Log Out</a></li>
     </ul>
 
@@ -1229,180 +1267,50 @@ if(isset($_GET['mark_all_read'])) {
 }
 </style>
 
+<?php include '../includes/reservation_system.php'; ?>
+
 <!-- JavaScript for Modal -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const modal = document.getElementById('reservationModal');
-    const computerModal = document.getElementById('computerModal');
     const feedbackModal = document.getElementById('feedbackModal');
-    const openReservationBtn = document.getElementById('openReservation');
-    const closeReservationBtn = document.getElementById('closeReservation');
-    const closeComputerBtn = document.getElementById('closeComputerModal');
     const closeFeedbackBtn = document.getElementById('closeFeedback');
-    const continueBtn = document.getElementById('continueToStep2');
-    let selectedComputer = null;
     
-    openReservationBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        modal.classList.add('active');
-    });
-    
-    closeReservationBtn.addEventListener('click', function() {
-        modal.classList.remove('active');
-    });
-    
-    closeComputerBtn.addEventListener('click', function() {
-        computerModal.classList.remove('active');
-    });
-    
-    closeFeedbackBtn.addEventListener('click', function() {
-        feedbackModal.classList.remove('active');
-    });
-    
-    feedbackModal.addEventListener('click', function(e) {
-        if (e.target === feedbackModal) {
+    if (closeFeedbackBtn) {
+        closeFeedbackBtn.addEventListener('click', function() {
             feedbackModal.classList.remove('active');
-        }
-    });
+        });
+    }
+    
+    if (feedbackModal) {
+        feedbackModal.addEventListener('click', function(e) {
+            if (e.target === feedbackModal) {
+                feedbackModal.classList.remove('active');
+            }
+        });
+    }
     
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
-            if (computerModal.classList.contains('active')) {
-                computerModal.classList.remove('active');
-            } else if (modal.classList.contains('active')) {
-                modal.classList.remove('active');
-            } else if (feedbackModal.classList.contains('active')) {
+            if (feedbackModal && feedbackModal.classList.contains('active')) {
                 feedbackModal.classList.remove('active');
             }
         }
     });
-    
-    continueBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        
-        const labRoom = document.getElementById('lab-room').value;
-        const reservationDate = document.getElementById('reservation-date').value;
-        const reservationTime = document.getElementById('reservation-time').value;
-        const purpose = document.getElementById('purpose').value;
-        
-        if (!labRoom || !reservationDate || !reservationTime || !purpose) {
-            alert('Please fill in all required fields');
-            return;
-        }
-        
-        document.getElementById('selectedRoom').textContent = 'Room ' + labRoom;
-        document.getElementById('selectedDate').textContent = reservationDate;
-        
-        const timeParts = reservationTime.split(':');
-        let hour = parseInt(timeParts[0]);
-        const ampm = hour >= 12 ? 'PM' : 'AM';
-        hour = hour % 12;
-        hour = hour ? hour : 12;
-        document.getElementById('selectedTime').textContent = hour + ':' + timeParts[1] + ' ' + ampm;
-        
-        document.getElementById('inputLabRoom').value = labRoom;
-        document.getElementById('inputReservationDate').value = reservationDate;
-        document.getElementById('inputReservationTime').value = reservationTime;
-        document.getElementById('inputPurpose').value = purpose;
-        document.getElementById('inputAdditionalNotes').value = document.getElementById('additional-notes').value;
-        
-        fetch('/SYSARCH/pages/api/get_computers.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'lab_room=' + encodeURIComponent(labRoom) + 
-                  '&reservation_date=' + encodeURIComponent(reservationDate) + 
-                  '&reservation_time=' + encodeURIComponent(reservationTime)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                alert('Error: ' + data.error);
-                return;
-            }
-            
-            const grid = document.getElementById('computerGrid');
-            grid.innerHTML = '';
-            
-            if (data.computers.length === 0) {
-                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">No computers found.</p>';
-                modal.classList.remove('active');
-                computerModal.classList.add('active');
-                return;
-            }
-            
-            // Rightmost column: 1-10 down, next: 20-11 up, etc.
-            const computers = data.computers;
-            const rowsPerCol = 10;
-            const totalCols = Math.ceil(computers.length / rowsPerCol);
-            const arranged = [];
-            
-            for (let col = totalCols - 1; col >= 0; col--) {
-                const start = col * rowsPerCol;
-                const end = Math.min(start + rowsPerCol, computers.length);
-                const colData = computers.slice(start, end);
-                
-                if ((totalCols - 1 - col) % 2 === 0) {
-                    arranged.push(...colData);
-                } else {
-                    arranged.push(...[...colData].reverse());
-                }
-            }
-            
-            arranged.forEach(comp => {
-                const unit = document.createElement('div');
-                const adminStatus = comp.admin_status ? comp.admin_status.toLowerCase() : '';
-                let statusClass = comp.available ? 'available' : 'occupied';
-                if (!comp.available && adminStatus === 'unavailable') {
-                    statusClass = 'unavailable';
-                }
-                unit.className = 'computer-unit ' + statusClass;
-                unit.textContent = comp.computer_number;
-                unit.title = comp.available ? 'Click to select' : (adminStatus === 'unavailable' ? 'Marked as unavailable by admin' : 'Already reserved');
-                
-                if (comp.available) {
-                    unit.addEventListener('click', function() {
-                        document.querySelectorAll('.computer-unit.selected').forEach(el => el.classList.remove('selected'));
-                        unit.classList.add('selected');
-                        selectedComputer = comp.computer_number;
-                        document.getElementById('inputComputerUnit').value = selectedComputer;
-                    });
-                }
-                
-                grid.appendChild(unit);
-            });
-            
-            modal.classList.remove('active');
-            computerModal.classList.add('active');
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Failed to load computers. Please try again.');
-        });
-    });
-    
-    document.getElementById('reservationFormStep2').addEventListener('submit', function(e) {
-        if (!selectedComputer) {
-            e.preventDefault();
-            alert('Please select a computer unit');
-        }
-    });
 });
-</script>
 
-<script>
-    function openFeedbackModal(sitInId, purpose, lab, date) {
-        document.getElementById('feedback-sit-in-id').value = sitInId;
-        document.getElementById('feedback-details').innerHTML = 
-            '<strong>Purpose:</strong> ' + purpose + '<br>' +
-            '<strong>Laboratory:</strong> ' + lab + '<br>' +
-            '<strong>Date:</strong> ' + date;
-        
-        // Reset form fields
-        document.getElementById('rating').value = '';
-        document.getElementById('feedback-comment').value = '';
-        
-        document.getElementById('feedbackModal').classList.add('active');
-    }
+function openFeedbackModal(sitInId, purpose, lab, date) {
+    document.getElementById('feedback-sit-in-id').value = sitInId;
+    document.getElementById('feedback-details').innerHTML = 
+        '<strong>Purpose:</strong> ' + purpose + '<br>' +
+        '<strong>Laboratory:</strong> ' + lab + '<br>' +
+        '<strong>Date:</strong> ' + date;
+    
+    // Reset form fields
+    document.getElementById('rating').value = '';
+    document.getElementById('feedback-comment').value = '';
+    
+    document.getElementById('feedbackModal').classList.add('active');
+}
 </script>
 
 </body>

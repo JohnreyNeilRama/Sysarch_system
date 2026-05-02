@@ -214,9 +214,10 @@ $conn->close();
         <li><a href="#" class="notification-link" id="openNotifications">
             Notification <?php if($unread_notifications > 0): ?><span class="notif-badge"><?php echo $unread_notifications; ?></span><?php endif; ?>
         </a></li>
-        <li><a href="/SYSARCH/userdb.php">Home</a></li>
-        <li><a href="/SYSARCH/edit_profile.php">Edit Profile</a></li>
-        <li><a href="/SYSARCH/history.php">History</a></li>
+        <li><a href="/SYSARCH/pages/userdb.php" class="active">Home</a></li>
+        <li><a href="/SYSARCH/pages/software_availability.php">Software</a></li>
+        <li><a href="/SYSARCH/pages/edit_profile.php">Edit Profile</a></li>
+        <li><a href="/SYSARCH/pages/history.php">History</a></li>
         <li><a href="#" class="reservation-link" id="openReservation">Reservation</a></li>
         <li><a href="/SYSARCH/logout.php" class="logout-btn">Log Out</a></li>
     </ul>
@@ -504,123 +505,7 @@ $conn->close();
 
 </div>
 
-<!-- FLOATING RESERVATION MODAL - Step 1 -->
-<div class="reservation-modal-overlay" id="reservationModal">
-    <div class="reservation-modal">
-        <div class="reservation-modal-header">
-            <h2>Make a Reservation - Step 1</h2>
-            <button class="reservation-close-btn" id="closeReservation">&times;</button>
-        </div>
-        <div class="reservation-modal-body">
-            <form id="reservationFormStep1" class="reservation-form">
-                <div class="form-group">
-                    <label for="lab-room">Laboratory Room</label>
-                    <select id="lab-room" name="lab_room" required>
-                        <option value="">Select Laboratory</option>
-                        <option value="524">Room 524</option>
-                        <option value="526">Room 526</option>
-                        <option value="528">Room 528</option>
-                        <option value="530">Room 530</option>
-                        <option value="544">Room 544</option>
-                        <option value="542">Room 542</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="reservation-date">Reservation Date</label>
-                    <input type="date" id="reservation-date" name="reservation_date" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="reservation-time">Reservation Time</label>
-                    <select id="reservation-time" name="reservation_time" required>
-                        <option value="">Select Time</option>
-                        <option value="07:30:00">7:30 AM</option>
-                        <option value="08:00:00">8:00 AM</option>
-                        <option value="08:30:00">8:30 AM</option>
-                        <option value="09:00:00">9:00 AM</option>
-                        <option value="09:30:00">9:30 AM</option>
-                        <option value="10:00:00">10:00 AM</option>
-                        <option value="10:30:00">10:30 AM</option>
-                        <option value="11:00:00">11:00 AM</option>
-                        <option value="11:30:00">11:30 AM</option>
-                        <option value="12:00:00">12:00 PM</option>
-                        <option value="12:30:00">12:30 PM</option>
-                        <option value="13:00:00">1:00 PM</option>
-                        <option value="13:30:00">1:30 PM</option>
-                        <option value="14:00:00">2:00 PM</option>
-                        <option value="14:30:00">2:30 PM</option>
-                        <option value="15:00:00">3:00 PM</option>
-                        <option value="15:30:00">3:30 PM</option>
-                        <option value="16:00:00">4:00 PM</option>
-                        <option value="16:30:00">4:30 PM</option>
-                        <option value="17:00:00">5:00 PM</option>
-                        <option value="17:30:00">5:30 PM</option>
-                        <option value="18:00:00">6:00 PM</option>
-                        <option value="18:30:00">6:30 PM</option>
-                        <option value="19:00:00">7:00 PM</option>
-                        <option value="19:30:00">7:30 PM</option>
-                        <option value="20:00:00">8:00 PM</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="purpose">Purpose</label>
-                    <select id="purpose" name="purpose" required>
-                        <option value="">Select Purpose</option>
-                        <option value="C Programming">C Programming</option>
-                        <option value="Java Programming">Java Programming</option>
-                        <option value="Python Programming">Python Programming</option>
-                        <option value="Web Development">Web Development</option>
-                        <option value="Database">Database</option>
-                        <option value="Research">Research</option>
-                        <option value="Assignment">Assignment</option>
-                        <option value="Examination">Examination</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="additional-notes">Additional Notes</label>
-                    <textarea id="additional-notes" name="additional_notes" placeholder="Enter any additional details..."></textarea>
-                </div>
-                
-                <button type="button" class="reservation-submit-btn" id="continueToStep2">Continue</button>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- COMPUTER SELECTION MODAL - Step 2 -->
-<div class="reservation-modal-overlay" id="computerModal">
-    <div class="reservation-modal computer-modal">
-        <div class="reservation-modal-header">
-            <h2>Select Computer - Step 2</h2>
-            <button class="reservation-close-btn" id="closeComputerModal">&times;</button>
-        </div>
-        <div class="reservation-modal-body">
-            <div class="computer-info">
-                <p><strong>Room:</strong> <span id="selectedRoom"></span></p>
-                <p><strong>Date:</strong> <span id="selectedDate"></span></p>
-                <p><strong>Time:</strong> <span id="selectedTime"></span></p>
-            </div>
-            <div class="computer-legend">
-                <span class="legend-item"><span class="computer-unit available"></span> Available</span>
-                <span class="legend-item"><span class="computer-unit occupied"></span> Unavailable</span>
-            </div>
-            <div class="computer-grid" id="computerGrid"></div>
-            <form id="reservationFormStep2" method="POST" action="/SYSARCH/includes/process_reservation.php">
-                <input type="hidden" name="lab_room" id="inputLabRoom">
-                <input type="hidden" name="reservation_date" id="inputReservationDate">
-                <input type="hidden" name="reservation_time" id="inputReservationTime">
-                <input type="hidden" name="purpose" id="inputPurpose">
-                <input type="hidden" name="additional_notes" id="inputAdditionalNotes">
-                <input type="hidden" name="computer_no" id="inputComputerNo">
-                <button type="submit" class="reservation-submit-btn">Submit Reservation</button>
-            </form>
-        </div>
-    </div>
-</div>
+<?php include '../includes/reservation_system.php'; ?>
 
 <style>
 .no-notifications {
@@ -1025,13 +910,9 @@ $conn->close();
 <!-- JavaScript for Modal -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const modal = document.getElementById('reservationModal');
-        const computerModal = document.getElementById('computerModal');
-        const openBtn = document.getElementById('openReservation');
-        const closeBtn = document.getElementById('closeReservation');
-        const closeComputerBtn = document.getElementById('closeComputerModal');
-        const continueBtn = document.getElementById('continueToStep2');
-        let selectedComputer = null;
+        const modal = document.getElementById('notificationModal');
+        const openBtn = document.getElementById('openNotifications');
+        const closeBtn = document.getElementById('closeNotifications');
         
         // Open modal
         if(openBtn) {
@@ -1045,13 +926,6 @@ $conn->close();
         if(closeBtn && modal) {
             closeBtn.addEventListener('click', function() {
                 modal.classList.remove('active');
-            });
-        }
-        
-        // Close computer modal with X button
-        if(closeComputerBtn && computerModal) {
-            closeComputerBtn.addEventListener('click', function() {
-                computerModal.classList.remove('active');
             });
         }
         
@@ -1073,169 +947,7 @@ $conn->close();
             });
         }
         
-        // Close modal with Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                if (computerModal.classList.contains('active')) {
-                    computerModal.classList.remove('active');
-                } else if (modal.classList.contains('active')) {
-                    modal.classList.remove('active');
-                }
-            }
-        });
-        
-        // Continue to Step 2 - Select Computer
-        if(continueBtn) {
-            continueBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                const labRoom = document.getElementById('lab-room').value;
-                const reservationDate = document.getElementById('reservation-date').value;
-                const reservationTime = document.getElementById('reservation-time').value;
-                const purpose = document.getElementById('purpose').value;
-                
-                if (!labRoom || !reservationDate || !reservationTime || !purpose) {
-                    alert('Please fill in all required fields');
-                    return;
-                }
-            
-                // Set info for Step 2
-                document.getElementById('selectedRoom').textContent = 'Room ' + labRoom;
-                document.getElementById('selectedDate').textContent = reservationDate;
-                
-                // Format time for display
-                const timeParts = reservationTime.split(':');
-                let hour = parseInt(timeParts[0]);
-                const ampm = hour >= 12 ? 'PM' : 'AM';
-                hour = hour % 12;
-                hour = hour ? hour : 12;
-                const minute = timeParts[1];
-                document.getElementById('selectedTime').textContent = hour + ':' + minute + ' ' + ampm;
-                
-                // Set hidden form values
-                document.getElementById('inputLabRoom').value = labRoom;
-                document.getElementById('inputReservationDate').value = reservationDate;
-                document.getElementById('inputReservationTime').value = reservationTime;
-                document.getElementById('inputPurpose').value = purpose;
-                document.getElementById('inputAdditionalNotes').value = document.getElementById('additional-notes').value;
-                
-                // Fetch available computers
-                fetch('/SYSARCH/pages/api/get_computers.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: 'lab_room=' + encodeURIComponent(labRoom) + 
-                          '&reservation_date=' + encodeURIComponent(reservationDate) + 
-                          '&reservation_time=' + encodeURIComponent(reservationTime)
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('HTTP error: ' + response.status);
-                    }
-                    return response.text();
-                })
-                .then(text => {
-                    console.log('Raw response:', text);
-                    let data;
-                    try {
-                        data = JSON.parse(text);
-                    } catch(e) {
-                        console.error('JSON parse error:', e);
-                        throw new Error('Invalid JSON: ' + text);
-                    }
-                    console.log('API Response:', data);
-                    console.log('Computers:', JSON.stringify(data.computers));
-                    if (data.error) {
-                        alert('Error: ' + data.error);
-                        return;
-                    }
-                    
-                    if (!data.computers) {
-                        console.error('No computers array in response');
-                        alert('Error: Invalid response from server');
-                        return;
-                    }
-                    
-                    const grid = document.getElementById('computerGrid');
-                    grid.innerHTML = '';
-                    
-                    if (data.computers.length === 0) {
-                        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">No computers found for this lab. Please try another lab.</p>';
-                        modal.classList.remove('active');
-                        computerModal.classList.add('active');
-                        return;
-                    }
-                    
-                    // Rightmost column: 1-10 down, next: 20-11 up, next: 21-30 down, etc.
-                    const computers = data.computers;
-                    const rowsPerCol = 10;
-                    const totalCols = Math.ceil(computers.length / rowsPerCol);
-                    const arranged = [];
-                    
-                    // Fill columns from right to left
-                    for (let col = totalCols - 1; col >= 0; col--) {
-                        const start = col * rowsPerCol;
-                        const end = Math.min(start + rowsPerCol, computers.length);
-                        const colData = computers.slice(start, end);
-                        
-                        if ((totalCols - 1 - col) % 2 === 0) {
-                            // Rightmost, 3rd from right, etc.: top to bottom (1-10, 21-30)
-                            arranged.push(...colData);
-                        } else {
-                            // 2nd from right, 4th from right, etc.: bottom to top (20-11, 40-31)
-                            arranged.push(...[...colData].reverse());
-                        }
-                    }
-                    
-                    arranged.forEach(comp => {
-                        const unit = document.createElement('div');
-                        const adminStatus = (comp.admin_status || 'available').toLowerCase();
-                        const isAdminUnavailable = adminStatus === 'unavailable';
-                        const isOccupied = !comp.available && !isAdminUnavailable;
-                        let statusClass = (isAdminUnavailable || isOccupied) ? 'unavailable' : 'available';
-                        console.log('Computer:', comp.computer_number, 'admin_status:', comp.admin_status, 'isAdminUnavailable:', isAdminUnavailable);
-                        unit.className = 'computer-unit ' + statusClass;
-                        unit.textContent = comp.computer_number;
-                        unit.title = statusClass === 'available' ? 'Click to select Computer ' + comp.computer_number : 'Computer ' + comp.computer_number + ' is not available';
-                        
-                        if (statusClass === 'available') {
-                            unit.addEventListener('click', function() {
-                                document.querySelectorAll('.computer-unit.selected').forEach(el => {
-                                    el.classList.remove('selected');
-                                });
-                                unit.classList.add('selected');
-                                selectedComputer = comp.computer_number;
-                                document.getElementById('inputComputerNo').value = selectedComputer;
-                            });
-                        }
-                        
-                        grid.appendChild(unit);
-                    });
-                    
-                    // Hide step 1 modal and show step 2 modal
-                    console.log('Showing computer modal, computers found:', data.computers.length);
-                    modal.classList.remove('active');
-                    computerModal.classList.add('active');
-                    console.log('Computer modal should be visible now');
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Failed to load computers: ' + error.message + '\nCheck console for details');
-                });
-            });
-        }
-        
-        // Handle form submission from Step 2
-        document.getElementById('reservationFormStep2').addEventListener('submit', function(e) {
-            if (!selectedComputer) {
-                e.preventDefault();
-                alert('Please select a computer unit');
-                return;
-            }
-            // Ensure the hidden input is set before submit
-            document.getElementById('inputComputerNo').value = selectedComputer;
-        });
+
         
         // Auto-hide success/error messages after 3 seconds
         setTimeout(function() {

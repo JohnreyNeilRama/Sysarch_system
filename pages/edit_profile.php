@@ -6,6 +6,62 @@ if(!isset($_SESSION['student_id'])){
     header("Location: /SYSARCH/login.php");
     exit;
 }
+
+// Include database connection
+include '../includes/connect.php';
+
+// Set timezone to Philippines (Asia/Manila)
+date_default_timezone_set('Asia/Manila');
+
+$notif_student_id = $_SESSION['id_number'];
+
+// Fetch unread notifications count
+$notif_count_sql = "SELECT COUNT(*) as unread_count FROM notifications WHERE id_number = ? AND is_read = 0";
+$notif_count_stmt = $conn->prepare($notif_count_sql);
+$notif_count_stmt->bind_param("s", $notif_student_id);
+$notif_count_stmt->execute();
+$notif_count_result = $notif_count_stmt->get_result();
+$notif_count_row = $notif_count_result->fetch_assoc();
+$unread_notifications = $notif_count_row['unread_count'];
+$notif_count_stmt->close();
+
+// Fetch current sessions
+$session_fetch_stmt = $conn->prepare("SELECT sessions FROM students WHERE id_number = ?");
+$session_fetch_stmt->bind_param("s", $notif_student_id);
+$session_fetch_stmt->execute();
+$session_fetch_result = $session_fetch_stmt->get_result();
+$session_fetch_row = $session_fetch_result->fetch_assoc();
+$current_sessions = $session_fetch_row ? intval($session_fetch_row['sessions']) : 30;
+$session_fetch_stmt->close();
+
+// Statistics logic
+$sessions_used = 30 - $current_sessions;
+$current_points_earned = floor($sessions_used / 3);
+
+$stats_sql = "SELECT 
+    COUNT(*) as total_sessions,
+    SUM(CASE WHEN logout_time IS NOT NULL THEN TIMESTAMPDIFF(SECOND, CONCAT(sit_in_date, ' ', sit_in_time), CONCAT(sit_in_date, ' ', logout_time)) ELSE 0 END) as total_seconds,
+    AVG(CASE WHEN logout_time IS NOT NULL THEN TIMESTAMPDIFF(SECOND, CONCAT(sit_in_date, ' ', sit_in_time), CONCAT(sit_in_date, ' ', logout_time)) ELSE NULL END) as avg_seconds,
+    MAX(CASE WHEN logout_time IS NOT NULL THEN TIMESTAMPDIFF(SECOND, CONCAT(sit_in_date, ' ', sit_in_time), CONCAT(sit_in_date, ' ', logout_time)) ELSE NULL END) as max_seconds
+FROM sit_in 
+WHERE id_number = ?";
+$stats_stmt = $conn->prepare($stats_sql);
+$stats_stmt->bind_param("s", $notif_student_id);
+$stats_stmt->execute();
+$stats_result = $stats_stmt->get_result();
+$stats_row = $stats_result->fetch_assoc();
+
+$total_sessions = $stats_row['total_sessions'] ? intval($stats_row['total_sessions']) : 0;
+$total_seconds = $stats_row['total_seconds'] ? intval($stats_row['total_seconds']) : 0;
+$avg_seconds = $stats_row['avg_seconds'] ? floatval($stats_row['avg_seconds']) : 0;
+$max_seconds = $stats_row['max_seconds'] ? intval($stats_row['max_seconds']) : 0;
+
+$total_hours = $total_seconds / 3600;
+$avg_minutes = $avg_seconds / 60;
+$max_hours = $max_seconds / 3600;
+
+$stats_stmt->close();
+$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -15,6 +71,7 @@ if(!isset($_SESSION['student_id'])){
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Profile - CCS Sit-in Monitoring</title>
     <link rel="stylesheet" href="/SYSARCH/assets/css/style.css">
+    <link rel="stylesheet" href="/SYSARCH/assets/css/userdb.css">
     <link rel="icon" type="image/png" href="/SYSARCH/assets/images/uclogo.png">
     <style>
         body {
@@ -152,7 +209,25 @@ if(!isset($_SESSION['student_id'])){
         }
     </style>
 </head>
-<body>
+<body class="dashboard-page">
+
+<nav class="dashboard-navbar">
+    <div class="dashboard-left">
+        Dashboard
+    </div>
+    <button class="mobile-menu-toggle" id="mobileMenuToggle">☰</button>
+    <ul class="dashboard-right" id="navRight">    
+        <li><a href="#" class="notification-link" id="openNotifications">
+            Notification <?php if($unread_notifications > 0): ?><span class="notif-badge"><?php echo $unread_notifications; ?></span><?php endif; ?>
+        </a></li>
+        <li><a href="/SYSARCH/pages/userdb.php">Home</a></li>
+        <li><a href="/SYSARCH/pages/software_availability.php">Software</a></li>
+        <li><a href="/SYSARCH/pages/edit_profile.php" class="active">Edit Profile</a></li>
+        <li><a href="/SYSARCH/pages/history.php">History</a></li>
+        <li><a href="#" class="reservation-link">Reservation</a></li>
+        <li><a href="/SYSARCH/logout.php" class="logout-btn">Log Out</a></li>
+    </ul>
+</nav>
 
 <div class="form-container">
     <h2>Edit Profile</h2>
@@ -201,7 +276,19 @@ if(!isset($_SESSION['student_id'])){
     <a href="/SYSARCH/userdb.php" class="back-link">← Back to Dashboard</a>
 </div>
 
+<?php include '../includes/reservation_system.php'; ?>
+
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+    const navRight = document.getElementById('navRight');
+    
+    mobileMenuToggle.addEventListener('click', function() {
+        navRight.classList.toggle('active');
+        this.textContent = navRight.classList.contains('active') ? '✕' : '☰';
+    });
+});
+
 function previewImage(input) {
     if (input.files && input.files[0]) {
         var reader = new FileReader();
