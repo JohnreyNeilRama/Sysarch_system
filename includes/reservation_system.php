@@ -220,6 +220,12 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('inputPurpose').value = purpose;
             document.getElementById('inputAdditionalNotes').value = document.getElementById('additional-notes').value;
             
+            // Reset computer selection for Step 2
+            resSelectedComputer = null;
+            if (document.getElementById('inputComputerNo')) {
+                document.getElementById('inputComputerNo').value = '';
+            }
+            
             // Fetch available computers
             fetch('/SYSARCH/pages/api/get_computers.php', {
                 method: 'POST',
@@ -322,12 +328,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const resFormStep2 = document.getElementById('reservationFormStep2');
     if (resFormStep2) {
         resFormStep2.addEventListener('submit', function(e) {
-            if (!resSelectedComputer) {
+            // Check the hidden input value directly as the source of truth
+            const computerInput = document.getElementById('inputComputerNo');
+            if (!computerInput || !computerInput.value) {
                 e.preventDefault();
                 alert('Please select a computer unit');
                 return;
             }
-            document.getElementById('inputComputerNo').value = resSelectedComputer;
+            // Ensure the variable matches the input (just in case)
+            resSelectedComputer = computerInput.value;
         });
     }
 });

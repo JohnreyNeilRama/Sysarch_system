@@ -290,7 +290,6 @@ $purpose_labels = json_encode(array_keys($purpose_data));
 
     <ul class="dashboard-right">    
         <li><a href="admin_dashboard.php" class="active">Dashboard</a></li>
-        <li><a href="analytics.php">Analytics</a></li>
         <li><a href="manage_students.php">Manage Students</a></li>
         <li><a href="manage_sitin.php">Sit-in Logs</a></li>
         <li><a href="manage_reservations.php">Reservations</a></li>
@@ -445,7 +444,7 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                     <span class="action-icon">👤</span>
                     <span class="action-text">+ Sit-in</span>
                 </button>
-                <button class="action-btn" id="openAnnouncements" onclick="document.getElementById('announcementsModal').classList.add('active');">
+                <button class="action-btn" id="openAnnouncements">
                     <span class="action-icon">📢</span>
                     <span class="action-text">Announcements</span>
                 </button>
@@ -456,6 +455,14 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                 <button class="action-btn" id="openManageLabs">
                     <span class="action-icon">⚙️</span>
                     <span class="action-text">Manage Labs</span>
+                </button>
+                <button class="action-btn" id="openManageSoftware">
+                    <span class="action-icon">💿</span>
+                    <span class="action-text">Manage Software</span>
+                </button>
+                <button class="action-btn" id="openAnalytics">
+                    <span class="action-icon">📊</span>
+                    <span class="action-text">Analytics</span>
                 </button>
             </div>
         </div>
@@ -490,10 +497,13 @@ $purpose_labels = json_encode(array_keys($purpose_data));
 <!-- SIT-IN MODAL -->
 <div class="modal-overlay" id="sitInModal">
 
-    <div class="modal-box">
+    <div class="modal-box modern-header-modal">
 
         <div class="modal-header">
-            <h2>Sit In Form</h2>
+            <div class="modal-title-with-icon">
+                <span class="modal-icon">👤</span>
+                <h2>Sit In Form</h2>
+            </div>
             <span class="close-btn" id="closeSitIn">&times;</span>
         </div>
 
@@ -710,12 +720,15 @@ $purpose_labels = json_encode(array_keys($purpose_data));
 
 <!-- ANNOUNCEMENTS MODAL -->
 <div class="modal-overlay" id="announcementsModal">
-    <div class="modal-box" style="width: 500px; max-height: 80vh; overflow-y: auto; display: block;">
+    <div class="modal-box modern-header-modal" style="width: 550px; max-height: 85vh; overflow-y: hidden; display: flex; flex-direction: column;">
         <div class="modal-header">
-            <h2>All Announcements</h2>
+            <div class="modal-title-with-icon">
+                <span class="modal-icon">📢</span>
+                <h2>All Announcements</h2>
+            </div>
             <span class="close-btn" id="closeAnnouncements">&times;</span>
         </div>
-        <div class="modal-body">
+        <div class="modal-body" style="overflow-y: auto; flex: 1; padding: 25px;">
             <?php
             include '../includes/connect.php';
             $stmt = $conn->query("SELECT id, admin_name, announcement_date, message, created_at FROM announcements ORDER BY announcement_date DESC, created_at DESC");
@@ -740,304 +753,7 @@ $purpose_labels = json_encode(array_keys($purpose_data));
     </div>
 </div>
 
-<script>
-const openBtn = document.getElementById("openSitIn");
-const modal = document.getElementById("sitInModal");
-const closeBtn = document.getElementById("closeSitIn");
-const closeBtn2 = document.getElementById("closeSitIn2");
 
-openBtn.onclick = () => {
-    modal.classList.add("active");
-};
-
-closeBtn.onclick = () => {
-    modal.classList.remove("active");
-};
-
-closeBtn2.onclick = () => {
-    modal.classList.remove("active");
-};
-
-// close when clicking outside
-window.addEventListener("click", function(e){
-    const sitInModal = document.getElementById("sitInModal");
-    const editModal = document.getElementById("editModal");
-    const announcementsModal = document.getElementById("announcementsModal");
-    const manageLabsModal = document.getElementById("manageLabsModal");
-
-    if(e.target === sitInModal){
-        sitInModal.classList.remove("active");
-    }
-
-    if(e.target === editModal){
-        editModal.classList.remove("active");
-    }
-
-    if(e.target === announcementsModal){
-        announcementsModal.classList.remove("active");
-    }
-
-    if(e.target === manageLabsModal){
-        manageLabsModal.classList.remove("active");
-    }
-});
-
-// Announcements Modal
-const openAnnouncementsBtn = document.getElementById("openAnnouncements");
-const announcementsModal = document.getElementById("announcementsModal");
-const closeAnnouncementsBtn = document.getElementById("closeAnnouncements");
-
-if(openAnnouncementsBtn) {
-    openAnnouncementsBtn.onclick = () => {
-        announcementsModal.classList.add("active");
-    };
-}
-
-if(closeAnnouncementsBtn) {
-    closeAnnouncementsBtn.onclick = () => {
-        announcementsModal.classList.remove("active");
-    };
-}
-
-// Edit and Delete Announcement Functions
-function openEditAnnouncement(id, date, message) {
-    document.getElementById('editAnnId').value = id;
-    document.getElementById('editAnnDate').value = date;
-    document.getElementById('editAnnMessage').value = message;
-    document.getElementById('editAnnouncementModal').classList.add('active');
-}
-
-function closeEditAnnouncement() {
-    document.getElementById('editAnnouncementModal').classList.remove('active');
-}
-
-document.addEventListener("DOMContentLoaded", function() {
-    const manageLabsModal = document.getElementById("manageLabsModal");
-    const closeManageLabsBtn = document.getElementById("closeManageLabs");
-    const closeManageLabsBtn2 = document.getElementById("closeManageLabs2");
-    const manageLabsForm = document.getElementById("manageLabsForm");
-    const labComputerSection = document.getElementById("labComputerSection");
-    const labComputersGrid = document.getElementById("labComputersGrid");
-    const currentLabDisplay = document.getElementById("currentLabDisplay");
-
-    function resetManageLabsForm() {
-        if (labComputerSection) labComputerSection.style.display = "none";
-        if (manageLabsForm) manageLabsForm.reset();
-        if (labComputersGrid) labComputersGrid.innerHTML = "";
-    }
-
-    const openManageLabsBtn = document.getElementById("openManageLabs");
-
-    if(openManageLabsBtn && manageLabsModal) {
-        openManageLabsBtn.onclick = () => {
-            manageLabsModal.classList.add("active");
-        };
-    }
-
-    if(closeManageLabsBtn) {
-        closeManageLabsBtn.onclick = () => {
-            manageLabsModal.classList.remove("active");
-            resetManageLabsForm();
-        };
-    }
-
-    if(closeManageLabsBtn2) {
-        closeManageLabsBtn2.onclick = () => {
-            manageLabsModal.classList.remove("active");
-            resetManageLabsForm();
-        };
-    }
-
-    const manageLabBtn = document.getElementById("manageLabBtn");
-    if(manageLabBtn) {
-        manageLabBtn.addEventListener("click", function(e) {
-            e.preventDefault();
-            const labSelect = document.getElementById("labSelect");
-            const selectedLab = labSelect.value;
-            
-            if(selectedLab) {
-                loadLabComputers(selectedLab);
-            } else {
-                alert("Please select a lab first");
-            }
-        });
-    }
-
-    const saveLabBtn = document.getElementById("saveLabBtn");
-    if(saveLabBtn) {
-        saveLabBtn.addEventListener("click", function(e) {
-            e.preventDefault();
-            alert("Changes saved successfully!");
-            manageLabsModal.classList.remove("active");
-            resetManageLabsForm();
-        });
-    }
-
-    function loadLabComputers(labRoom) {
-        currentLabDisplay.textContent = "Lab " + labRoom;
-        labComputersGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #666;">Loading computers...</div>';
-        labComputerSection.style.display = "block";
-    
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/SYSARCH/pages/api/get_lab_computers.php", true);
-    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-    xhr.onreadystatechange = function() {
-        if(xhr.readyState === 4 && xhr.status === 200) {
-            try {
-                const data = JSON.parse(xhr.responseText);
-                if(data.error) {
-                    labComputersGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #dc3545;">Error: ' + data.error + '</div>';
-                    return;
-                }
-                displayComputers(data.computers, labRoom);
-            } catch(e) {
-                labComputersGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #dc3545;">Error parsing response</div>';
-            }
-        }
-    };
-    xhr.onerror = function() {
-        console.error("XHR error:", xhr.statusText);
-        labComputersGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #dc3545;">Network error occurred</div>';
-    };
-    
-    xhr.send("lab_room=" + labRoom);
-}
-
-function displayComputers(computers, labRoom) {
-    labComputersGrid.innerHTML = "";
-    
-    if(computers.length === 0) {
-        labComputersGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #666;">No computers found for Lab ' + labRoom + '</div>';
-        return;
-    }
-    
-    var rowsPerCol = 10;
-    var totalCols = Math.ceil(computers.length / rowsPerCol);
-    var arranged = [];
-    
-    for(var col = totalCols - 1; col >= 0; col--) {
-        var start = col * rowsPerCol;
-        var end = Math.min(start + rowsPerCol, computers.length);
-        var colData = computers.slice(start, end);
-        
-        if((totalCols - 1 - col) % 2 === 0) {
-            arranged.push.apply(arranged, colData);
-        } else {
-            arranged.push.apply(arranged, [].concat(colData).reverse());
-        }
-    }
-    
-    for(var i = 0; i < arranged.length; i++) {
-        var comp = arranged[i];
-        var isAvailable = comp.status && (comp.status.toLowerCase() === "available" || comp.status === "Available");
-        var unit = document.createElement("div");
-        unit.className = "computer-unit " + (isAvailable ? "available" : "unavailable");
-        unit.textContent = comp.computer_number;
-        unit.dataset.id = comp.id;
-        unit.dataset.status = comp.status;
-        unit.title = "Click to toggle status";
-        
-        unit.onclick = function() {
-            toggleComputerStatus(this, labRoom);
-        };
-        
-        labComputersGrid.appendChild(unit);
-    }
-}
-
-function toggleComputerStatus(element, labRoom) {
-    var computerId = element.dataset.id;
-    var currentStatus = element.dataset.status;
-    var isCurrentlyAvailable = currentStatus && (currentStatus.toLowerCase() === "available" || currentStatus === "Available");
-    var newStatus = isCurrentlyAvailable ? "unavailable" : "available";
-    
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/SYSARCH/pages/api/update_computer_status.php", true);
-    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-    xhr.onreadystatechange = function() {
-        if(xhr.readyState === 4 && xhr.status === 200) {
-            try {
-                const data = JSON.parse(xhr.responseText);
-                if(data.success) {
-                    var newIsAvailable = newStatus === "available";
-                    element.className = "computer-unit " + (newIsAvailable ? "available" : "unavailable");
-                    element.dataset.status = newIsAvailable ? "Available" : "unavailable";
-                } else {
-                    alert("Error updating computer status: " + (data.error || "Unknown error"));
-                }
-            } catch(e) {
-                alert("Error updating computer status");
-            }
-        }
-    };
-    xhr.send("computer_id=" + computerId + "&status=" + newStatus + "&lab_room=" + labRoom);
-}
-
-}); // End DOMContentLoaded for Manage Labs
-
-function confirmDeleteAnnouncement(id) {
-    if(confirm('Are you sure you want to delete this announcement?')) {
-        var form = document.createElement('form');
-        form.method = 'POST';
-        form.innerHTML = '<input type="hidden" name="delete_announcement" value="1"><input type="hidden" name="announcement_id" value="' + id + '">';
-        document.body.appendChild(form);
-        form.submit();
-    }
-}
-
-// Fetch student info when ID Number loses focus
-function fetchStudentInfo() {
-    const idNumber = document.getElementById('idNumber').value;
-    if(idNumber.trim() === '') return;
-    
-    // Use fetch to get student info from database
-    fetch('admin_dashboard.php?id_lookup=' + encodeURIComponent(idNumber))
-    .then(response => response.text())
-    .then(data => {
-        try {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(data, 'text/html');
-            const studentData = doc.getElementById('student-data');
-            
-            if(studentData) {
-                const studentName = studentData.getAttribute('data-name');
-                const studentSessions = studentData.getAttribute('data-sessions');
-                const studentId = studentData.getAttribute('data-id');
-                
-                if(studentId) {
-                    document.getElementById('studentName').value = studentName;
-                } else {
-                    alert('Student not found! Please check the ID Number.');
-                    document.getElementById('studentName').value = '';
-                }
-            }
-        } catch(e) {
-            console.error('Error parsing student data:', e);
-        }
-    })
-    .catch(error => console.error('Error:', error));
-}
-
-// EDIT MODAL ELEMENT
-const editModal = document.getElementById("editModal");
-
-// OPEN MODAL
-function openEditModal(){
-    editModal.classList.add("active");
-}
-
-// CLOSE MODAL
-function closeEditModal(){
-    editModal.classList.remove("active");
-}
-
-// CLOSE WHEN CLICKING OUTSIDE (SAFE VERSION)
-window.addEventListener("click", function(e){
-    if(e.target === editModal){
-        editModal.classList.remove("active");
-    }
-});
-</script>
 
 <!-- Edit Announcement Modal -->
 <div class="modal-overlay" id="editAnnouncementModal">
@@ -1066,7 +782,7 @@ window.addEventListener("click", function(e){
 
 <!-- Manage Labs Modal -->
 <div class="modal-overlay" id="manageLabsModal">
-    <div class="modal-box manage-labs-modal">
+    <div class="modal-box manage-labs-modal modern-header-modal">
         <div class="modal-header">
             <div class="modal-title-with-icon">
                 <span class="modal-icon">🖥️</span>
@@ -1119,7 +835,195 @@ window.addEventListener("click", function(e){
     </div>
 </div>
 
+<!-- Analytics Modal -->
+<div class="modal-overlay" id="analyticsModal">
+    <div class="modal-box analytics-modal modern-header-modal">
+        <div class="modal-header">
+            <div class="modal-title-with-icon">
+                <span class="modal-icon">📊</span>
+                <h2>System Analytics</h2>
+            </div>
+            <span class="close-btn" id="closeAnalytics">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="analytics-header">
+                <p class="analytics-subtitle">Real-time usage and activity metrics</p>
+                <button class="refresh-btn" id="refreshAnalyticsBtn">
+                    <span>🔄</span> Refresh
+                </button>
+            </div>
+
+            <!-- Analytics Summary Cards -->
+            <div class="analytics-summary-grid">
+                <div class="summary-item">
+                    <div class="summary-label">Total Students</div>
+                    <div class="summary-value" id="ana-total-students">0</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Total Sit-ins</div>
+                    <div class="summary-value" id="ana-total-sitin">0</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Total Reservations</div>
+                    <div class="summary-value" id="ana-total-res">0</div>
+                </div>
+            </div>
+
+            <div class="analytics-charts-grid">
+                <!-- Activity Trend -->
+                <div class="ana-chart-card">
+                    <h3>📈 Weekly Activity Trend</h3>
+                    <div class="ana-chart-container">
+                        <canvas id="activityTrendChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Peak Hours -->
+                <div class="ana-chart-card">
+                    <h3>🕒 Peak Usage Hours</h3>
+                    <div class="ana-chart-container">
+                        <canvas id="peakHoursChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Lab Distribution -->
+                <div class="ana-chart-card">
+                    <h3>🏢 Lab Usage Distribution</h3>
+                    <div class="ana-chart-container">
+                        <canvas id="labUsageChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Top Students -->
+                <div class="ana-chart-card">
+                    <h3>🏆 Most Active Students</h3>
+                    <div class="top-students-list" id="topStudentsList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Manage Software Modal -->
+<div class="modal-overlay" id="manageSoftwareModal">
+    <div class="modal-box manage-software-modal modern-header-modal">
+        <div class="modal-header">
+            <div class="modal-title-with-icon">
+                <span class="modal-icon">💿</span>
+                <h2>Manage Software</h2>
+            </div>
+            <span class="close-btn" id="closeManageSoftware">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="lab-selection-info">
+                <p>Select a laboratory to manage its installed software.</p>
+            </div>
+            <form id="manageSoftwareForm">
+                <div class="form-group">
+                    <label for="softwareLabSelect"><span class="input-icon">📍</span> Select Laboratory</label>
+                    <select name="lab_select" id="softwareLabSelect">
+                        <option value="">-- Choose a Lab --</option>
+                        <option value="524">Lab 524</option>
+                        <option value="526">Lab 526</option>
+                        <option value="528">Lab 528</option>
+                        <option value="530">Lab 530</option>
+                        <option value="544">Lab 544</option>
+                        <option value="542">Lab 542</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-close" id="closeManageSoftware2">Cancel</button>
+                    <button type="button" class="btn-submit" id="manageSoftwareBtn">
+                        <span>⚙️</span> View Software
+                    </button>
+                </div>
+            </form>
+            
+            <div id="labSoftwareSection" class="lab-computer-section" style="display: none;">
+                <div class="lab-computer-header">
+                    <h3>Software in <span id="currentSoftwareLabDisplay">Lab</span></h3>
+                    <p class="computer-instructions">Manage installed software categorized by their usage.</p>
+                </div>
+                <div class="software-list-container" id="labSoftwareList"></div>
+                <div class="add-software-form">
+                    <h4>Add New Software</h4>
+                    <div class="software-input-group">
+                        <input type="text" id="newSoftwareName" placeholder="Software Name">
+                        <select id="newSoftwareCategory">
+                            <option value="Web Browser">Web Browser</option>
+                            <option value="Programming & IDEs">Programming & IDEs</option>
+                            <option value="Database Management">Database Management</option>
+                            <option value="Web Development">Web Development</option>
+                            <option value="Office Productivity">Office Productivity</option>
+                            <option value="Network & Security">Network & Security</option>
+                            <option value="Mobile Development">Mobile Development</option>
+                            <option value="Design & Multimedia">Design & Multimedia</option>
+                            <option value="Utility">Utility</option>
+                        </select>
+                        <button type="button" class="btn-submit" id="addSoftwareBtn">Add Software</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
+/* Unified Modern Modal Design for All Quick Action Modals */
+.modern-header-modal {
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.modern-header-modal .modal-header {
+    background: linear-gradient(135deg, #1a3a5f 0%, #0f5bbe 100%);
+    color: white;
+    padding: 24px 30px;
+    border-bottom: none;
+    flex-shrink: 0;
+}
+
+.modern-header-modal .modal-title-with-icon {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.modern-header-modal .modal-title-with-icon h2 {
+    margin: 0;
+    font-size: 22px;
+    color: white;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.modern-header-modal .modal-icon {
+    font-size: 24px;
+    background: rgba(255, 255, 255, 0.15);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.modern-header-modal .close-btn {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 28px;
+    transition: all 0.3s ease;
+    text-shadow: none;
+}
+
+.modern-header-modal .close-btn:hover {
+    color: white;
+    transform: scale(1.1);
+}
+
 .lab-computer-section {
     margin-top: 25px;
     padding-top: 20px;
@@ -1208,11 +1112,515 @@ window.addEventListener("click", function(e){
     transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(229, 57, 53, 0.4);
 }
+
+/* Modern Manage Software UI */
+.manage-software-modal {
+    width: 600px !important;
+    max-width: 95%;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+}
+
+.manage-software-modal .modal-body {
+    padding: 30px;
+    background: #f8fafc;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.manage-software-modal .lab-selection-info {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.manage-software-modal .lab-selection-info p {
+    color: #64748b;
+    font-size: 15px;
+    margin: 0;
+}
+
+.manage-software-modal .form-group {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    margin-bottom: 25px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.manage-software-modal .form-group:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+    border-color: #cbd5e1;
+}
+
+.manage-software-modal .form-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 16px;
+    font-size: 15px;
+}
+
+.manage-software-modal select#softwareLabSelect {
+    width: 100%;
+    padding: 16px 20px;
+    font-size: 16px;
+    font-weight: 500;
+    border: 2px solid #cbd5e1;
+    border-radius: 12px;
+    background-color: #fcfcfc;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 20px center;
+    background-size: 18px;
+}
+
+.manage-software-modal select#softwareLabSelect:focus {
+    border-color: #0f5bbe;
+    box-shadow: 0 0 0 4px rgba(15, 91, 190, 0.1);
+    outline: none;
+    background-color: #ffffff;
+}
+
+.manage-software-modal select#softwareLabSelect:hover {
+    border-color: #94a3b8;
+}
+
+.manage-software-modal .modal-actions {
+    display: flex;
+    gap: 16px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 24px;
+    margin-top: 10px;
+}
+
+.manage-software-modal .modal-actions button {
+    flex: 1;
+    padding: 14px;
+    font-size: 15px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.manage-software-modal .btn-close {
+    background: #f1f5f9;
+    color: #475569;
+    font-weight: 600;
+    border: 1px solid #cbd5e1;
+}
+
+.manage-software-modal .btn-close:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+.manage-software-modal .btn-submit {
+    background: linear-gradient(135deg, #0f5bbe 0%, #1976D2 100%);
+    box-shadow: 0 4px 12px rgba(15, 91, 190, 0.25);
+}
+
+.manage-software-modal .btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(15, 91, 190, 0.35);
+}
+
+#labSoftwareSection {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    margin-top: 25px;
+}
+
+.software-list-container {
+    margin-bottom: 25px;
+}
+
+.software-category-group {
+    margin-bottom: 20px;
+    animation: fadeIn 0.4s ease;
+}
+
+.software-category-group .category-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f5bbe;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.software-category-group .category-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #eef2f7;
+}
+
+.software-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.software-tag {
+    background: #ffffff;
+    color: #334155;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.software-tag:hover {
+    border-color: #0f5bbe;
+    background: #f8fafc;
+    color: #0f5bbe;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(15, 91, 190, 0.1);
+}
+
+.delete-sw {
+    cursor: pointer;
+    font-size: 10px;
+    color: #ef4444;
+    opacity: 0.6;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fef2f2;
+}
+
+.delete-sw:hover {
+    opacity: 1;
+    background: #ef4444;
+    color: white;
+    transform: scale(1.15) rotate(90deg);
+}
+
+.add-software-form {
+    background: #f8fafc;
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px dashed #cbd5e1;
+    margin-top: 25px;
+    transition: all 0.3s ease;
+}
+
+.add-software-form:hover {
+    border-color: #94a3b8;
+    background: #f1f5f9;
+}
+
+.add-software-form h4 {
+    margin: 0 0 16px 0;
+    color: #0f5bbe;
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.add-software-form h4::before {
+    content: '➕';
+    font-size: 14px;
+}
+
+.software-input-group {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+    flex-wrap: wrap;
+}
+
+.software-input-group input,
+.software-input-group select {
+    flex: 1;
+    min-width: 160px;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background: white;
+    color: #334155;
+}
+
+.software-input-group input:focus,
+.software-input-group select:focus {
+    outline: none;
+    border-color: #0f5bbe;
+    box-shadow: 0 0 0 4px rgba(15, 91, 190, 0.1);
+}
+
+.software-input-group input::placeholder {
+    color: #94a3b8;
+}
+
+.software-input-group .btn-submit {
+    padding: 12px 24px;
+    white-space: nowrap;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #0f5bbe 0%, #1976D2 100%);
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(15, 91, 190, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.software-input-group .btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(15, 91, 190, 0.3);
+    background: linear-gradient(135deg, #1976D2 0%, #0f5bbe 100%);
+}
+
+.software-input-group .btn-submit:active {
+    transform: translateY(0);
+}
+
+/* Custom scrollbar for modal body */
+.manage-software-modal .modal-body {
+    padding-right: 12px;
+}
+
+.manage-software-modal .modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.manage-software-modal .modal-body::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 8px;
+}
+
+.manage-software-modal .modal-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 8px;
+    border: 2px solid #f1f5f9;
+}
+
+.manage-software-modal .modal-body::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* ============================= */
+/* ANALYTICS MODAL STYLING       */
+/* ============================= */
+
+.analytics-modal {
+    width: 1000px !important;
+    max-width: 95%;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+}
+
+.analytics-modal .modal-body {
+    padding: 30px;
+    background: #f8fafc;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.analytics-modal .analytics-header {
+    margin-bottom: 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.analytics-modal .analytics-subtitle {
+    color: #64748b;
+    font-size: 15px;
+    margin: 0;
+}
+
+.analytics-modal .refresh-btn {
+    background: #0f5bbe;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(15, 91, 190, 0.2);
+}
+
+.analytics-modal .refresh-btn:hover {
+    background: #0d4fa1;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(15, 91, 190, 0.3);
+}
+
+.analytics-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.analytics-modal .summary-item {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    border: 1px solid #e2e8f0;
+    transition: transform 0.3s ease;
+}
+
+.analytics-modal .summary-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.08);
+}
+
+.analytics-modal .summary-label {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.analytics-modal .summary-value {
+    font-size: 32px;
+    font-weight: 800;
+    color: #0f5bbe;
+}
+
+.analytics-charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+}
+
+.ana-chart-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+}
+
+.ana-chart-card h3 {
+    font-size: 16px;
+    color: #1e293b;
+    margin: 0 0 20px 0;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ana-chart-container {
+    height: 250px;
+    position: relative;
+}
+
+.top-students-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.top-student-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border-left: 4px solid #0f5bbe;
+    transition: all 0.2s ease;
+}
+
+.top-student-item:hover {
+    background: #f1f5f9;
+    transform: translateX(5px);
+}
+
+.analytics-modal .student-info {
+    font-weight: 600;
+    color: #334155;
+    font-size: 14px;
+}
+
+.analytics-modal .student-count {
+    background: #0f5bbe;
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.analytics-modal .modal-body::-webkit-scrollbar,
+.top-students-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.analytics-modal .modal-body::-webkit-scrollbar-track,
+.top-students-list::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 8px;
+}
+
+.analytics-modal .modal-body::-webkit-scrollbar-thumb,
+.top-students-list::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 8px;
+}
+
+.analytics-modal .modal-body::-webkit-scrollbar-thumb:hover,
+.top-students-list::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
 </style>
 
 <!-- REPORTS MODAL -->
 <div class="modal-overlay" id="reportsModal">
-    <div class="modal-box report-modal">
+    <div class="modal-box report-modal modern-header-modal">
         <div class="modal-header">
             <div class="modal-title-with-icon">
                 <span class="modal-icon">📊</span>
@@ -1375,165 +1783,390 @@ window.addEventListener("click", function(e){
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    const reportsModal = document.getElementById("reportsModal");
-    const openReportsBtn = document.getElementById("openReports");
-    const closeReportsBtn = document.getElementById("closeReports");
+    // Modal Config Mapping
+    const modalConfig = {
+        sitIn: {
+            overlay: document.getElementById("sitInModal"),
+            open: document.getElementById("openSitIn"),
+            close: ["closeSitIn", "closeSitIn2"]
+        },
+        announcements: {
+            overlay: document.getElementById("announcementsModal"),
+            open: document.getElementById("openAnnouncements"),
+            close: ["closeAnnouncements"]
+        },
+        reports: {
+            overlay: document.getElementById("reportsModal"),
+            open: document.getElementById("openReports"),
+            close: ["closeReports"]
+        },
+        manageLabs: {
+            overlay: document.getElementById("manageLabsModal"),
+            open: document.getElementById("openManageLabs"),
+            close: ["closeManageLabs", "closeManageLabs2"],
+            onClose: resetManageLabsForm
+        },
+        manageSoftware: {
+            overlay: document.getElementById("manageSoftwareModal"),
+            open: document.getElementById("openManageSoftware"),
+            close: ["closeManageSoftware", "closeManageSoftware2"],
+            onClose: resetManageSoftwareForm
+        },
+        analytics: {
+            overlay: document.getElementById("analyticsModal"),
+            open: document.getElementById("openAnalytics"),
+            close: ["closeAnalytics"],
+            onOpen: fetchAnalytics
+        },
+        editStudent: {
+            overlay: document.getElementById("editModal"),
+            close: [document.querySelector("#editModal .close-btn")]
+        },
+        editAnnouncement: {
+            overlay: document.getElementById("editAnnouncementModal"),
+            close: [document.querySelector("#editAnnouncementModal .close-btn")]
+        }
+    };
 
-    if(openReportsBtn) {
-        openReportsBtn.onclick = () => {
-            reportsModal.classList.add("active");
-        };
-    }
-
-    if(closeReportsBtn) {
-        closeReportsBtn.onclick = () => {
-            reportsModal.classList.remove("active");
-        };
-    }
-
-    // Update global click listener for reports modal
-    window.addEventListener("click", function(e){
-        if(e.target === reportsModal){
-            reportsModal.classList.remove("active");
+    // Initialize Modal Logic
+    Object.keys(modalConfig).forEach(key => {
+        const cfg = modalConfig[key];
+        if (cfg.open && cfg.overlay) {
+            cfg.open.onclick = () => {
+                cfg.overlay.classList.add("active");
+                if (cfg.onOpen) cfg.onOpen();
+                if (key === 'sitIn') setTimeout(() => document.getElementById("idNumber")?.focus(), 100);
+            };
+        }
+        if (cfg.close && cfg.overlay) {
+            cfg.close.forEach(btnRef => {
+                const btn = typeof btnRef === 'string' ? document.getElementById(btnRef) : btnRef;
+                if (btn) {
+                    btn.onclick = () => {
+                        cfg.overlay.classList.remove("active");
+                        if (cfg.onClose) cfg.onClose();
+                    };
+                }
+            });
         }
     });
+
+    // Outside Click Listener
+    window.addEventListener("click", (e) => {
+        Object.values(modalConfig).forEach(cfg => {
+            if (e.target === cfg.overlay) {
+                cfg.overlay.classList.remove("active");
+                if (cfg.onClose) cfg.onClose();
+            }
+        });
+    });
+
+    // Manage Labs Features
+    const manageLabBtn = document.getElementById("manageLabBtn");
+    if (manageLabBtn) {
+        manageLabBtn.onclick = (e) => {
+            e.preventDefault();
+            const labSelect = document.getElementById("labSelect");
+            if (labSelect?.value) loadLabComputers(labSelect.value);
+            else alert("Please select a lab first");
+        };
+    }
+
+    // Manage Software Features
+    const manageSoftwareBtn = document.getElementById("manageSoftwareBtn");
+    if (manageSoftwareBtn) {
+        manageSoftwareBtn.onclick = (e) => {
+            e.preventDefault();
+            const labSelect = document.getElementById("softwareLabSelect");
+            if (labSelect?.value) loadLabSoftware(labSelect.value);
+            else alert("Please select a lab first");
+        };
+    }
+
+    const addSoftwareBtn = document.getElementById("addSoftwareBtn");
+    if (addSoftwareBtn) {
+        addSoftwareBtn.onclick = () => {
+            const labRoom = document.getElementById("softwareLabSelect")?.value;
+            const nameInput = document.getElementById("newSoftwareName");
+            const categorySelect = document.getElementById("newSoftwareCategory");
+            if (!labRoom || !nameInput?.value.trim()) return alert("Lab and Software Name are required");
+            
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "/SYSARCH/pages/api/add_lab_software.php", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        if (data.success) { nameInput.value = ""; loadLabSoftware(labRoom); }
+                        else alert("Error: " + data.error);
+                    } catch(e) { alert("Error adding software"); }
+                }
+            };
+            xhr.send(`lab_room=${encodeURIComponent(labRoom)}&software_name=${encodeURIComponent(nameInput.value.trim())}&category=${encodeURIComponent(categorySelect.value)}`);
+        };
+    }
 });
+
+// Helper Functions
+function resetManageLabsForm() {
+    const section = document.getElementById("labComputerSection");
+    if (section) section.style.display = "none";
+    document.getElementById("manageLabsForm")?.reset();
+    const grid = document.getElementById("labComputersGrid");
+    if (grid) grid.innerHTML = "";
+}
+
+function resetManageSoftwareForm() {
+    const section = document.getElementById("labSoftwareSection");
+    if (section) section.style.display = "none";
+    document.getElementById("manageSoftwareForm")?.reset();
+    const list = document.getElementById("labSoftwareList");
+    if (list) list.innerHTML = "";
+}
+
+function loadLabComputers(labRoom) {
+    const display = document.getElementById("currentLabDisplay");
+    const grid = document.getElementById("labComputersGrid");
+    const section = document.getElementById("labComputerSection");
+    if (display) display.textContent = "Lab " + labRoom;
+    if (grid) grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #666;">Loading...</div>';
+    if (section) section.style.display = "block";
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/SYSARCH/pages/api/get_lab_computers.php", true);
+    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            try {
+                const data = JSON.parse(xhr.responseText);
+                if (data.computers) displayComputers(data.computers, labRoom);
+            } catch(e) { grid.innerHTML = "Error parsing data"; }
+        }
+    };
+    xhr.send("lab_room=" + labRoom);
+}
+
+function displayComputers(computers, labRoom) {
+    const grid = document.getElementById("labComputersGrid");
+    if (!grid) return;
+    grid.innerHTML = "";
+    computers.forEach(comp => {
+        const isAvailable = comp.status?.toLowerCase() === "available";
+        const unit = document.createElement("div");
+        unit.className = `computer-unit ${isAvailable ? 'available' : 'unavailable'}`;
+        unit.textContent = comp.computer_number;
+        unit.onclick = () => toggleComputerStatus(unit, comp.id, comp.status, labRoom);
+        grid.appendChild(unit);
+    });
+}
+
+function toggleComputerStatus(element, id, currentStatus, labRoom) {
+    const nextStatus = currentStatus.toLowerCase() === 'available' ? 'unavailable' : 'available';
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/SYSARCH/pages/api/update_computer_status.php", true);
+    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            const data = JSON.parse(xhr.responseText);
+            if (data.success) {
+                element.className = `computer-unit ${nextStatus}`;
+                // Update in-memory status for next click
+                element.onclick = () => toggleComputerStatus(element, id, nextStatus, labRoom);
+            }
+        }
+    };
+    xhr.send(`computer_id=${id}&status=${nextStatus}&lab_room=${labRoom}`);
+}
+
+function loadLabSoftware(labRoom) {
+    const display = document.getElementById("currentSoftwareLabDisplay");
+    const section = document.getElementById("labSoftwareSection");
+    const list = document.getElementById("labSoftwareList");
+    if (display) display.textContent = labRoom;
+    if (section) section.style.display = "block";
+    if (list) list.innerHTML = "Loading...";
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/SYSARCH/pages/api/get_lab_software.php", true);
+    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            try {
+                const data = JSON.parse(xhr.responseText);
+                displaySoftware(data.software || [], labRoom);
+            } catch(e) { list.innerHTML = "Error"; }
+        }
+    };
+    xhr.send("lab_room=" + labRoom);
+}
+
+function displaySoftware(softwareList, labRoom) {
+    const list = document.getElementById("labSoftwareList");
+    if (!list) return;
+    list.innerHTML = softwareList.length ? "" : "No software found.";
+    const grouped = {};
+    softwareList.forEach(sw => {
+        if (!grouped[sw.category]) grouped[sw.category] = [];
+        grouped[sw.category].push(sw);
+    });
+
+    for (const category in grouped) {
+        const group = document.createElement("div");
+        group.className = "software-category-group";
+        group.innerHTML = `<div class="category-title">${category}</div>`;
+        const tagList = document.createElement("div");
+        tagList.className = "software-list";
+        grouped[category].forEach(sw => {
+            const tag = document.createElement("span");
+            tag.className = "software-tag";
+            tag.innerHTML = `${sw.software_name} <span class="delete-sw" onclick="deleteSoftware(${sw.id}, '${labRoom}')">✕</span>`;
+            tagList.appendChild(tag);
+        });
+        group.appendChild(tagList);
+        list.appendChild(group);
+    }
+}
+
+function deleteSoftware(id, labRoom) {
+    if (!confirm("Remove this software?")) return;
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/SYSARCH/pages/api/delete_lab_software.php", true);
+    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    xhr.onload = function() { loadLabSoftware(labRoom); };
+    xhr.send("id=" + id);
+}
+
+function openEditAnnouncement(id, date, message) {
+    const modal = document.getElementById('editAnnouncementModal');
+    if (modal) {
+        document.getElementById('editAnnId').value = id;
+        document.getElementById('editAnnDate').value = date;
+        document.getElementById('editAnnMessage').value = message;
+        modal.classList.add('active');
+    }
+}
+
+function confirmDeleteAnnouncement(id) {
+    if(!confirm('Delete this announcement?')) return;
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.innerHTML = `<input type="hidden" name="delete_announcement" value="1"><input type="hidden" name="announcement_id" value="${id}">`;
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function fetchStudentInfo() {
+    const id = document.getElementById('idNumber')?.value;
+    if (!id) return;
+    fetch('admin_dashboard.php?id_lookup=' + encodeURIComponent(id))
+    .then(r => r.text())
+    .then(html => {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const data = doc.getElementById('student-data');
+        if (data) {
+            const nameInput = document.getElementById('studentName');
+            if (nameInput) nameInput.value = data.getAttribute('data-name') || '';
+        }
+    });
+}
+
+function openEditModal() { document.getElementById("editModal")?.classList.add("active"); }
+function closeEditModal() { document.getElementById("editModal")?.classList.remove("active"); }
+
+// Charts and Analytics
+let analyticsCharts = {};
+async function fetchAnalytics() {
+    try {
+        const r = await fetch('/SYSARCH/pages/api/get_analytics_data.php');
+        const d = await r.json();
+        document.getElementById('ana-total-students').textContent = d.counts.students;
+        document.getElementById('ana-total-sitin').textContent = d.counts.sitin;
+        document.getElementById('ana-total-res').textContent = d.counts.reservations;
+        updateActivityChart(d.activity_trends);
+        updatePeakHoursChart(d.peak_hours);
+        updateLabUsageChart(d.lab_usage);
+        updateTopStudentsList(d.top_students);
+    } catch(e) {}
+}
+
+function updateActivityChart(data) {
+    const ctx = document.getElementById('activityTrendChart')?.getContext('2d');
+    if (!ctx) return;
+    if (analyticsCharts.activity) analyticsCharts.activity.destroy();
+    analyticsCharts.activity = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map(d => d.date),
+            datasets: [{ data: data.map(d => d.count), borderColor: '#0f5bbe', fill: true, backgroundColor: 'rgba(15, 91, 190, 0.1)' }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+}
+
+function updatePeakHoursChart(data) {
+    const ctx = document.getElementById('peakHoursChart')?.getContext('2d');
+    if (!ctx) return;
+    if (analyticsCharts.peak) analyticsCharts.peak.destroy();
+    analyticsCharts.peak = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Array.from({length: 24}, (_, i) => `${i % 12 || 12}${i < 12 ? 'AM' : 'PM'}`),
+            datasets: [{ data: data, backgroundColor: '#0f5bbe' }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+}
+
+function updateLabUsageChart(data) {
+    const ctx = document.getElementById('labUsageChart')?.getContext('2d');
+    if (!ctx) return;
+    if (analyticsCharts.lab) analyticsCharts.lab.destroy();
+    analyticsCharts.lab = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: data.map(d => 'Lab ' + d.lab),
+            datasets: [{ data: data.map(d => d.count), backgroundColor: ['#0f5bbe', '#1976D2', '#4caf50', '#ff9800', '#f44336'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+}
+
+function updateTopStudentsList(students) {
+    const list = document.getElementById('topStudentsList');
+    if (!list) return;
+    list.innerHTML = students.length ? "" : "No data.";
+    students.forEach(s => {
+        const item = document.createElement('div');
+        item.className = 'top-student-item';
+        item.innerHTML = `<span>${s.student_name}</span><span>${s.count} sessions</span>`;
+        list.appendChild(item);
+    });
+}
 
 async function generatePDF(type) {
     const { jsPDF } = window.jspdf;
+    const doc = new jsPDF((type === 'sitin' || type === 'reservations') ? 'l' : 'p', 'mm', 'a4');
+    const r = await fetch(`/SYSARCH/pages/api/get_report_data.php?type=${type}`);
+    const data = await r.json();
+    if (data.error || !data.length) return alert("No data.");
     
-    // Determine orientation based on content
-    // Sit-in and Reservations usually have more columns, so landscape is better
-    const orientation = (type === 'sitin' || type === 'reservations') ? 'l' : 'p';
-    const doc = new jsPDF(orientation, 'mm', 'a4');
-    
-    console.log('Generating report for:', type);
-    
-    try {
-        const response = await fetch(`/SYSARCH/pages/api/get_report_data.php?type=${type}`);
-        const data = await response.json();
-        
-        if (data.error) {
-            alert('Error fetching data: ' + data.error);
-            return;
-        }
+    let title = type === 'students' ? "Students" : type === 'sitin' ? "Sit-in Logs" : "Reservations";
+    let columns = type === 'students' ? ["ID", "Name", "Course", "Year"] : ["ID", "Name", "Lab", "Date", "Status"];
+    let rows = data.map(i => type === 'students' ? [i.id_number, i.last_name, i.course, i.year_level] : [i.id_number, i.student_name, i.lab || i.lab_room, i.sit_in_date || i.reservation_date, i.status]);
 
-        if (data.length === 0) {
-            alert('No data found for this report.');
-            return;
-        }
+    doc.autoTable({
+        head: [columns],
+        body: rows,
+        startY: 20,
+        didDrawPage: (d) => { doc.text(title, 15, 15); }
+    });
+    doc.save(`${type}_report.pdf`);
+}
 
-        let title = "";
-        let columns = [];
-        let rows = [];
-
-        if (type === 'students') {
-            title = "List of Registered Students";
-            columns = ["ID Number", "Full Name", "Course", "Year", "Sessions", "Points"];
-            rows = data.map(item => [
-                item.id_number,
-                `${item.last_name}, ${item.first_name}`,
-                item.course,
-                item.year_level,
-                item.sessions,
-                item.points_earned
-            ]);
-        } else if (type === 'sitin') {
-            title = "Sit-in Logs Report";
-            columns = ["ID Number", "Student Name", "Purpose", "Lab", "Comp", "Date", "Time", "Status"];
-            rows = data.map(item => [
-                item.id_number,
-                item.student_name,
-                item.purpose,
-                item.lab,
-                item.computer_no,
-                item.sit_in_date,
-                item.sit_in_time,
-                item.status
-            ]);
-        } else if (type === 'reservations') {
-            title = "Laboratory Reservations Report";
-            columns = ["ID Number", "Student Name", "Lab", "Date", "Time", "Purpose", "Status"];
-            rows = data.map(item => [
-                item.id_number,
-                item.student_name,
-                item.lab_room,
-                item.reservation_date,
-                item.reservation_time,
-                item.purpose,
-                item.status
-            ]);
-        }
-
-        // AutoTable Configuration
-        doc.autoTable({
-            head: [columns],
-            body: rows,
-            startY: 45,
-            theme: 'striped',
-            headStyles: { 
-                fillColor: [15, 91, 190], 
-                textColor: [255, 255, 255],
-                fontSize: 10,
-                fontStyle: 'bold',
-                halign: 'center'
-            },
-            bodyStyles: { 
-                fontSize: 9,
-                valign: 'middle'
-            },
-            alternateRowStyles: { 
-                fillColor: [245, 248, 252] 
-            },
-            columnStyles: {
-                0: { cellWidth: 25 }, // ID Number
-                1: { cellWidth: 'auto' } // Name
-            },
-            margin: { top: 45, bottom: 20 },
-            didDrawPage: function(data) {
-                // Header
-                doc.setFontSize(18);
-                doc.setTextColor(15, 91, 190);
-                doc.setFont('helvetica', 'bold');
-                const pageWidth = doc.internal.pageSize.width;
-                doc.text("UNIVERSITY OF CEBU", pageWidth / 2, 15, { align: "center" });
-                
-                doc.setFontSize(12);
-                doc.setTextColor(60, 60, 60);
-                doc.text("College of Computer Studies", pageWidth / 2, 22, { align: "center" });
-                
-                doc.setFontSize(14);
-                doc.setTextColor(33, 33, 33);
-                doc.text(title.toUpperCase(), pageWidth / 2, 32, { align: "center" });
-                
-                // Horizontal line
-                doc.setDrawColor(15, 91, 190);
-                doc.setLineWidth(0.5);
-                doc.line(15, 36, pageWidth - 15, 36);
-                
-                doc.setFontSize(9);
-                doc.setFont('helvetica', 'normal');
-                doc.setTextColor(100);
-                doc.text(`Generated on: ${new Date().toLocaleString()}`, 15, 42);
-                
-                // Footer - Page Number
-                const str = "Page " + doc.internal.getNumberOfPages();
-                doc.setFontSize(9);
-                const pageSize = doc.internal.pageSize;
-                const pageHeight = pageSize.height ? pageSize.height : pageSize.getHeight();
-                doc.text(str, pageWidth - 20, pageHeight - 10);
-                doc.text("CCS Sit-in Monitoring System - Confidential Report", 15, pageHeight - 10);
-            }
-        });
-
-        // Save PDF
-        const fileName = `${type}_report_${new Date().toISOString().slice(0,10)}.pdf`;
-        doc.save(fileName);
-        
-    } catch (error) {
-        console.error('Error generating PDF:', error);
-        alert('An error occurred while generating the PDF. Check console for details.');
-    }
+function updatePieChart(range) {
+    // Legacy support for pie chart in stats
+    console.log("Updating stats chart for range:", range);
 }
 </script>
 

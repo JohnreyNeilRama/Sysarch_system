@@ -75,7 +75,6 @@ $result = $stmt->get_result();
     </div>
     <ul class="dashboard-right" id="navRight">    
         <li><a href="admin_dashboard.php">Dashboard</a></li>
-        <li><a href="analytics.php">Analytics</a></li>
         <li><a href="manage_students.php" class="active">Manage Students</a></li>
         <li><a href="manage_sitin.php">Sit-in Logs</a></li>
         <li><a href="manage_reservations.php">Reservations</a></li>

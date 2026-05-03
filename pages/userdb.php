@@ -207,7 +207,8 @@ $conn->close();
 <nav class="dashboard-navbar">
 
     <div class="dashboard-left">
-        Dashboard
+        <img src="/SYSARCH/assets/images/uclogo.png" alt="UC Logo">
+        <span>CCS Sit-in System</span>
     </div>
     <button class="mobile-menu-toggle" id="mobileMenuToggle">☰</button>
     <ul class="dashboard-right" id="navRight">    
@@ -910,9 +911,21 @@ $conn->close();
 <!-- JavaScript for Modal -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        checkNewNotifications();
+        
         const modal = document.getElementById('notificationModal');
         const openBtn = document.getElementById('openNotifications');
         const closeBtn = document.getElementById('closeNotifications');
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const navRight = document.getElementById('navRight');
+        
+        // Mobile menu toggle
+        if(mobileMenuToggle && navRight) {
+            mobileMenuToggle.addEventListener('click', function() {
+                navRight.classList.toggle('active');
+                this.textContent = navRight.classList.contains('active') ? '✕' : '☰';
+            });
+        }
         
         // Open modal
         if(openBtn) {
@@ -938,16 +951,14 @@ $conn->close();
             });
         }
         
-        // Close computer modal when clicking outside
-        if(computerModal) {
-            computerModal.addEventListener('click', function(e) {
-                if (e.target === computerModal) {
-                    computerModal.classList.remove('active');
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (modal && modal.classList.contains('active')) {
+                    modal.classList.remove('active');
                 }
-            });
-        }
-        
-
+            }
+        });
         
         // Auto-hide success/error messages after 3 seconds
         setTimeout(function() {
@@ -963,6 +974,64 @@ $conn->close();
             }
         }, 3000);
     });
+    
+    function checkNewNotifications() {
+        fetch('/SYSARCH/pages/api/check_new_notifications.php')
+            .then(response => response.json())
+            .then(data => {
+                if (data.newNotification) {
+                    showNotificationPopup(data.notification);
+                }
+            })
+            .catch(error => console.error('Error checking notifications:', error));
+    }
+    
+    function showNotificationPopup(notification) {
+        const popup = document.createElement('div');
+        popup.id = 'notif-popup';
+        
+        let icon = '';
+        let iconClass = '';
+        
+        if (notification.type === 'reservation_approved') {
+            icon = '✓';
+            iconClass = 'approved';
+        } else if (notification.type === 'reservation_rejected') {
+            icon = '✕';
+            iconClass = 'rejected';
+        } else if (notification.type === 'login') {
+            icon = '→';
+            iconClass = 'login';
+        } else if (notification.type === 'logout') {
+            icon = '←';
+            iconClass = 'logout';
+        } else {
+            icon = 'ℹ';
+            iconClass = 'approved';
+        }
+        
+        popup.innerHTML = `
+            <div class="notif-popup-icon ${iconClass}">${icon}</div>
+            <div class="notif-popup-content">
+                <div class="notif-popup-title">${notification.title}</div>
+                <div class="notif-popup-message">${notification.message}</div>
+            </div>
+            <button class="notif-popup-close" onclick="this.parentElement.remove();">&times;</button>
+        `;
+        
+        document.body.appendChild(popup);
+        
+        setTimeout(() => {
+            popup.classList.add('show');
+        }, 100);
+        
+        setTimeout(() => {
+            if (popup.parentElement) {
+                popup.classList.remove('show');
+                setTimeout(() => popup.remove(), 300);
+            }
+        }, 8000);
+    }
 </script>
 
 </body>
