@@ -128,7 +128,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id_number'])) {
                     $notif_stmt->close();
                     
                     // Redirect to prevent double submission
-                    header("Location: /SYSARCH/admin_dashboard.php");
+                    header("Location: /SYSARCH/pages/admin_dashboard.php");
                     exit;
                 } else {
                     $sit_in_error = $stmt->error;
@@ -220,7 +220,7 @@ $monthly_data = array(
     'Sep' => 0, 'Oct' => 0, 'Nov' => 0, 'Dec' => 0
 );
 
-// Get purpose statistics from sit_in table
+// Get purpose statistics for this year
 $purpose_data = array(
     'C Programming' => 0,
     'Java Programming' => 0,
@@ -233,7 +233,9 @@ $purpose_data = array(
     'Other' => 0
 );
 
-$stmt = $conn->prepare("SELECT purpose, COUNT(*) as count FROM sit_in GROUP BY purpose");
+$first_day_of_year = date('Y-01-01');
+$stmt = $conn->prepare("SELECT purpose, COUNT(*) as count FROM sit_in WHERE sit_in_date >= ? GROUP BY purpose");
+$stmt->bind_param("s", $first_day_of_year);
 $stmt->execute();
 $result = $stmt->get_result();
 while($row = $result->fetch_assoc()){
@@ -246,11 +248,12 @@ while($row = $result->fetch_assoc()){
 }
 $stmt->close();
 
-// Get most visited lab room (by total sit-in sessions)
+// Get most visited lab room for this year
 $most_visited_lab = "None";
 $most_visited_count = 0;
-$stmt = $conn->prepare("SELECT lab, COUNT(*) as session_count FROM sit_in GROUP BY lab ORDER BY session_count DESC LIMIT 1");
+$stmt = $conn->prepare("SELECT lab, COUNT(*) as session_count FROM sit_in WHERE sit_in_date >= ? GROUP BY lab ORDER BY session_count DESC LIMIT 1");
 if($stmt) {
+    $stmt->bind_param("s", $first_day_of_year);
     $stmt->execute();
     $result = $stmt->get_result();
     if($row = $result->fetch_assoc()){
@@ -258,7 +261,8 @@ if($stmt) {
         $most_visited_count = $row['session_count'];
     }
     $stmt->close();
-} else {
+}
+ else {
     $most_visited_lab = "Error: " . $conn->error;
 }
 
@@ -352,10 +356,10 @@ $purpose_labels = json_encode(array_keys($purpose_data));
         <div class="card-header">
             Purpose Statistics
             <select id="timeRangeSelector" onchange="updatePieChart(this.value)" style="margin-left: 15px; padding: 5px 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 14px;">
-                <option value="today" selected>Today</option>
+                <option value="year" selected>This Year</option>
+                <option value="today">Today</option>
                 <option value="week">This Week</option>
                 <option value="month">This Month</option>
-                <option value="year">This Year</option>
             </select>
         </div>
         <div class="card-body" style="text-align: center;">
@@ -368,8 +372,8 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                 </div>
                 <div class="pie-chart-stats">
                     <div class="stats-label">Most Visited Lab</div>
-                    <div class="stats-value"><?php echo htmlspecialchars($most_visited_lab); ?></div>
-                    <div style="font-size: 10px; color: #999; margin-top: 4px;"><?php echo $most_visited_count; ?> sessions</div>
+                    <div class="stats-value" id="mostVisitedLab"><?php echo htmlspecialchars($most_visited_lab); ?></div>
+                    <div id="mostVisitedCount" style="font-size: 10px; color: #999; margin-top: 4px;"><?php echo $most_visited_count; ?> sessions</div>
                 </div>
             </div>
         </div>
@@ -575,16 +579,17 @@ $purpose_labels = json_encode(array_keys($purpose_data));
     let pieChart = null;
     
     // Color palette for pie chart
+    // Premium Color palette for pie chart (Modern, harmonious HSL-based colors)
     const colors = [
-        '#0f5bbe', // Blue
-        '#1976D2', // Light Blue
-        '#4caf50', // Green
-        '#ff9800', // Orange
-        '#f44336', // Red
-        '#9c27b0', // Purple
-        '#00bcd4', // Cyan
-        '#795548', // Brown
-        '#607d8b'  // Gray
+        '#4361ee', // Modern Blue
+        '#3a0ca3', // Deep Purple
+        '#7209b7', // Purple
+        '#f72585', // Pink/Red
+        '#4cc9f0', // Sky Blue
+        '#4895ef', // Soft Blue
+        '#560bad', // Electric Purple
+        '#b5179e', // Magenta
+        '#3f37c9'  // Indigo
     ];
     
     // Function to update pie chart based on time range
@@ -599,7 +604,10 @@ $purpose_labels = json_encode(array_keys($purpose_data));
         const canvas = document.getElementById('pieChart');
         
         // Fetch data via AJAX with cache-busting
-        fetch('get_purpose_stats.php?range=' + timeRange + '&t=' + Date.now())
+        // Using an absolute-ish path for better reliability across different URL structures
+        const fetchUrl = '/SYSARCH/pages/get_purpose_stats.php?range=' + timeRange + '&t=' + Date.now();
+        
+        fetch(fetchUrl)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok: ' + response.status);
@@ -607,85 +615,112 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                 return response.json();
             })
             .then(data => {
+                // Clear loading state
+                legendContainer.style.opacity = '1';
+                
                 if (data.error) {
                     console.error('Error from server:', data.error);
+                    legendContainer.innerHTML = '<p style="text-align: center; color: #f44336; padding: 20px;">Server Error: ' + data.error + '</p>';
                     return;
                 }
-                console.log('Purpose stats data:', data);
-                const labels = data.labels;
-                // Convert all values to numbers to ensure proper calculations
-                const values = data.values.map(v => parseInt(v) || 0);
                 
-                // Check if there's any data
+                console.log('Purpose stats data:', data);
+                const labels = data.labels || [];
+                // Convert all values to numbers to ensure proper calculations
+                const values = (data.values || []).map(v => parseInt(v) || 0);
+                
+                // Update most visited lab stat dynamically
+                const labValueElem = document.getElementById('mostVisitedLab');
+                const labCountElem = document.getElementById('mostVisitedCount');
+                if (labValueElem && labCountElem) {
+                    labValueElem.textContent = data.most_visited_lab || 'None';
+                    labCountElem.textContent = (data.most_visited_count || 0) + ' sessions';
+                }
+                
                 const totalCount = values.reduce((a, b) => a + b, 0);
+
                 if (totalCount === 0) {
-                    console.log('No sit-in data found');
                     if (pieChart) {
-                        pieChart.destroy();
-                        pieChart = null;
+                        pieChart.data.datasets[0].data = values;
+                        pieChart.update('active'); // Use active mode for smooth transition
                     }
                     document.getElementById('pieLegend').innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No sit-in data available for this period.</p>';
                     return;
                 }
                 
-                // Find most and lowest used
-                let maxVal = Math.max(...values);
+                // Find most and lowest used for legend badges
+                const maxVal = Math.max(...values);
                 let minVal = Math.min(...values.filter(v => v > 0));
                 if (minVal === Infinity) minVal = 0;
                 
                 // Update existing chart or create new one
-                const ctx = document.getElementById('pieChart').getContext('2d');
-                
                 if (pieChart) {
                     // Update existing chart data for smooth transition
                     pieChart.data.labels = labels;
                     pieChart.data.datasets[0].data = values;
-                    pieChart.update();
+                    
+                    // Trigger update with a more dramatic morphing animation
+                    pieChart.update({
+                        duration: 1200,
+                        easing: 'easeInOutBack'
+                    });
                 } else {
-                    // Create new pie chart
+                    // Create new pie chart if it doesn't exist
+                    const ctx = document.getElementById('pieChart').getContext('2d');
                     pieChart = new Chart(ctx, {
                         type: 'pie',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: values,
-                            backgroundColor: colors,
-                            borderWidth: 2,
-                            borderColor: '#ffffff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        animation: {
-                            duration: 800,
-                            easing: 'easeInOutQuart'
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: values,
+                                backgroundColor: colors,
+                                borderWidth: 2,
+                                borderColor: '#ffffff'
+                            }]
                         },
-                        plugins: {
-                            legend: {
-                                display: false
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            layout: {
+                                padding: 10
                             },
-                            tooltip: {
-                                enabled: true,
-                                callbacks: {
-                                    label: function(context) {
-                                        let label = context.label || '';
-                                        let value = context.raw || 0;
-                                        let total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                        let percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                        return label + ': ' + value + ' (' + percentage + '%)';
+                            animation: {
+                                animateRotate: true,
+                                animateScale: true,
+                                duration: 1500,
+                                easing: 'easeOutQuart'
+                            },
+                            hover: {
+                                mode: 'nearest',
+                                intersect: true
+                            },
+                            elements: {
+                                arc: {
+                                    hoverOffset: 15,
+                                    borderJoinStyle: 'round'
+                                }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    enabled: true,
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.label || '';
+                                            let value = context.raw || 0;
+                                            let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            let percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                            return label + ': ' + value + ' (' + percentage + '%)';
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                });
+                    });
                 }
                 
-                // Update custom legend
-                const legendContainer = document.getElementById('pieLegend');
+                // Update custom legend instantly
                 let legendHTML = '<div class="legend-title">Purpose Legend</div><div class="legend-items">';
-                
                 labels.forEach((label, index) => {
                     const value = values[index];
                     let badge = '';
@@ -695,7 +730,7 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                         badge = '<span class="legend-badge lowest">Lowest</span>';
                     }
                     
-                    legendHTML += '<div class="legend-item">' +
+                    legendHTML += '<div class="legend-item" style="animation-delay: ' + (index * 0.05) + 's">' +
                         '<span class="legend-color" style="background-color: ' + colors[index] + '"></span>' +
                         '<span class="legend-label">' + label + ': ' + value + '</span>' +
                         badge +
@@ -703,15 +738,93 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                 });
                 legendHTML += '</div>';
                 legendContainer.innerHTML = legendHTML;
+                legendContainer.style.opacity = '1';
             })
-            .catch(error => console.error('Error fetching data:', error));
+            .catch(error => {
+                console.error('Error fetching data:', error);
+                const legendContainer = document.getElementById('pieLegend');
+                if (legendContainer) {
+                    legendContainer.innerHTML = '<p style="text-align: center; color: #f44336; padding: 20px;">Failed to load statistics. Please try again.</p>';
+                    legendContainer.style.opacity = '1';
+                }
+            });
     }
     
     // Initialize pie chart with default data (today)
+    // Initialize pie chart with PHP pre-fetched data
     function initPieChart() {
-        // Get initial time range from selector (default: today)
-        const timeRange = document.getElementById('timeRangeSelector').value;
-        updatePieChart(timeRange);
+        // Initial data from PHP
+        const initialLabels = <?php echo $purpose_labels; ?>;
+        const initialValues = <?php echo $purpose_json; ?>.map(v => parseInt(v) || 0);
+        
+        // Find most and lowest used for initial legend
+        const maxVal = Math.max(...initialValues);
+        const minVal = Math.min(...initialValues.filter(v => v > 0)) || 0;
+        
+        const ctx = document.getElementById('pieChart').getContext('2d');
+        pieChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: initialLabels,
+                datasets: [{
+                    data: initialValues,
+                    backgroundColor: colors,
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: {
+                    padding: 10
+                },
+                animation: {
+                    animateRotate: true,
+                    animateScale: true,
+                    duration: 2000,
+                    easing: 'easeOutBack'
+                },
+                elements: {
+                    arc: {
+                        hoverOffset: 15
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        enabled: true,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                let value = context.raw || 0;
+                                let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                let percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return label + ': ' + value + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Update legend with initial data
+        const legendContainer = document.getElementById('pieLegend');
+        let legendHTML = '<div class="legend-title">Purpose Legend</div><div class="legend-items">';
+        initialLabels.forEach((label, index) => {
+            const value = initialValues[index];
+            let badge = '';
+            if (value === maxVal && maxVal > 0) badge = '<span class="legend-badge highest">Highest</span>';
+            else if (value === minVal && minVal > 0 && value !== maxVal) badge = '<span class="legend-badge lowest">Lowest</span>';
+            
+            legendHTML += `<div class="legend-item" style="animation-delay: ${index * 0.1}s">
+                <span class="legend-color" style="background-color: ${colors[index]}"></span>
+                <span class="legend-label">${label}: ${value}</span>
+                ${badge}
+            </div>`;
+        });
+        legendHTML += '</div>';
+        legendContainer.innerHTML = legendHTML;
     }
     
     // Initialize on page load
@@ -1951,12 +2064,32 @@ function displayComputers(computers, labRoom) {
     const grid = document.getElementById("labComputersGrid");
     if (!grid) return;
     grid.innerHTML = "";
-    computers.forEach(comp => {
-        const isAvailable = comp.status?.toLowerCase() === "available";
+    
+    // Match student reservation snake arrangement logic
+    const rowsPerCol = 10;
+    const totalCols = Math.ceil(computers.length / rowsPerCol);
+    const arranged = [];
+    
+    // Iterate from last column to first (Right-to-Left arrangement)
+    for (let col = totalCols - 1; col >= 0; col--) {
+        const start = col * rowsPerCol;
+        const end = Math.min(start + rowsPerCol, computers.length);
+        const colData = computers.slice(start, end);
+        
+        // Flip every other column to create the snake pattern
+        if ((totalCols - 1 - col) % 2 === 0) {
+            arranged.push(...colData);
+        } else {
+            arranged.push(...[...colData].reverse());
+        }
+    }
+    
+    arranged.forEach(comp => {
+        const isAvailable = (comp.status || comp.admin_status || "").toLowerCase() === "available";
         const unit = document.createElement("div");
         unit.className = `computer-unit ${isAvailable ? 'available' : 'unavailable'}`;
         unit.textContent = comp.computer_number;
-        unit.onclick = () => toggleComputerStatus(unit, comp.id, comp.status, labRoom);
+        unit.onclick = () => toggleComputerStatus(unit, comp.id, comp.status || comp.admin_status, labRoom);
         grid.appendChild(unit);
     });
 }
@@ -2164,10 +2297,7 @@ async function generatePDF(type) {
     doc.save(`${type}_report.pdf`);
 }
 
-function updatePieChart(range) {
-    // Legacy support for pie chart in stats
-    console.log("Updating stats chart for range:", range);
-}
+// Function removed to avoid conflict with the main Purpose Statistics chart logic
 </script>
 
 

@@ -1,5 +1,6 @@
 <?php
 session_start();
+ob_start();
 
 // Check if admin is logged in
 if(!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true){
@@ -39,12 +40,20 @@ switch($range) {
         $where_clause = "WHERE sit_in_date >= '$first_day_of_month' AND sit_in_date <= '$today'";
         break;
     case 'year':
+    default:
         $first_day_of_year = date('Y-01-01');
         $where_clause = "WHERE sit_in_date >= '$first_day_of_year' AND sit_in_date <= '$today'";
         break;
-    case 'all':
-    default:
-        $where_clause = '';
+}
+
+// Get most visited lab for this range
+$most_visited_lab = "None";
+$most_visited_count = 0;
+$lab_sql = "SELECT lab, COUNT(*) as session_count FROM sit_in " . $where_clause . " GROUP BY lab ORDER BY session_count DESC LIMIT 1";
+$lab_result = $conn->query($lab_sql);
+if($lab_result && $row = $lab_result->fetch_assoc()) {
+    $most_visited_lab = $row['lab'];
+    $most_visited_count = $row['session_count'];
 }
 
 // Get purpose statistics
@@ -88,9 +97,12 @@ while($row = $result->fetch_assoc()){
 
 // Return as JSON
 header('Content-Type: application/json');
+ob_clean();
 echo json_encode(array(
     'labels' => array_keys($purpose_data),
-    'values' => array_values($purpose_data)
+    'values' => array_values($purpose_data),
+    'most_visited_lab' => $most_visited_lab,
+    'most_visited_count' => $most_visited_count
 ));
 
 $conn->close();
