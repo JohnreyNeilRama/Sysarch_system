@@ -201,6 +201,10 @@
     margin-top: 15px;
 }
 
+#pieChart {
+    cursor: default;
+}
+
 .pie-chart-stats {
     flex: 0 0 140px;
     text-align: center;
@@ -253,7 +257,6 @@
 }
 
 .legend-item:hover {
-    transform: translateY(-2px) scale(1.05);
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     border-color: #4361ee;
 }

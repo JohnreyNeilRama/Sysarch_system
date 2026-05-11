@@ -674,8 +674,11 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                             datasets: [{
                                 data: values,
                                 backgroundColor: colors,
+                                hoverBackgroundColor: colors,
                                 borderWidth: 2,
-                                borderColor: '#ffffff'
+                                borderColor: '#ffffff',
+                                hoverBorderColor: '#ffffff',
+                                hoverBorderWidth: 2
                             }]
                         },
                         options: {
@@ -696,7 +699,7 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                             },
                             elements: {
                                 arc: {
-                                    hoverOffset: 15,
+                                    hoverOffset: 0,
                                     borderJoinStyle: 'round'
                                 }
                             },
@@ -769,8 +772,11 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                 datasets: [{
                     data: initialValues,
                     backgroundColor: colors,
+                    hoverBackgroundColor: colors,
                     borderWidth: 2,
-                    borderColor: '#ffffff'
+                    borderColor: '#ffffff',
+                    hoverBorderColor: '#ffffff',
+                    hoverBorderWidth: 2
                 }]
             },
             options: {
@@ -787,7 +793,7 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                 },
                 elements: {
                     arc: {
-                        hoverOffset: 15
+                        hoverOffset: 0
                     }
                 },
                 plugins: {
