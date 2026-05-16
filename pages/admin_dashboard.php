@@ -1015,7 +1015,7 @@ $purpose_labels = json_encode(array_keys($purpose_data));
 
                 <!-- Top Students -->
                 <div class="ana-chart-card">
-                    <h3>🏆 Most Active Students</h3>
+                    <h3>🏆 Leaderboard</h3>
                     <div class="top-students-list" id="topStudentsList">
                         <!-- Populated by JS -->
                     </div>
@@ -2278,7 +2278,7 @@ function updateTopStudentsList(students) {
     students.forEach(s => {
         const item = document.createElement('div');
         item.className = 'top-student-item';
-        item.innerHTML = `<span>${s.student_name}</span><span>${s.count} sessions</span>`;
+        item.innerHTML = `<span>${s.student_name}</span><span style="font-weight:bold; color:#ff9800;">${s.points} pts</span>`;
         list.appendChild(item);
     });
 }

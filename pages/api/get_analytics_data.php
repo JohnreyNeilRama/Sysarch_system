@@ -39,12 +39,17 @@ while($row = $peak_result->fetch_assoc()) {
 }
 $response['peak_hours'] = $hours_data;
 
-// 4. Most Active Students (Top 5)
+// 4. Leaderboard (Top 10 Students by Points)
 $top_students = [];
-$student_query = "SELECT student_name, COUNT(*) as count FROM sit_in GROUP BY id_number, student_name ORDER BY count DESC LIMIT 5";
+$student_query = "SELECT first_name, last_name, points_earned FROM students WHERE points_earned > 0 ORDER BY points_earned DESC LIMIT 10";
 $student_result = $conn->query($student_query);
-while($row = $student_result->fetch_assoc()) {
-    $top_students[] = $row;
+if ($student_result) {
+    while($row = $student_result->fetch_assoc()) {
+        $top_students[] = [
+            'student_name' => trim($row['first_name'] . ' ' . $row['last_name']),
+            'points' => (int)$row['points_earned']
+        ];
+    }
 }
 $response['top_students'] = $top_students;
 
