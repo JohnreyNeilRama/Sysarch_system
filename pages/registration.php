@@ -55,6 +55,21 @@
 
             <h2>Sign Up</h2>
 
+            <?php if(isset($_GET['error'])): ?>
+                <p style="color: red; text-align: center; margin-bottom: 15px; font-weight: bold;"><?php echo htmlspecialchars($_GET['error']); ?></p>
+            <?php endif; ?>
+
+            <?php if(isset($_GET['success'])): ?>
+                <div id="successMessage" class="success-message" style="display: block; margin-bottom: 15px; text-align: center; color: green; font-weight: bold;">
+                    ✅ Account created successfully! Redirecting to login page...
+                </div>
+                <script>
+                    setTimeout(function() {
+                        window.location.href = '/SYSARCH/pages/login.php';
+                    }, 2000);
+                </script>
+            <?php endif; ?>
+
             <form action="/SYSARCH/includes/register.php" method="POST" onsubmit="return validateForm()">
                 <label>ID Number</label>
                 <input type="text" name="id_number" placeholder="Enter ID Number" required>
@@ -114,9 +129,6 @@
                 <textarea rows="3" name="address" placeholder="Enter your address" required></textarea>
 
                 <button type="submit">Register</button>
-                <div id="successMessage" class="success-message">
-                    ✅ Account created successfully! Redirecting to login page...
-                </div>
 
             </form>
 

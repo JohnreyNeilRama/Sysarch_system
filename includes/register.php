@@ -17,7 +17,7 @@ if ($password !== $confirm_password) {
     if(isset($_POST['from_admin']) && $_POST['from_admin'] == '1'){
         header("Location: /SYSARCH/pages/manage_students.php?error=" . urlencode("Password and Confirm Password do not match!"));
     } else {
-        echo "Password and Confirm Password do not match!";
+        header("Location: /SYSARCH/pages/registration.php?error=" . urlencode("Password and Confirm Password do not match!"));
     }
     exit;
 }
@@ -32,7 +32,7 @@ if($result->num_rows > 0){
     if(isset($_POST['from_admin']) && $_POST['from_admin'] == '1'){
         header("Location: /SYSARCH/pages/manage_students.php?error=" . urlencode($error_msg));
     } else {
-        echo $error_msg;
+        header("Location: /SYSARCH/pages/registration.php?error=" . urlencode($error_msg));
     }
     $stmt->close();
     $conn->close();
@@ -49,7 +49,7 @@ if($result->num_rows > 0){
     if(isset($_POST['from_admin']) && $_POST['from_admin'] == '1'){
         header("Location: /SYSARCH/pages/manage_students.php?error=" . urlencode($error_msg));
     } else {
-        echo $error_msg;
+        header("Location: /SYSARCH/pages/registration.php?error=" . urlencode($error_msg));
     }
     $stmt->close();
     $conn->close();
@@ -70,7 +70,7 @@ if($stmt->execute()){
     if(isset($_POST['from_admin']) && $_POST['from_admin'] == '1'){
         header("Location: /SYSARCH/pages/manage_students.php?success=1");
     } else {
-        header("Location: /SYSARCH/pages/login.php");
+        header("Location: /SYSARCH/pages/registration.php?success=1");
     }
     exit;
 }else{
@@ -78,7 +78,7 @@ if($stmt->execute()){
     if(isset($_POST['from_admin']) && $_POST['from_admin'] == '1'){
         header("Location: /SYSARCH/pages/manage_students.php?error=" . urlencode($error_msg));
     } else {
-        echo $error_msg;
+        header("Location: /SYSARCH/pages/registration.php?error=" . urlencode($error_msg));
     }
     $stmt->close();
     $conn->close();

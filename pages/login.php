@@ -56,12 +56,12 @@
             <h2>Login</h2>
 
             <?php if(isset($_GET['error'])): ?>
-            <p style="color: red; text-align: center; margin-bottom: 10px;">Invalid email or password!</p>
+            <p style="color: red; text-align: center; margin-bottom: 10px;">Invalid ID Number or password!</p>
             <?php endif; ?>
 
             <form action="/SYSARCH/includes/login.php" method="POST">
-                <label>Email</label>
-                <input type="email" name="email" placeholder="example@gmail.com" required>
+                <label>ID Number</label>
+                <input type="text" name="id_number" placeholder="Enter your ID Number" required>
 
                 <label>Password</label>
                 <input type="password" name="password" placeholder="Enter your password" required>

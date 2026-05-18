@@ -4,12 +4,12 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 include 'connect.php';
 
-$email = $_POST['email'];
+$id_number = $_POST['id_number'];
 $password = $_POST['password'];
 
 // First, check if the user is an admin
-$stmt = $conn->prepare("SELECT * FROM admins WHERE email = ?");
-$stmt->bind_param("s", $email);
+$stmt = $conn->prepare("SELECT * FROM admins WHERE admin_id = ?");
+$stmt->bind_param("s", $id_number);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -32,8 +32,8 @@ if($row = $result->fetch_assoc()){
 }
 
 // If not admin, check if the user is a student
-$stmt = $conn->prepare("SELECT * FROM students WHERE email = ?");
-$stmt->bind_param("s", $email);
+$stmt = $conn->prepare("SELECT * FROM students WHERE id_number = ?");
+$stmt->bind_param("s", $id_number);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -77,7 +77,7 @@ if($row = $result->fetch_assoc()){
         exit;
     }
 } else {
-    // Invalid email
+    // Invalid ID Number
     $stmt->close();
     $conn->close();
     header("Location: /SYSARCH/pages/login.php?error=1");
