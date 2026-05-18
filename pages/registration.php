@@ -130,6 +130,7 @@
 
                 <button type="submit">Register</button>
 
+                <p class="login-link">Already have an account? <a href="/SYSARCH/login.php">Log In</a></p>
             </form>
 
         </div>

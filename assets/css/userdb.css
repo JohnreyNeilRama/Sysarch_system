@@ -11,7 +11,7 @@
     z-index: 10000;
     animation: fadeIn 0.3s ease;
     text-align: center;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .toast-message.toast-success {
@@ -25,13 +25,25 @@
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
-    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
 }
 
 @keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
 }
 
 /* WELCOME MESSAGE */
@@ -57,102 +69,104 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
     animation: shimmer 3s infinite;
 }
 
 @keyframes shimmer {
-    100% { left: 100%; }
+    100% {
+        left: 100%;
+    }
 }
 
 .welcome-message span {
     font-weight: 700;
     color: #ffd700;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* DASHBOARD NAVBAR */
 
-.dashboard-navbar{
-    background-color:#0f5bbe;
-    color:white;
-    padding:15px 30px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+.dashboard-navbar {
+    background-color: #0f5bbe;
+    color: white;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     transition: background-color 0.3s, box-shadow 0.3s;
 }
 
-.dashboard-navbar:hover{
-    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+.dashboard-navbar:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
-.dashboard-left{
-    font-size:30px;
-    font-weight:bold;
+.dashboard-left {
+    font-size: 30px;
+    font-weight: bold;
     display: flex;
     align-items: center;
     gap: 15px;
     transition: transform 0.3s;
 }
 
-.dashboard-left:hover{
+.dashboard-left:hover {
     transform: scale(1.02);
 }
 
-.dashboard-left img{
+.dashboard-left img {
     width: 55px;
     height: 55px;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     object-fit: contain;
     background: white;
     padding: 3px;
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.dashboard-left img:hover{
+.dashboard-left img:hover {
     transform: scale(1.1) rotate(3deg);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
-.dashboard-left span{
+.dashboard-left span {
     font-size: 26px;
     font-weight: 700;
     letter-spacing: 0.5px;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
     transition: color 0.3s, text-shadow 0.3s;
 }
 
-.dashboard-left span:hover{
+.dashboard-left span:hover {
     color: #e3f2fd;
-    text-shadow: 1px 1px 4px rgba(0,0,0,0.2);
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* Right menu */
 
-.dashboard-right{
-    list-style:none;
-    display:flex;
-    align-items:center;
+.dashboard-right {
+    list-style: none;
+    display: flex;
+    align-items: center;
 }
 
-.dashboard-right li{
-    margin-left:20px;
+.dashboard-right li {
+    margin-left: 20px;
 }
 
-.dashboard-right a{
-    color:white;
-    text-decoration:none;
-    font-size:20px;
-    padding:8px 12px;
-    border-radius:4px;
+.dashboard-right a {
+    color: white;
+    text-decoration: none;
+    font-size: 20px;
+    padding: 8px 12px;
+    border-radius: 4px;
     transition: all 0.3s ease;
     position: relative;
 }
 
-.dashboard-right a::after{
+.dashboard-right a::after {
     content: '';
     position: absolute;
     bottom: 0;
@@ -164,44 +178,44 @@
     transform: translateX(-50%);
 }
 
-.dashboard-right a:hover::after{
+.dashboard-right a:hover::after {
     width: 80%;
 }
 
-.dashboard-right a:hover:not(.logout-btn){
-    background: rgba(255,255,255,0.2);
+.dashboard-right a:hover:not(.logout-btn) {
+    background: rgba(255, 255, 255, 0.2);
     transform: translateY(-2px);
 }
 
 
 /* Logout button */
 
-.logout-btn{
-    background:white;
-    color:black !important;
-    font-weight:bold;
-    padding:8px 14px;
-    border-radius:5px;
+.logout-btn {
+    background: white;
+    color: black !important;
+    font-weight: bold;
+    padding: 8px 14px;
+    border-radius: 5px;
     margin-left: 50px;
 }
 
-.logout-btn:hover{
-    background:gray;
-    
+.logout-btn:hover {
+    background: gray;
+
 }
 
 /* Main Content */
 /* MAIN LAYOUT */
-.dashboard-container{
-    display:flex;
-    min-height:calc(100vh - 60px);
+.dashboard-container {
+    display: flex;
+    min-height: calc(100vh - 60px);
     padding: 20px;
     background-color: #f5f7fa;
     gap: 20px;
 }
 
 /* LEFT COLUMN - Contains Student Info + Sit-in Summary */
-.left-column{
+.left-column {
     display: flex;
     flex-direction: column;
     width: 320px;
@@ -210,71 +224,72 @@
 }
 
 /* Student Info Card */
-.student-info{
-    background:white;
+.student-info {
+    background: white;
     border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.student-info:hover{
+.student-info:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 /* RIGHT COLUMN - Main Dashboard Content */
-.dashboard-main{
+.dashboard-main {
     flex: 1;
-    background:transparent;
-    min-width: 0; /* Prevents overflow */
+    background: transparent;
+    min-width: 0;
+    /* Prevents overflow */
 }
 
 
 /* HEADER */
 
-.student-header{
+.student-header {
     background: linear-gradient(135deg, #0f5bbe 0%, #1976D2 100%);
-    color:white;
-    padding:20px;
-    font-size:18px;
-    font-weight:bold;
+    color: white;
+    padding: 20px;
+    font-size: 18px;
+    font-weight: bold;
     text-align: center;
     letter-spacing: 1px;
     transition: background 0.3s;
 }
 
-.student-header:hover{
+.student-header:hover {
     background: linear-gradient(135deg, #1976D2 0%, #0f5bbe 100%);
 }
 
 
 /* PROFILE */
 
-.student-profile{
-    text-align:center;
-    padding:25px 20px;
+.student-profile {
+    text-align: center;
+    padding: 25px 20px;
     background: linear-gradient(180deg, #f8f9fa 0%, #fff 100%);
     border-bottom: 2px solid #e9ecef;
     border-radius: 20px;
     transition: background 0.3s;
 }
 
-.student-profile:hover{
+.student-profile:hover {
     background: linear-gradient(180deg, #fff 0%, #f8f9fa 100%);
 }
 
-.student-profile img{
-    width:140px;
-    height:140px;
-    border-radius:50%;
-    object-fit:cover;
+.student-profile img {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: cover;
     border: 4px solid #0f5bbe;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.student-profile img:hover{
+.student-profile img:hover {
     transform: scale(1.1);
     box-shadow: 0 6px 20px rgba(15, 91, 190, 0.4);
 }
@@ -282,54 +297,54 @@
 
 /* DETAILS */
 
-.student-details{
-    padding:25px 30px;
+.student-details {
+    padding: 25px 30px;
 }
 
-.student-details{
-    padding:20px;
+.student-details {
+    padding: 20px;
 }
 
-.student-details p{
+.student-details p {
     display: flex;
     flex-direction: column;
-    margin-bottom:15px;
-    padding:12px 15px;
+    margin-bottom: 15px;
+    padding: 12px 15px;
     background: #f9fbfd;
-    border-radius:10px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     transition: all 0.3s ease;
 }
 
 /* Hover effect */
-.student-details p:hover{
-    background:#eef4ff;
+.student-details p:hover {
+    background: #eef4ff;
     transform: translateY(-3px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* Label (ID Number, Name, etc.) */
-.student-details strong{
-    font-size:12px;
-    color:#888;
-    margin-bottom:5px;
-    letter-spacing:0.5px;
+.student-details strong {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 5px;
+    letter-spacing: 0.5px;
 }
 
 /* Value */
-.student-details span{
-    font-size:15px;
-    font-weight:600;
-    color:#222;
+.student-details span {
+    font-size: 15px;
+    font-weight: 600;
+    color: #222;
 }
 
-.student-details strong{
+.student-details strong {
     color: #555;
     font-weight: 600;
     min-width: 90px;
 }
 
-.student-details span{
+.student-details span {
     color: #333;
     font-weight: 500;
     text-align: left;
@@ -339,173 +354,173 @@
 
 /* RIGHT SIDE (EMPTY FOR NOW) */
 
-.dashboard-main{
-    flex:1;
-    background:transparent;
+.dashboard-main {
+    flex: 1;
+    background: transparent;
     margin-left: 20px;
 }
 
 /* DASHBOARD RIGHT CARDS */
 
-.dashboard-card{
-    background:white;
-    border-radius:15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+.dashboard-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     margin-bottom: 25px;
-    overflow:hidden;
+    overflow: hidden;
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.dashboard-card:hover{
+.dashboard-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 /* CARD HEADER */
 
-.card-header{
+.card-header {
     background: linear-gradient(135deg, #0f5bbe 0%, #1976D2 100%);
-    color:white;
-    padding:18px;
-    font-size:18px;
-    font-weight:bold;
-    text-align:center;
+    color: white;
+    padding: 18px;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
     transition: background 0.3s;
 }
 
-.card-header:hover{
+.card-header:hover {
     background: linear-gradient(135deg, #1976D2 0%, #0f5bbe 100%);
 }
 
 /* CARD BODY */
 
-.card-body{
-    padding:25px;
-    min-height:150px;
+.card-body {
+    padding: 25px;
+    min-height: 150px;
 }
 
 /* ANNOUNCEMENT BODY - SCROLLABLE */
-.announcement-body{
-    max-height:300px;
-    overflow-y:auto;
-    padding-right:10px;
+.announcement-body {
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 10px;
 }
 
-.announcement-body::-webkit-scrollbar{
-    width:8px;
+.announcement-body::-webkit-scrollbar {
+    width: 8px;
 }
 
-.announcement-body::-webkit-scrollbar-track{
-    background:#f1f1f1;
-    border-radius:4px;
+.announcement-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
 }
 
-.announcement-body::-webkit-scrollbar-thumb{
-    background:#c1c1c1;
-    border-radius:4px;
+.announcement-body::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
 }
 
-.announcement-body::-webkit-scrollbar-thumb:hover{
-    background:#a1a1a1;
+.announcement-body::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
 }
 
 /* RULES LIST */
 
-.rules-content h3{
-    text-align:center;
-    font-size:18px;
-    margin-bottom:5px;
+.rules-content h3 {
+    text-align: center;
+    font-size: 18px;
+    margin-bottom: 5px;
 }
 
-.rules-content h4{
-    text-align:center;
-    font-size:14px;
-    margin-bottom:10px;
+.rules-content h4 {
+    text-align: center;
+    font-size: 14px;
+    margin-bottom: 10px;
 }
 
-.rules-title{
-    margin-top:15px;
-    font-weight:bold;
+.rules-title {
+    margin-top: 15px;
+    font-weight: bold;
 }
 
-.rules-content p{
-    font-size:14px;
-    margin:15px 0;
-    text-align:justify;
+.rules-content p {
+    font-size: 14px;
+    margin: 15px 0;
+    text-align: justify;
 }
 
-.rules-content ol{
-    padding-left:20px;
+.rules-content ol {
+    padding-left: 20px;
 }
 
-.rules-content li{
-    margin-bottom:12px;
-    font-size:14px;
-    line-height:1.5;
-    text-align:justify;
+.rules-content li {
+    margin-bottom: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: justify;
 }
 
 /* ANNOUNCEMENT TEXT */
 
 /* ANNOUNCEMENT STYLE */
 
-.announcement-item{
-    margin-bottom:15px;
+.announcement-item {
+    margin-bottom: 15px;
 }
 
-.announcement-meta{
-    font-weight:bold;
-    color:#333;
-    font-size:14px;
+.announcement-meta {
+    font-weight: bold;
+    color: #333;
+    font-size: 14px;
 }
 
-.announcement-text{
-    margin-top:8px;
-    font-size:14px;
-    color:#555;
-    line-height:1.5;
+.announcement-text {
+    margin-top: 8px;
+    font-size: 14px;
+    color: #555;
+    line-height: 1.5;
 }
 
 /* Divider line */
-.card-body hr{
-    border:none;
-    border-top:1px solid #ddd;
-    margin:15px 0;
+.card-body hr {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin: 15px 0;
 }
 
 
 /* Responsive */
 @media (max-width: 768px) {
-    .dashboard-container{
+    .dashboard-container {
         flex-direction: column;
     }
-    
-    .student-info{
+
+    .student-info {
         width: 100%;
         margin-bottom: 20px;
     }
-    
-    .sitin-summary-card{
+
+    .sitin-summary-card {
         width: 100%;
         margin-bottom: 20px;
     }
 }
 
 /* SIT-IN SUMMARY CARD */
-.sitin-summary-card{
+.sitin-summary-card {
     background: white;
     border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.sitin-summary-card:hover{
+.sitin-summary-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
-.summary-header{
+.summary-header {
     background: linear-gradient(135deg, #0f5bbe 0%, #1976D2 100%);
     color: white;
     padding: 18px 20px;
@@ -516,18 +531,18 @@
     transition: background 0.3s;
 }
 
-.summary-header:hover{
+.summary-header:hover {
     background: linear-gradient(135deg, #1976D2 0%, #0f5bbe 100%);
 }
 
-.summary-body{
+.summary-body {
     padding: 20px;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 15px;
 }
 
-.summary-item{
+.summary-item {
     display: flex;
     flex-direction: column;
     padding: 15px;
@@ -537,14 +552,14 @@
     transition: all 0.3s ease;
 }
 
-.summary-item:hover{
+.summary-item:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border-color: #0f5bbe;
     background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%);
 }
 
-.summary-label{
+.summary-label {
     font-size: 12px;
     color: #666;
     margin-bottom: 8px;
@@ -553,14 +568,14 @@
     text-transform: uppercase;
 }
 
-.summary-value{
+.summary-value {
     font-size: 16px;
     font-weight: 700;
     color: #0f5bbe;
     line-height: 1.2;
 }
 
-.summary-unit{
+.summary-unit {
     font-size: 11px;
     font-weight: 500;
     color: #888;
@@ -573,50 +588,50 @@
         flex-direction: column;
         padding: 10px;
     }
-    
+
     .left-column {
         width: 100%;
         gap: 15px;
     }
-    
+
     .student-info {
         width: 100%;
         margin-bottom: 0;
     }
-    
+
     .sitin-summary-card {
         width: 100%;
         margin-bottom: 0;
     }
-    
+
     .dashboard-main {
         margin-left: 0;
     }
-    
+
     /* Navigation styles remain... */
     .dashboard-navbar {
         padding: 10px 15px;
         flex-wrap: wrap;
     }
-    
+
     .dashboard-left {
         font-size: 18px;
         flex: 1;
     }
-    
+
     .dashboard-left img {
         width: 40px;
         height: 40px;
     }
-    
+
     .dashboard-left span {
         font-size: 16px;
     }
-    
+
     .mobile-menu-toggle {
         display: block;
     }
-    
+
     .dashboard-right {
         display: none;
         width: 100%;
@@ -626,18 +641,18 @@
         padding: 10px 0;
         align-items: stretch;
     }
-    
+
     .dashboard-right.active {
         display: flex;
     }
-    
+
     .dashboard-right li {
         display: block;
         width: 100%;
         margin: 0;
         text-align: center;
     }
-    
+
     .dashboard-right a {
         display: block;
         padding: 12px 20px;
@@ -645,192 +660,192 @@
         font-size: 14px;
         text-align: center;
     }
-    
+
     .logout-btn {
         margin-left: 0;
         margin-top: 10px;
         text-align: center;
     }
-    
+
     /* Student Info Panel */
     .student-header {
         padding: 15px;
         font-size: 16px;
     }
-    
+
     .student-profile {
         padding: 20px 15px;
     }
-    
+
     .student-profile img {
         width: 100px;
         height: 100px;
     }
-    
+
     .student-details {
         padding: 15px;
     }
-    
+
     .student-details p {
         padding: 10px;
         margin-bottom: 10px;
     }
-    
+
     .student-details strong {
         font-size: 11px;
     }
-    
+
     .student-details span {
         font-size: 13px;
     }
-    
+
     /* Dashboard Cards */
     .card-header {
         padding: 12px;
         font-size: 14px;
     }
-    
+
     .card-body {
         padding: 15px;
         min-height: 100px;
     }
-    
+
     /* Rules Content */
     .rules-content h3 {
         font-size: 16px;
     }
-    
+
     .rules-content h4 {
         font-size: 12px;
     }
-    
+
     .rules-content p,
     .rules-content li {
         font-size: 13px;
     }
-    
+
     /* Announcement */
     .announcement-meta {
         font-size: 12px;
     }
-    
+
     .announcement-text {
         font-size: 13px;
     }
-    
+
     /* Sit-in Summary Card */
     .summary-header {
         padding: 12px 15px;
         font-size: 14px;
     }
-    
+
     .summary-body {
         padding: 12px;
         gap: 10px;
     }
-    
+
     .summary-item {
         padding: 10px;
     }
-    
+
     .summary-label {
         font-size: 10px;
     }
-    
+
     .summary-value {
         font-size: 13px;
     }
-    
+
     /* Reservation Modal */
     .reservation-modal {
         width: 95%;
     }
-    
+
     .reservation-modal-header {
         padding: 15px;
     }
-    
+
     .reservation-modal-header h2 {
         font-size: 18px;
     }
-    
+
     .reservation-modal-body {
         padding: 15px;
     }
-    
+
     .reservation-form .form-group {
         margin-bottom: 12px;
     }
-    
+
     .reservation-form label {
         font-size: 12px;
     }
-    
+
     .reservation-form input,
     .reservation-form select,
     .reservation-form textarea {
         padding: 10px;
         font-size: 13px;
     }
-    
+
     .reservation-submit-btn {
         padding: 12px;
         font-size: 14px;
     }
 }
-    
-    .summary-header {
-        padding: 12px 15px;
-        font-size: 14px;
-    }
-    
-    .summary-body {
-        padding: 12px;
-        gap: 10px;
-    }
-    
-    .summary-item {
-        padding: 10px;
-    }
-    
-    .summary-label {
-        font-size: 10px;
-    }
-    
-    .summary-value {
-        font-size: 13px;
-    }
+
+.summary-header {
+    padding: 12px 15px;
+    font-size: 14px;
 }
+
+.summary-body {
+    padding: 12px;
+    gap: 10px;
+}
+
+.summary-item {
+    padding: 10px;
+}
+
+.summary-label {
+    font-size: 10px;
+}
+
+.summary-value {
+    font-size: 13px;
+}
+
 
 /* Small Mobile Styles (max-width: 480px) */
 @media (max-width: 480px) {
     .sitin-summary-card {
         border-radius: 12px;
     }
-    
+
     .summary-header {
         font-size: 13px;
         padding: 10px;
     }
-    
+
     .summary-body {
         padding: 10px;
         gap: 8px;
     }
-    
+
     .summary-item {
         padding: 8px;
         border-radius: 8px;
     }
-    
+
     .summary-label {
         font-size: 9px;
     }
-    
+
     .summary-value {
         font-size: 12px;
     }
-    
+
     .summary-unit {
         font-size: 10px;
     }
@@ -1103,6 +1118,7 @@
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -1113,6 +1129,7 @@
         opacity: 0;
         transform: translateY(50px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1125,11 +1142,11 @@
         width: 95%;
         max-height: 90vh;
     }
-    
+
     .reservation-modal-header h2 {
         font-size: 18px;
     }
-    
+
     .reservation-modal-body {
         padding: 20px;
     }
@@ -1155,30 +1172,31 @@
 
 /* Tablet and Mobile Styles (max-width: 768px) */
 @media (max-width: 768px) {
+
     /* Navigation */
     .dashboard-navbar {
         padding: 10px 15px;
         flex-wrap: wrap;
     }
-    
+
     .dashboard-left {
         font-size: 18px;
         flex: 1;
     }
-    
+
     .dashboard-left img {
         width: 40px;
         height: 40px;
     }
-    
+
     .dashboard-left span {
         font-size: 16px;
     }
-    
+
     .mobile-menu-toggle {
         display: block;
     }
-    
+
     .dashboard-right {
         display: none;
         width: 100%;
@@ -1188,18 +1206,18 @@
         padding: 10px 0;
         align-items: stretch;
     }
-    
+
     .dashboard-right.active {
         display: flex;
     }
-    
+
     .dashboard-right li {
         display: block;
         width: 100%;
         margin: 0;
         text-align: center;
     }
-    
+
     .dashboard-right a {
         display: block;
         padding: 12px 20px;
@@ -1207,131 +1225,131 @@
         font-size: 14px;
         text-align: center;
     }
-    
+
     .logout-btn {
         margin-left: 0;
         margin-top: 10px;
         text-align: center;
     }
-    
+
     /* Dashboard Container */
     .dashboard-container {
         flex-direction: column;
         padding: 10px;
     }
-    
+
     /* Student Info Panel */
     .student-info {
         width: 100%;
         margin-bottom: 20px;
     }
-    
+
     .student-header {
         padding: 15px;
         font-size: 16px;
     }
-    
+
     .student-profile {
         padding: 20px 15px;
     }
-    
+
     .student-profile img {
         width: 100px;
         height: 100px;
     }
-    
+
     .student-details {
         padding: 15px;
     }
-    
+
     .student-details p {
         padding: 10px;
         margin-bottom: 10px;
     }
-    
+
     .student-details strong {
         font-size: 11px;
     }
-    
+
     .student-details span {
         font-size: 13px;
     }
-    
+
     /* Dashboard Main */
     .dashboard-main {
         margin-left: 0;
     }
-    
+
     /* Dashboard Cards */
     .dashboard-card {
         margin-bottom: 15px;
     }
-    
+
     .card-header {
         padding: 12px;
         font-size: 14px;
     }
-    
+
     .card-body {
         padding: 15px;
         min-height: 100px;
     }
-    
+
     /* Rules Content */
     .rules-content h3 {
         font-size: 16px;
     }
-    
+
     .rules-content h4 {
         font-size: 12px;
     }
-    
+
     .rules-content p,
     .rules-content li {
         font-size: 13px;
     }
-    
+
     /* Announcement */
     .announcement-meta {
         font-size: 12px;
     }
-    
+
     .announcement-text {
         font-size: 13px;
     }
-    
+
     /* Reservation Modal */
     .reservation-modal {
         width: 95%;
     }
-    
+
     .reservation-modal-header {
         padding: 15px;
     }
-    
+
     .reservation-modal-header h2 {
         font-size: 18px;
     }
-    
+
     .reservation-modal-body {
         padding: 15px;
     }
-    
+
     .reservation-form .form-group {
         margin-bottom: 12px;
     }
-    
+
     .reservation-form label {
         font-size: 12px;
     }
-    
+
     .reservation-form input,
     .reservation-form select,
     .reservation-form textarea {
         padding: 10px;
         font-size: 13px;
     }
-    
+
     .reservation-submit-btn {
         padding: 12px;
         font-size: 14px;
@@ -1343,85 +1361,85 @@
     .dashboard-navbar {
         padding: 8px 10px;
     }
-    
+
     .dashboard-left {
         font-size: 16px;
     }
-    
+
     .dashboard-left img {
         width: 35px;
         height: 35px;
     }
-    
+
     .dashboard-left span {
         font-size: 14px;
     }
-    
+
     .student-profile img {
         width: 80px;
         height: 80px;
     }
-    
+
     .student-details strong {
         font-size: 10px;
     }
-    
+
     .student-details span {
         font-size: 12px;
     }
-    
+
     .card-header {
         font-size: 13px;
     }
-    
+
     .rules-content h3 {
         font-size: 14px;
     }
-    
+
     .rules-content h4 {
         font-size: 11px;
     }
-    
+
     .rules-content p,
     .rules-content li {
         font-size: 12px;
     }
-    
+
     .announcement-meta {
         font-size: 11px;
     }
-    
+
     .announcement-text {
         font-size: 12px;
     }
-    
+
     .sitin-summary-card {
         border-radius: 12px;
     }
-    
+
     .summary-header {
         font-size: 13px;
         padding: 10px;
     }
-    
+
     .summary-body {
         padding: 10px;
         gap: 8px;
     }
-    
+
     .summary-item {
         padding: 8px;
         border-radius: 8px;
     }
-    
+
     .summary-label {
         font-size: 9px;
     }
-    
+
     .summary-value {
         font-size: 12px;
     }
-    
+
     .summary-unit {
         font-size: 10px;
     }
