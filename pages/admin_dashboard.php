@@ -150,7 +150,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['announcement_date']) &&
     $stmt->bind_param("sss", $admin_name, $announcement_date, $message);
     
     if($stmt->execute()) {
-        header("Location: /SYSARCH/admin_dashboard.php?success=announcement");
+        header("Location: /SYSARCH/pages/admin_dashboard.php?success=announcement");
         exit;
     }
     $stmt->close();
@@ -162,7 +162,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_announcement']))
     $stmt = $conn->prepare("DELETE FROM announcements WHERE id = ?");
     $stmt->bind_param("i", $delete_id);
     if($stmt->execute()) {
-        header("Location: /SYSARCH/admin_dashboard.php?success=deleted");
+        header("Location: /SYSARCH/pages/admin_dashboard.php?success=deleted");
         exit;
     }
     $stmt->close();
@@ -176,7 +176,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['edit_announcement'])) {
     $stmt = $conn->prepare("UPDATE announcements SET announcement_date = ?, message = ? WHERE id = ?");
     $stmt->bind_param("ssi", $edit_date, $edit_message, $edit_id);
     if($stmt->execute()) {
-        header("Location: /SYSARCH/admin_dashboard.php?success=updated");
+        header("Location: /SYSARCH/pages/admin_dashboard.php?success=updated");
         exit;
     }
     $stmt->close();
@@ -298,7 +298,6 @@ $purpose_labels = json_encode(array_keys($purpose_data));
         <li><a href="manage_sitin.php">Sit-in Logs</a></li>
         <li><a href="manage_reservations.php">Reservations</a></li>
         <li><a href="feedback_reports.php">Feedback Reports</a></li>
-        <li><a href="#">Settings</a></li>
         <li><a href="/SYSARCH/logout.php" class="logout-btn">Log Out</a></li>
     </ul>
 
@@ -491,6 +490,13 @@ $purpose_labels = json_encode(array_keys($purpose_data));
                 </div>
                 <button type="submit" class="submit-btn">Post Announcement</button>
             </form>
+
+            <?php if (isset($_GET['success']) && $_GET['success'] == 'announcement'): ?>
+                <div class="announcement-success-alert">
+                    <span class="alert-icon">✓</span>
+                    <span class="alert-text">Announcement posted successfully!</span>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
     </div>
@@ -967,9 +973,6 @@ $purpose_labels = json_encode(array_keys($purpose_data));
         <div class="modal-body">
             <div class="analytics-header">
                 <p class="analytics-subtitle">Real-time usage and activity metrics</p>
-                <button class="refresh-btn" id="refreshAnalyticsBtn">
-                    <span>🔄</span> Refresh
-                </button>
             </div>
 
             <!-- Analytics Summary Cards -->
@@ -1097,7 +1100,7 @@ $purpose_labels = json_encode(array_keys($purpose_data));
 }
 
 .modern-header-modal .modal-header {
-    background: linear-gradient(135deg, #1a3a5f 0%, #0f5bbe 100%);
+    background: linear-gradient(135deg, #0f5bbe 0%, #1a73e8 100%);
     color: white;
     padding: 24px 30px;
     border-bottom: none;
@@ -1735,6 +1738,53 @@ $purpose_labels = json_encode(array_keys($purpose_data));
 .top-students-list::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
 }
+
+/* Announcement success alert (Floating Toast at Top) */
+.announcement-success-alert {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(0);
+    z-index: 10000;
+    background: #e6f4ea;
+    border: 1px solid #34a853;
+    color: #137333;
+    border-radius: 12px;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.05);
+    animation: toastSlideDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes toastSlideDown {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.announcement-success-alert .alert-icon {
+    font-size: 18px;
+    background: #34a853;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+}
 </style>
 
 <!-- REPORTS MODAL -->
@@ -1902,6 +1952,24 @@ $purpose_labels = json_encode(array_keys($purpose_data));
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+    // Auto-hide announcement success alert after 3 seconds
+    const successAlert = document.querySelector('.announcement-success-alert');
+    if (successAlert) {
+        setTimeout(() => {
+            successAlert.style.opacity = '0';
+            successAlert.style.transform = 'translateX(-50%) translateY(-40px)';
+            setTimeout(() => {
+                successAlert.remove();
+            }, 400);
+        }, 3000);
+        
+        // Clean URL query params so refreshes don't show the alert again
+        if (window.history.replaceState) {
+            const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            window.history.replaceState({path: cleanUrl}, '', cleanUrl);
+        }
+    }
+
     // Modal Config Mapping
     const modalConfig = {
         sitIn: {

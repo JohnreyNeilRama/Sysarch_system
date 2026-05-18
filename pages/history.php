@@ -873,6 +873,7 @@ $stats_stmt->close();
     font-size: 22px;
     font-weight: 700;
     letter-spacing: -0.5px;
+    color: white;
 }
 
 .notification-close-btn {

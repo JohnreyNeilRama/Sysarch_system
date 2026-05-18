@@ -468,9 +468,9 @@ $conn->close();
 
     <div class="card-body announcement-body">
         <?php
-        // Fetch announcements from database (latest first)
+        // Fetch announcements from database (latest first, only showing active/scheduled ones)
         include '../includes/connect.php';
-        $stmt = $conn->prepare("SELECT admin_name, announcement_date, message FROM announcements ORDER BY announcement_date DESC, created_at DESC");
+        $stmt = $conn->prepare("SELECT admin_name, announcement_date, message FROM announcements WHERE announcement_date <= CURRENT_DATE() ORDER BY announcement_date DESC, created_at DESC");
         $stmt->execute();
         $result = $stmt->get_result();
         
@@ -731,6 +731,7 @@ $conn->close();
     font-size: 22px;
     font-weight: 700;
     letter-spacing: -0.5px;
+    color: white;
 }
 
 .notification-close-btn {

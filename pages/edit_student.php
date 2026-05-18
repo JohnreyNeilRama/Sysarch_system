@@ -200,7 +200,6 @@ $conn->close();
         <li><a href="manage_sitin.php">Sit-in Logs</a></li>
         <li><a href="manage_reservations.php">Reservations</a></li>
         <li><a href="feedback_reports.php">Feedback Reports</a></li>
-        <li><a href="#">Settings</a></li>
         <li><a href="/SYSARCH/logout.php" class="logout-btn">Log Out</a></li>
     </ul>
 </nav>

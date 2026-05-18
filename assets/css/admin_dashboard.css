@@ -530,7 +530,7 @@
 /* CARD HEADER */
 
 .admin-dashboard-page .card-header{
-    background: #1a3a5f;
+    background: #0f5bbe;
     color:white;
     padding:18px;
     font-size:18px;
@@ -540,7 +540,7 @@
 }
 
 .admin-dashboard-page .card-header:hover{
-    background: #1c4b81;
+    background: #0d4fa1;
 }
 
 /* CARD BODY */
@@ -737,6 +737,7 @@
     width:100%;
     height:100%;
     background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(4px);
     display: none;
     align-items: center;
     justify-content: center;
@@ -1130,11 +1131,11 @@
         }
         
         .students-table th {
-            background-color: #1a3a5f;
+            background-color: #0f5bbe;
             transition: background-color 0.3s ease;
         }
         .students-table th:hover {
-            background-color: #2a4a6f;
+            background-color: #0d4fa1;
         }
         .students-table tbody tr {
             transition: background-color 0.3s ease;
@@ -1272,7 +1273,7 @@
 }
 
 .manage-labs-modal .modal-header {
-    background: linear-gradient(135deg, #1a3a5f 0%, #2a4a6f 100%);
+    background: linear-gradient(135deg, #0f5bbe 0%, #1a73e8 100%);
     padding: 20px 25px;
     border-bottom: none;
 }

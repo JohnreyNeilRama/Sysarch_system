@@ -47,7 +47,7 @@ $where_clauses = [];
 
 if($search !== '') {
     $search_param = "%$search%";
-    $where_clauses[] = "(student_id LIKE ? OR student_name LIKE ? OR comment LIKE ?)";
+    $where_clauses[] = "(f.student_id LIKE ? OR f.student_name LIKE ? OR f.comment LIKE ?)";
     $params[] = $search_param;
     $params[] = $search_param;
     $params[] = $search_param;
@@ -55,7 +55,7 @@ if($search !== '') {
 }
 
 if($rating_filter !== 'All' && is_numeric($rating_filter)) {
-    $where_clauses[] = "rating = ?";
+    $where_clauses[] = "f.rating = ?";
     $params[] = $rating_filter;
     $types .= 'i';
 }
@@ -181,6 +181,7 @@ if($stats_row = $stats_result->fetch_assoc()){
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
             z-index: 1000;
             justify-content: center;
             align-items: center;
@@ -286,10 +287,29 @@ if($stats_row = $stats_result->fetch_assoc()){
             border-radius: 5px;
             cursor: pointer;
             font-size: 14px;
+            transition: all 0.3s ease;
         }
         
         .search-box button:hover {
             background: #0d4a9e;
+        }
+
+        .search-box .btn-reset {
+            padding: 10px 20px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .search-box .btn-reset:hover {
+            background: #c82333;
+            color: white;
         }
 
         .table-container {
@@ -306,7 +326,7 @@ if($stats_row = $stats_result->fetch_assoc()){
         }
         
         th {
-            background: #1a3a5f;
+            background: #0f5bbe;
             color: white;
             padding: 15px;
             text-align: left;
@@ -338,7 +358,6 @@ if($stats_row = $stats_result->fetch_assoc()){
         <li><a href="manage_sitin.php">Sit-in Logs</a></li>
         <li><a href="manage_reservations.php">Reservations</a></li>
         <li><a href="feedback_reports.php" class="active">Feedback Reports</a></li>
-        <li><a href="#">Settings</a></li>
         <li><a href="/SYSARCH/logout.php" class="logout-btn">Log Out</a></li>
     </ul>
 
@@ -407,7 +426,7 @@ if($stats_row = $stats_result->fetch_assoc()){
                 <option value="1" <?php echo $rating_filter === '1' ? 'selected' : ''; ?>>1 Star</option>
             </select>
             <button type="submit">Search</button>
-            <a href="feedback_reports.php"><button type="button">Reset</button></a>
+            <a href="feedback_reports.php" class="btn-reset">Reset</a>
         </form>
 
         <!-- Feedback Table -->

@@ -531,6 +531,7 @@ $conn->close();
     font-size: 22px;
     font-weight: 700;
     letter-spacing: -0.5px;
+    color: white;
 }
 
 .notification-close-btn {
@@ -599,8 +600,112 @@ $conn->close();
 }
 
 .notification-item.unread {
-    background: #f0f7ff;
+    background: linear-gradient(135deg, #e8f4fd 0%, #f0f7ff 100%);
     border-left: 4px solid #1565c0;
+}
+
+.notification-item.unread::before {
+    content: '';
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 10px;
+    height: 10px;
+    background: linear-gradient(135deg, #1565c0 0%, #1976D2 100%);
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.4);
+}
+
+.notification-item.read {
+    opacity: 0.65;
+    background: #f5f5f5;
+}
+
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.notification-title {
+    font-weight: 700;
+    color: #1a1a1a;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+}
+
+.notification-title.reservation_approved, .notification-title.login {
+    color: #2e7d32;
+}
+
+.notification-title.reservation_rejected, .notification-title.logout {
+    color: #c62828;
+}
+
+.notification-title.login {
+    color: #1565c0;
+}
+
+.notif-icon {
+    font-size: 14px;
+}
+
+.notif-icon.approved {
+    color: #4caf50;
+}
+
+.notif-icon.rejected {
+    color: #f44336;
+}
+
+.notification-time {
+    font-size: 12px;
+    color: #888;
+    font-weight: 400;
+}
+
+.notification-message {
+    color: #555;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.mark-read-btn {
+    display: inline-block;
+    margin-top: 10px;
+    color: #1976D2;
+    font-size: 12px;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 15px;
+    background: rgba(25, 118, 210, 0.1);
+    transition: all 0.2s ease;
+}
+
+.mark-read-btn:hover {
+    text-decoration: underline;
+}
+
+.no-notifications {
+    text-align: center;
+    padding: 60px 30px;
+    color: #9e9e9e;
+}
+
+.no-notifications p {
+    font-size: 16px;
+    margin: 0;
+    opacity: 0.8;
+}
+
+.no-notifications-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
 }
 </style>
 
