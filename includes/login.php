@@ -8,8 +8,8 @@ $id_number = $_POST['id_number'];
 $password = $_POST['password'];
 
 // First, check if the user is an admin
-$stmt = $conn->prepare("SELECT * FROM admins WHERE admin_id = ?");
-$stmt->bind_param("s", $id_number);
+$stmt = $conn->prepare("SELECT * FROM admins WHERE admin_id = ? OR username = ?");
+$stmt->bind_param("ss", $id_number, $id_number);
 $stmt->execute();
 $result = $stmt->get_result();
 
