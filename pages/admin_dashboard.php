@@ -921,7 +921,16 @@ $purpose_labels = json_encode(array_keys($purpose_data));
             </div>
             <form id="manageLabsForm">
                 <div class="form-group">
-                    <label for="labSelect"><span class="input-icon">📍</span> Select Laboratory</label>
+                    <div class="form-header-row">
+                        <label for="labSelect"><span class="input-icon">📍</span> Select Laboratory</label>
+                        <div class="toggle-container">
+                            <span class="toggle-label" id="toggleAllLabel">Enable All Labs</span>
+                            <label class="switch">
+                                <input type="checkbox" id="toggleAllLabs">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                    </div>
                     <select name="lab_select" id="labSelect">
                         <option value="">-- Choose a Lab --</option>
                         <option value="524">Lab 524</option>
@@ -1991,7 +2000,8 @@ document.addEventListener("DOMContentLoaded", function() {
             overlay: document.getElementById("manageLabsModal"),
             open: document.getElementById("openManageLabs"),
             close: ["closeManageLabs", "closeManageLabs2"],
-            onClose: resetManageLabsForm
+            onClose: resetManageLabsForm,
+            onOpen: fetchAllLabsStatus
         },
         manageSoftware: {
             overlay: document.getElementById("manageSoftwareModal"),
@@ -2093,9 +2103,120 @@ document.addEventListener("DOMContentLoaded", function() {
             xhr.send(`lab_room=${encodeURIComponent(labRoom)}&software_name=${encodeURIComponent(nameInput.value.trim())}&category=${encodeURIComponent(categorySelect.value)}`);
         };
     }
+
+    // Initialize the Toggle All Labs handler
+    initToggleAllLabs();
 });
 
 // Helper Functions
+function fetchAllLabsStatus() {
+    const toggle = document.getElementById("toggleAllLabs");
+    const label = document.getElementById("toggleAllLabel");
+    if (!toggle) return;
+    
+    toggle.disabled = true;
+    
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/SYSARCH/pages/api/toggle_all_labs.php", true);
+    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            try {
+                const data = JSON.parse(xhr.responseText);
+                if (data.success) {
+                    toggle.checked = data.enabled;
+                    if (label) {
+                        label.textContent = data.enabled ? "All Labs Enabled" : "All Labs Disabled";
+                        label.style.color = data.enabled ? "#137333" : "#64748b";
+                    }
+                }
+            } catch(e) {
+                console.error("Error parsing labs status:", e);
+            } finally {
+                toggle.disabled = false;
+            }
+        }
+    };
+    xhr.send("action=get_status");
+}
+
+function initToggleAllLabs() {
+    const toggle = document.getElementById("toggleAllLabs");
+    const label = document.getElementById("toggleAllLabel");
+    if (!toggle) return;
+    
+    toggle.onchange = function() {
+        const isChecked = toggle.checked;
+        const nextStatus = isChecked ? "available" : "unavailable";
+        
+        toggle.disabled = true;
+        
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/SYSARCH/pages/api/toggle_all_labs.php", true);
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                toggle.disabled = false;
+                if (xhr.status === 200) {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        if (data.success) {
+                            if (label) {
+                                label.textContent = isChecked ? "All Labs Enabled" : "All Labs Disabled";
+                                label.style.color = isChecked ? "#137333" : "#64748b";
+                            }
+                            
+                            showNotification(
+                                isChecked ? "All laboratories have been successfully enabled!" : "All laboratories have been successfully disabled!",
+                                "success"
+                            );
+                            
+                            const labSelect = document.getElementById("labSelect");
+                            const computerSection = document.getElementById("labComputerSection");
+                            if (labSelect && labSelect.value && computerSection && computerSection.style.display !== "none") {
+                                loadLabComputers(labSelect.value);
+                            }
+                        } else {
+                            toggle.checked = !isChecked;
+                            showNotification("Failed to update laboratories: " + data.error, "error");
+                        }
+                    } catch(e) {
+                        toggle.checked = !isChecked;
+                        showNotification("Failed to update laboratories.", "error");
+                    }
+                } else {
+                    toggle.checked = !isChecked;
+                    showNotification("Server error, please try again.", "error");
+                }
+            }
+        };
+        xhr.send(`action=toggle&status=${nextStatus}`);
+    };
+}
+
+function showNotification(message, type = 'success') {
+    const isError = type === 'error';
+    const toast = document.createElement('div');
+    toast.className = 'announcement-success-alert';
+    if (isError) {
+        toast.style.background = '#fce8e6';
+        toast.style.borderColor = '#ea4335';
+        toast.style.color = '#c5221f';
+    }
+    
+    const icon = isError ? '❌' : '✅';
+    toast.innerHTML = `<span class="alert-icon">${icon}</span> <span>${message}</span>`;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-50%) translateY(-40px)';
+        setTimeout(() => {
+            toast.remove();
+        }, 400);
+    }, 3000);
+}
+
 function resetManageLabsForm() {
     const section = document.getElementById("labComputerSection");
     if (section) section.style.display = "none";
